@@ -64,10 +64,10 @@ export default function Home() {
     // 2. Realtime Subscription
     const channel = supabase
       .channel('realtime-updates')
-      .on('postgres_changes', { event: 'INSERT', table: 'votes' }, (payload) => {
+      .on('postgres_changes' as any, { event: 'INSERT', table: 'votes' }, (payload) => {
         setVotes((current) => [...current, payload.new]);
       })
-      .on('postgres_changes', { event: 'INSERT', table: 'contributions' }, (payload) => {
+      .on('postgres_changes' as any, { event: 'INSERT', table: 'contributions' }, (payload) => {
         setContributions((current) => [...current, payload.new]);
       })
       .subscribe();
