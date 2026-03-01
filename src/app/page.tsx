@@ -119,7 +119,7 @@ const TENSIONS = [
     desc: "Vigilar proactivament que la intel·ligència artificial no esdevingui una nova eina d'exclusió estructural.",
     left: "Biaixos",
     leftDesc: "Consciència de l'ús de dades històriques i els prejudicis que els models de llenguatge poden perpetuar.",
-    right: "Justícia Algorítmica",
+    right: "Justicia Algorítmica",
     rightDesc: "Treballar activament per un disseny inclusiu i una auditoria social que garanteixi l'equitat tecnológica.",
   },
   {
@@ -283,6 +283,7 @@ export default function Home() {
   const [expandedValue, setExpandedValue] = useState<string | null>(null);
   const [expandedD, setExpandedD] = useState<string | null>(null);
   const [expandedLv, setExpandedLv] = useState<number | null>(null);
+  const [expandedTension, setExpandedTension] = useState<string | null>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -320,10 +321,10 @@ export default function Home() {
       <section id="details-intro" className="reveal-section py-40 px-6 bg-white overflow-hidden border-b border-black/5">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-start mb-48">
-            <div className="relative group w-full aspect-square md:aspect-auto md:h-[600px]">
+            <div className="relative group w-full aspect-square md:aspect-auto md:h-[650px]">
               <div className="absolute -inset-4 bg-[var(--jesuites-blue)]/5 rounded-[4rem] -rotate-2" />
               <div className="relative h-full w-full rounded-[3rem] overflow-hidden shadow-2xl">
-                <Image src="/imatges/mirades-obertes-2.jpg" alt="Visió" fill className="object-contain bg-[var(--jesuites-cream)] p-8" />
+                <Image src="/imatges/mirades-obertes-2.jpg" alt="Visió" fill className="object-cover" />
               </div>
             </div>
             <div className="flex flex-col justify-between h-full py-4 space-y-16 lg:space-y-0">
@@ -331,13 +332,13 @@ export default function Home() {
                 <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Propòsit Docent</span>
                 <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] mb-0 tracking-tighter leading-none font-serif uppercase">Raons de <span className="italic opacity-60">fons</span></h2>
               </div>
-              <div className="space-y-8">
-                <div className="bg-black/5 p-10 rounded-[3.5rem] border border-black/5 hover:bg-[var(--jesuites-cream)] transition-all">
-                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-2 uppercase text-base tracking-widest font-serif">Renovació de la tradició</h4>
+              <div className="space-y-10">
+                <div className="bg-black/5 p-12 rounded-[3.5rem] border border-black/5 hover:bg-[var(--jesuites-cream)] transition-all">
+                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-3 uppercase text-base tracking-widest font-serif">Renovació de la tradició</h4>
                   <p className="text-2xl text-gray-500 font-light leading-snug">Integrar l'IA com una oportunitat per renovar la nostra tradició educativa a través del pensament crític.</p>
                 </div>
-                <div className="bg-black/5 p-10 rounded-[3.5rem] border border-black/5 hover:bg-[var(--jesuites-cream)] transition-all">
-                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-2 uppercase text-base tracking-widest font-serif">Acompanyament en l'error</h4>
+                <div className="bg-black/5 p-12 rounded-[3.5rem] border border-black/5 hover:bg-[var(--jesuites-cream)] transition-all">
+                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-3 uppercase text-base tracking-widest font-serif">Acompanyament en l'error</h4>
                   <p className="text-2xl text-gray-500 font-light leading-snug">Educar en la imaginació i l'error com a oportunitat de creixement, elements que cap algoritme pot substituir.</p>
                 </div>
               </div>
@@ -367,7 +368,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. VALORS RECTORS */}
+      {/* 4. VALORS RECTORS */}
       <section id="principles-section" className="reveal-section py-40 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-32 px-6">
           <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Cultura Institucional</span>
@@ -402,53 +403,43 @@ export default function Home() {
         <SectionArrow targetId="tensions-section" />
       </section>
 
-      {/* 4. TENSIONS */}
+      {/* 5. TENSIONS (NEW ACCORDION STYLE) */}
       <section id="tensions-section" className="reveal-section py-40 bg-[var(--jesuites-blue)] text-white overflow-hidden relative">
         <div className="absolute inset-0 opacity-10 pointer-events-none"><Image src="/imatges/mirades-obertes-3.jpg" alt="Bg" fill className="object-cover grayscale" /></div>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="mb-48 text-center px-6">
+          <div className="mb-32 text-center px-6">
             <span className="text-white/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Reflexió Dialèctica</span>
             <h2 className="text-6xl md:text-[12rem] font-bold mb-10 tracking-tighter italic font-serif leading-none uppercase">Habitar les <br />Tensions</h2>
           </div>
-          <div className="grid grid-cols-1 gap-72 tensions-container">
+
+          <div className="space-y-8 max-w-6xl mx-auto tensions-container">
             {TENSIONS.map((t) => (
-              <div key={t.id} className="relative group max-w-6xl mx-auto w-full">
-                {/* Desktop/Tablet Layout */}
-                <div className="hidden md:flex flex-col items-center">
-                  <div className="text-center mb-20 max-w-5xl mx-auto">
-                    <h5 className="text-5xl font-bold uppercase tracking-widest text-amber-200 mb-8 font-serif leading-none">{t.title}</h5>
-                    <p className="text-2xl font-light text-white/70 italic leading-snug px-6">{t.desc}</p>
+              <div key={t.id} onClick={() => setExpandedTension(expandedTension === t.id ? null : t.id)} className={`bg-white/5 backdrop-blur-md rounded-[3.5rem] border border-white/10 transition-all duration-700 overflow-hidden group cursor-pointer ${expandedTension === t.id ? 'ring-4 ring-white/10 shadow-2xl scale-[1.02]' : 'hover:bg-white/10'}`}>
+                <div className="p-10 md:p-12 flex flex-col md:flex-row justify-between items-center gap-10">
+                  <div className="flex-1 text-center md:text-left">
+                    <h4 className="text-3xl md:text-5xl font-bold uppercase tracking-widest text-amber-200 font-serif leading-none mb-4">{t.title}</h4>
+                    <p className="text-lg md:text-xl font-light text-white/50 italic leading-snug">{t.desc}</p>
                   </div>
-                  <div className="flex justify-between items-start gap-32 w-full relative pt-12">
-                    <div className="flex-1 text-left space-y-8">
-                      <h4 className="text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.left.replace(" ", "\n")}</h4>
-                      <p className="text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
-                    </div>
-                    {/* Visual Opposition Indicator */}
-                    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-32 bg-white/20 flex items-center justify-center">
-                      <div className="tension-marker absolute w-16 h-16 rounded-full bg-white shadow-[0_0_60px_rgba(255,255,255,0.8)] flex items-center justify-center group-hover:scale-125 transition-transform"><ArrowRightLeft size={28} className="text-[var(--jesuites-blue)]" /></div>
-                    </div>
-                    <div className="flex-1 text-right space-y-8">
-                      <h4 className="text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.right.replace(" ", "\n")}</h4>
-                      <p className="text-2xl font-light text-white/40 italic leading-snug">{t.rightDesc}</p>
-                    </div>
+                  <div className={`w-14 h-14 rounded-full border border-white/20 flex items-center justify-center transition-all duration-500 ${expandedTension === t.id ? 'bg-amber-200 text-[var(--jesuites-blue)] rotate-180' : 'text-white'}`}>
+                    <ChevronDown size={24} />
                   </div>
                 </div>
-                {/* Mobile Layout */}
-                <div className="md:hidden flex flex-col items-center text-center px-4 space-y-12">
-                  <div className="space-y-6">
-                    <h5 className="text-3xl font-bold uppercase tracking-widest text-amber-200 font-serif">{t.title}</h5>
-                    <p className="text-lg font-light text-white/60 italic leading-tight">{t.desc}</p>
-                  </div>
-                  <div className="flex flex-col gap-10 w-full">
-                    <div className="space-y-3">
-                      <h4 className="text-5xl font-bold font-serif uppercase text-white leading-none">{t.left}</h4>
-                      <p className="text-base font-light text-white/40 italic">{t.leftDesc}</p>
+
+                <div className={`transition-all duration-700 overflow-hidden ${expandedTension === t.id ? 'max-h-[1000px] opacity-100 p-10 md:p-20 pt-0' : 'max-h-0 opacity-0'}`}>
+                  <div className="border-t border-white/10 pt-16 flex flex-col md:flex-row justify-between items-start gap-20 md:gap-32 relative">
+                    {/* Left Pole */}
+                    <div className="flex-1 text-center md:text-left space-y-8 w-full group-hover:-translate-x-2 transition-transform">
+                      <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.left.replace(" ", "\n")}</h4>
+                      <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
-                    <div className="flex items-center justify-center opacity-30"><ArrowRightLeft size={20} /></div>
-                    <div className="space-y-3">
-                      <h4 className="text-5xl font-bold font-serif uppercase text-white leading-none">{t.right}</h4>
-                      <p className="text-base font-light text-white/40 italic">{t.rightDesc}</p>
+                    {/* Visual Marker (Hidden in Mobile Accordion for better space) */}
+                    <div className="hidden md:flex absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-32 bg-white/20 items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-white shadow-[0_0_60px_rgba(255,255,255,0.8)] flex items-center justify-center"><ArrowRightLeft size={28} className="text-[var(--jesuites-blue)]" /></div>
+                    </div>
+                    {/* Right Pole */}
+                    <div className="flex-1 text-center md:text-right space-y-8 w-full group-hover:translate-x-2 transition-transform">
+                      <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.right.replace(" ", "\n")}</h4>
+                      <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.rightDesc}</p>
                     </div>
                   </div>
                 </div>
@@ -459,7 +450,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. MODEL 4D */}
+      {/* 6. MODEL 4D */}
       <section id="model-4d-section" className="reveal-section py-40 px-6 bg-[var(--jesuites-cream)] overflow-hidden">
         <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-12 gap-24 items-start">
           <div className="lg:col-span-5 mb-16 lg:mb-0">
@@ -470,7 +461,7 @@ export default function Home() {
           <div className="lg:col-span-7 flex flex-col gap-3">
             {MODEL_4D.map((d) => (
               <div key={d.id} onClick={() => setExpandedD(expandedD === d.id ? null : d.id)} className={`bg-white rounded-[2rem] shadow-sm cursor-pointer transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedD === d.id ? 'ring-4 ring-[var(--jesuites-blue)]/10 z-10' : 'opacity-90'}`}>
-                <div className="p-6 md:p-8">
+                <div className="p-6 md:p-7">
                   <div className="flex justify-between items-center gap-6">
                     <div className="flex items-center gap-6 min-w-0">
                       <span className="text-4xl md:text-5xl font-bold text-[var(--jesuites-blue)] opacity-10 font-serif leading-none">{d.id}</span>
@@ -479,7 +470,7 @@ export default function Home() {
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate">{d.subtitle}</p>
                       </div>
                     </div>
-                    <d.icon size={24} className={`transition-all shrink-0 ${expandedD === d.id ? 'text-amber-500 rotate-12' : 'text-[var(--jesuites-blue)]/20'}`} />
+                    <d.icon size={22} className={`transition-all shrink-0 ${expandedD === d.id ? 'text-amber-500 rotate-12' : 'text-[var(--jesuites-blue)]/20'}`} />
                   </div>
                   <div className={`transition-all duration-700 overflow-hidden ${expandedD === d.id ? 'max-h-[1000px] opacity-100 mt-6 pt-6 border-t border-black/5' : 'max-h-0 opacity-0'}`}>
                     <p className="text-xl md:text-2xl text-gray-600 font-light italic mb-8">"{d.desc}"</p>
@@ -495,7 +486,7 @@ export default function Home() {
         <SectionArrow targetId="delegation-section" />
       </section>
 
-      {/* 6. NIVELLS DE DELEGACIÓ */}
+      {/* 7. NIVELLS DE DELEGACIÓ */}
       <section id="delegation-section" className="reveal-section py-40 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="mb-48">
@@ -517,7 +508,7 @@ export default function Home() {
                     <div className="relative w-24 h-24 md:w-36 md:h-36 flex items-center justify-center">
                       <div className="absolute inset-0 rounded-full border-[10px] md:border-[14px] border-black/[0.05]" />
                       <svg className="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="41%" className="stroke-[var(--jesuites-blue)] fill-transparent stroke-[10] md:stroke-[14]" strokeDasharray="1000" strokeDashoffset={(1000 - (1000 * (l.human / 100))).toString()} strokeLinecap="round" />
+                        <circle cx="50%" cy="50%" r="41.5%" className="stroke-[var(--jesuites-blue)] fill-transparent stroke-[10] md:stroke-[14]" strokeDasharray="1000" strokeDashoffset={(1000 - (1000 * (l.human / 100))).toString()} strokeLinecap="round" />
                       </svg>
                       <div className="flex flex-col items-center">
                         <span className="text-2xl md:text-5xl font-bold font-serif text-[var(--jesuites-blue)] leading-none">{l.human}%</span>
@@ -527,7 +518,7 @@ export default function Home() {
                     <div className={`w-12 h-12 rounded-full border border-black/10 flex items-center justify-center transition-all ${expandedLv === l.lv ? 'bg-[var(--jesuites-blue)] text-white rotate-180' : 'text-[var(--jesuites-blue)]'}`}><ChevronDown size={20} /></div>
                   </div>
                 </div>
-                <div className={`transition-all duration-700 overflow-hidden ${expandedLv === l.lv ? 'max-h-[1400px] opacity-100 p-8 md:p-14 md:pt-2' : 'max-h-0 opacity-0'}`}>
+                <div className={`transition-all duration-700 overflow-hidden ${expandedLv === l.lv ? 'max-h-[1400px] opacity-100 p-8 md:p-14 md:pt-0' : 'max-h-0 opacity-0'}`}>
                   <div className="border-t border-black/5 pt-8 space-y-8">
                     <p className="text-xl md:text-3xl font-light text-gray-600 italic leading-snug md:px-10">"{l.desc}"</p>
                     <div className="md:px-10"><ExamplesCarousel examples={l.examples} /></div>
@@ -539,15 +530,15 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. FOOTER */}
+      {/* 8. FOOTER */}
       <footer className="py-40 text-center bg-white border-t border-black/5">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex justify-center mb-16 opacity-30 grayscale brightness-0"><Image src="/imatges/FJE-trans.png" alt="Logo FJE" width={280} height={100} className="h-auto w-48 md:w-64" /></div>
-          <div className="flex justify-center gap-16 md:gap-24 mb-20 opacity-20 grayscale brightness-0">
+          <div className="flex justify-center gap-16 md:gap-24 opacity-20 grayscale brightness-0">
             <Image src="/imatges/Escud blau.jpg" alt="Escut" width={60} height={60} className="h-20 w-auto" />
             <Image src="/imatges/FJE blanc CSC.png" alt="CSC" width={80} height={50} className="h-16 w-auto" />
           </div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.5em] text-gray-300">Jesuïtes Educació • Marc General IA 2026</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.5em] text-gray-300 mt-20">Jesuïtes Educació • Marc General IA 2026</p>
         </div>
       </footer>
     </main>
