@@ -64,9 +64,11 @@ export default function Home() {
     // 2. Realtime Subscription
     const channel = supabase
       .channel('realtime-updates')
+      // @ts-ignore
       .on('postgres_changes' as any, { event: 'INSERT', table: 'votes' }, (payload) => {
         setVotes((current) => [...current, payload.new]);
       })
+      // @ts-ignore
       .on('postgres_changes' as any, { event: 'INSERT', table: 'contributions' }, (payload) => {
         setContributions((current) => [...current, payload.new]);
       })
