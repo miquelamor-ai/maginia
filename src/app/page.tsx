@@ -8,7 +8,8 @@ import { supabase } from "@/lib/supabase";
 import {
   ChevronDown, Users, Eye, Search, Heart, ShieldCheck,
   ArrowRightLeft, FileText, Gavel, Sparkles, Settings,
-  Target, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight
+  Target, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight,
+  Menu, X
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -284,6 +285,16 @@ export default function Home() {
   const [expandedD, setExpandedD] = useState<string | null>(null);
   const [expandedLv, setExpandedLv] = useState<number | null>(null);
   const [expandedTension, setExpandedTension] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const NAV_LINKS = [
+    { name: "Inici", id: "hero-top" },
+    { name: "Raons de fons", id: "details-intro" },
+    { name: "Valors Rectors", id: "principles-section" },
+    { name: "Tensions", id: "tensions-section" },
+    { name: "Model 4D", id: "model-4d-section" },
+    { name: "Nivells", id: "delegation-section" }
+  ];
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -298,8 +309,35 @@ export default function Home() {
   return (
     <main ref={containerRef} className="relative min-h-screen bg-[var(--jesuites-cream)] pb-64 font-sans leading-relaxed text-[var(--jesuites-text)]">
 
+      {/* 0. FLOATING NAVIGATION MENU */}
+      <nav className="fixed top-8 right-8 z-[100] flex flex-col items-end gap-4">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[var(--jesuites-blue)] text-white shadow-2xl flex items-center justify-center hover:scale-110 transition-transform ring-4 ring-white/10"
+        >
+          {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
+
+        <div className={`transition-all duration-500 overflow-hidden bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-black/5 ${isMenuOpen ? 'max-h-[600px] opacity-100 p-8' : 'max-h-0 opacity-0 pointer-events-none'}`}>
+          <div className="flex flex-col gap-6 min-w-[200px]">
+            {NAV_LINKS.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-left text-sm font-bold uppercase tracking-[0.3em] text-[var(--jesuites-blue)] hover:translate-x-3 transition-transform font-serif border-b border-black/5 pb-2"
+              >
+                {link.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
+
       {/* 1. HERO */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section id="hero-top" className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0 bg-black">
           <Image src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2000" alt="Background" fill className="object-cover opacity-50 scale-10" priority />
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-[var(--jesuites-cream)]" />
@@ -435,10 +473,10 @@ export default function Home() {
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
 
-                    {/* Subtle VS Watermark - Absolute centered, no extra spacing */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none flex items-center justify-center opacity-20">
-                      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 backdrop-blur-[2px] flex items-center justify-center">
-                        <span className="text-white font-black text-5xl md:text-7xl tracking-tighter select-none">VS</span>
+                    {/* Subtle VS Watermark - Gradient and smaller */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none flex items-center justify-center">
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-transparent backdrop-blur-md flex items-center justify-center border border-white/10">
+                        <span className="text-white font-black text-sm md:text-base tracking-tighter select-none">VS</span>
                       </div>
                     </div>
 
