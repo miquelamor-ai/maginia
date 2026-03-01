@@ -119,7 +119,7 @@ const TENSIONS = [
     desc: "Vigilar proactivament que la intel·ligència artificial no esdevingui una nova eina d'exclusió estructural.",
     left: "Biaixos",
     leftDesc: "Consciència de l'ús de dades històriques i els prejudicis que els models de llenguatge poden perpetuar.",
-    right: "Justicia Algorítmica",
+    right: "Justícia Algorítmica",
     rightDesc: "Treballar activament per un disseny inclusiu i una auditoria social que garanteixi l'equitat tecnológica.",
   },
   {
@@ -404,7 +404,7 @@ export default function Home() {
       </section>
 
       {/* 5. TENSIONS (NEW ACCORDION STYLE) */}
-      <section id="tensions-section" className="reveal-section py-40 bg-[var(--jesuites-blue)] text-white overflow-hidden relative">
+      <section id="tensions-section" className="reveal-section py-40 bg-[var(--jesuites-blue)] text-white overflow-hidden relative border-b border-white/5">
         <div className="absolute inset-0 opacity-10 pointer-events-none"><Image src="/imatges/mirades-obertes-3.jpg" alt="Bg" fill className="object-cover grayscale" /></div>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="mb-32 text-center px-6">
@@ -428,16 +428,16 @@ export default function Home() {
                 <div className={`transition-all duration-700 overflow-hidden ${expandedTension === t.id ? 'max-h-[1000px] opacity-100 p-10 md:p-20 pt-0' : 'max-h-0 opacity-0'}`}>
                   <div className="border-t border-white/10 pt-16 flex flex-col md:flex-row justify-between items-start gap-20 md:gap-32 relative">
                     {/* Left Pole */}
-                    <div className="flex-1 text-center md:text-left space-y-8 w-full group-hover:-translate-x-2 transition-transform">
+                    <div className="flex-1 text-center md:text-left space-y-8 w-full">
                       <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.left.replace(" ", "\n")}</h4>
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
-                    {/* Visual Marker (Hidden in Mobile Accordion for better space) */}
+                    {/* Visual Marker */}
                     <div className="hidden md:flex absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-32 bg-white/20 items-center justify-center">
                       <div className="w-16 h-16 rounded-full bg-white shadow-[0_0_60px_rgba(255,255,255,0.8)] flex items-center justify-center"><ArrowRightLeft size={28} className="text-[var(--jesuites-blue)]" /></div>
                     </div>
                     {/* Right Pole */}
-                    <div className="flex-1 text-center md:text-right space-y-8 w-full group-hover:translate-x-2 transition-transform">
+                    <div className="flex-1 text-center md:text-right space-y-8 w-full">
                       <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.right.replace(" ", "\n")}</h4>
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.rightDesc}</p>
                     </div>
@@ -458,24 +458,24 @@ export default function Home() {
             <h2 className="text-7xl md:text-9xl font-bold text-[var(--jesuites-blue)] mb-10 tracking-tighter uppercase font-serif leading-none">Fluidesa <br />en IA <br /><span className="italic opacity-30 font-light font-sans text-5xl md:text-7xl">Model 4D</span></h2>
             <p className="text-2xl md:text-3xl text-gray-500 font-light max-w-xl leading-snug">Marc sòcio-tècnic estructurat en quatre dimensions que s'alimenten recursivament.</p>
           </div>
-          <div className="lg:col-span-7 flex flex-col gap-3">
+          <div className="lg:col-span-7 flex flex-col gap-4">
             {MODEL_4D.map((d) => (
               <div key={d.id} onClick={() => setExpandedD(expandedD === d.id ? null : d.id)} className={`bg-white rounded-[2rem] shadow-sm cursor-pointer transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedD === d.id ? 'ring-4 ring-[var(--jesuites-blue)]/10 z-10' : 'opacity-90'}`}>
-                <div className="p-6 md:p-7">
+                <div className="p-7 md:p-9">
                   <div className="flex justify-between items-center gap-6">
                     <div className="flex items-center gap-6 min-w-0">
                       <span className="text-4xl md:text-5xl font-bold text-[var(--jesuites-blue)] opacity-10 font-serif leading-none">{d.id}</span>
                       <div className="min-w-0">
-                        <h4 className="text-2xl md:text-3xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tight font-serif leading-none mb-1 truncate">{d.name}</h4>
+                        <h4 className="text-2xl md:text-3xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tight font-serif leading-none mb-2 truncate">{d.name}</h4>
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate">{d.subtitle}</p>
                       </div>
                     </div>
-                    <d.icon size={22} className={`transition-all shrink-0 ${expandedD === d.id ? 'text-amber-500 rotate-12' : 'text-[var(--jesuites-blue)]/20'}`} />
+                    <d.icon size={26} className={`transition-all shrink-0 ${expandedD === d.id ? 'text-amber-500 rotate-12' : 'text-[var(--jesuites-blue)]/20'}`} />
                   </div>
-                  <div className={`transition-all duration-700 overflow-hidden ${expandedD === d.id ? 'max-h-[1000px] opacity-100 mt-6 pt-6 border-t border-black/5' : 'max-h-0 opacity-0'}`}>
+                  <div className={`transition-all duration-700 overflow-hidden ${expandedD === d.id ? 'max-h-[1000px] opacity-100 mt-8 pt-8 border-t border-black/5' : 'max-h-0 opacity-0'}`}>
                     <p className="text-xl md:text-2xl text-gray-600 font-light italic mb-8">"{d.desc}"</p>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">{d.details.map((dt, idx) => (
-                      <li key={idx} className="flex gap-4 items-center text-xs font-bold text-[var(--jesuites-blue)] uppercase italic bg-[var(--jesuites-cream)] p-4 rounded-xl"><CheckCircle2 size={18} className="text-amber-500 shrink-0" /> {dt}</li>
+                      <li key={idx} className="flex gap-4 items-center text-xs font-bold text-[var(--jesuites-blue)] uppercase italic bg-[var(--jesuites-cream)] p-4 rounded-xl"><CheckCircle2 size={20} className="text-amber-500 shrink-0" /> {dt}</li>
                     ))}</ul>
                   </div>
                 </div>
