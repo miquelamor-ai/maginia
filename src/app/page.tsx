@@ -307,8 +307,8 @@ export default function Home() {
         <div className="hero-content relative z-10 text-center px-6 max-w-7xl mx-auto">
           <Image src="/imatges/FJE-trans.png" alt="Logo" width={280} height={100} className="mx-auto mb-16 h-auto w-40 md:w-52" priority />
           <div className="hero-text mb-10">
-            <span className="text-[var(--jesuites-cream)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Marc General d'Integració d'IA</span>
-            <h1 className="text-8xl md:text-[14rem] font-bold text-white leading-[0.75] tracking-tighter uppercase drop-shadow-2xl font-serif">MIRADES<br />OBERES</h1>
+            <span className="text-[var(--jesuites-cream)]/40 font-bold tracking-[0.4em] uppercase text-base md:text-xl mb-8 block font-serif">Marc General d'Integració d'IA</span>
+            <h1 className="text-8xl md:text-[14rem] font-bold text-white leading-[0.75] tracking-tighter uppercase drop-shadow-2xl font-serif">MIRADES<br />OBERTES</h1>
           </div>
           <p className="hero-text text-xl md:text-3xl font-light text-white/50 uppercase tracking-[0.4em] font-serif max-w-5xl mx-auto italic">Navegant l'Era de la Intel·ligència Artificial <br className="hidden md:block" /> des de l'Humanisme i el Diàleg</p>
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce cursor-pointer" onClick={() => document.getElementById('details-intro')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -536,10 +536,6 @@ export default function Home() {
       <footer className="py-40 text-center bg-white border-t border-black/5">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex justify-center mb-16 opacity-30 grayscale brightness-0"><Image src="/imatges/FJE-trans.png" alt="Logo FJE" width={280} height={100} className="h-auto w-48 md:w-64" /></div>
-          <div className="flex justify-center gap-16 md:gap-24 opacity-20 grayscale brightness-0">
-            <Image src="/imatges/Escud blau.jpg" alt="Escut" width={60} height={60} className="h-20 w-auto" />
-            <Image src="/imatges/FJE blanc CSC.png" alt="CSC" width={80} height={50} className="h-16 w-auto" />
-          </div>
           <p className="text-[11px] font-bold uppercase tracking-[0.5em] text-gray-300 mt-20">Jesuïtes Educació • Marc General IA 2026</p>
         </div>
       </footer>
