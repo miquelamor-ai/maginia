@@ -205,10 +205,13 @@ export default function Participar() {
                 )}
             </div>
 
-            {/* Link per tornar a la web principal */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-black/5 flex justify-center z-[90]">
+            {/* Links per navegar */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-black/5 flex justify-center gap-8 z-[90]">
                 <button onClick={() => window.location.href = '/'} className="text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--jesuites-blue)] hover:underline">
-                    ← Tornar a MIRADES OBERTES
+                    ← Tornar a la Web
+                </button>
+                <button onClick={() => window.location.href = '/#results-dashboard'} className="text-[10px] font-bold uppercase tracking-[0.4em] text-amber-600 hover:underline">
+                    Veure Resultats →
                 </button>
             </div>
         </main>

@@ -9,7 +9,7 @@ import {
   ChevronDown, Users, Eye, Search, Heart, ShieldCheck,
   ArrowRightLeft, FileText, Gavel, Sparkles, Settings,
   Target, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight,
-  Menu, X
+  Menu, X, BarChart3
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -279,6 +279,100 @@ function ExamplesCarousel({ examples }: { examples: any[] }) {
   );
 }
 
+function ResultsDashboard() {
+  const [activeSection, setActiveSection] = useState("valors");
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const SECTIONS = [
+    { id: "valors", name: "Valors", items: ["antropocentrisme", "transparencia", "verificacio", "equitat", "benestar"] },
+    { id: "tensions", name: "Tensions", items: ["humanisme", "agencia", "cognicio", "presencia", "justicia", "plausibilitat"] },
+    { id: "model4d", name: "Model 4D", items: ["D1", "D2", "D3", "D4"] },
+    { id: "delegacio", name: "Nivells", items: ["nivell0", "nivell1", "nivell2", "nivell3", "nivell4", "nivell5"] }
+  ];
+
+  const VOTE_LABELS: Record<string, string> = {
+    agree: "D'acord",
+    worry: "Inquietud",
+    doubt: "Dubtes",
+    inspired: "Inspiració"
+  };
+
+  const VOTE_COLORS: Record<string, string> = {
+    agree: "bg-green-500",
+    worry: "bg-orange-500",
+    doubt: "bg-blue-500",
+    inspired: "bg-purple-500"
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const { data: votes, error } = await supabase.from("votes").select("*");
+      if (!error && votes) setData(votes);
+      setIsLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  const getStats = (itemId: string) => {
+    const itemVotes = data.filter(v => v.item_id === itemId);
+    const total = itemVotes.length || 1;
+    return Object.keys(VOTE_LABELS).map(type => ({
+      type,
+      count: itemVotes.filter(v => v.vote_type === type).length,
+      percent: Math.round((itemVotes.filter(v => v.vote_type === type).length / total) * 100)
+    }));
+  };
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl rounded-[4rem] p-8 md:p-16 border border-white/10">
+      <div className="flex flex-wrap gap-4 mb-20 justify-center">
+        {SECTIONS.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setActiveSection(s.id)}
+            className={`px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeSection === s.id ? 'bg-amber-200 text-[var(--jesuites-blue)] shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+          >
+            {s.name}
+          </button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-20 animate-pulse text-amber-200 uppercase tracking-widest text-xs font-bold">Carregant dades en viu...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {SECTIONS.find(s => s.id === activeSection)?.items.map(itemId => {
+            const stats = getStats(itemId);
+            return (
+              <div key={itemId} className="bg-white/5 rounded-[3rem] p-8 border border-white/5 hover:bg-white/10 transition-all">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-amber-200 mb-8 border-b border-white/10 pb-4">{itemId.replace("nivell", "Nivell ")}</h4>
+                <div className="space-y-6">
+                  {stats.map(s => (
+                    <div key={s.type} className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white/50 px-2">
+                        <span>{VOTE_LABELS[s.type]}</span>
+                        <span className="text-white">{s.percent}%</span>
+                      </div>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${VOTE_COLORS[s.type]} transition-all duration-1000 ease-out`}
+                          style={{ width: `${s.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [expandedValue, setExpandedValue] = useState<string | null>(null);
@@ -293,7 +387,7 @@ export default function Home() {
     { name: "Valors Rectors", id: "principles-section" },
     { name: "Tensions", id: "tensions-section" },
     { name: "Model 4D", id: "model-4d-section" },
-    { name: "Nivells", id: "delegation-section" }
+    { name: "Resultats", id: "results-dashboard" }
   ];
 
   useEffect(() => {
@@ -579,8 +673,23 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 7. DASHBOARD DE RESULTATS (VISIÓ COMPARTIDA) */}
+      <section id="results-dashboard" className="reveal-section py-40 px-6 bg-[var(--jesuites-blue)] text-white overflow-hidden relative">
+        <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-24">
+            <span className="text-amber-200/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Consens Institucional</span>
+            <h2 className="text-6xl md:text-[8rem] font-bold mb-8 tracking-tighter font-serif uppercase italic leading-none">Visió <br /><span className="text-amber-200">Compartida</span></h2>
+            <p className="text-xl md:text-2xl font-light text-white/50 max-w-2xl mx-auto italic">Explora els resultats agregats de la nostra comunitat en temps real.</p>
+          </div>
+
+          <ResultsDashboard />
+        </div>
+        <SectionArrow targetId="footer-fje" />
+      </section>
+
       {/* 8. FOOTER */}
-      <footer className="py-40 text-center bg-white border-t border-black/5">
+      <footer id="footer-fje" className="py-40 text-center bg-white border-t border-black/5">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex justify-center mb-16 opacity-30 grayscale brightness-0"><Image src="/imatges/FJE-trans.png" alt="Logo FJE" width={280} height={100} className="h-auto w-48 md:w-64" /></div>
           <p className="text-[11px] font-bold uppercase tracking-[0.5em] text-gray-300 mt-20">Jesuïtes Educació • Marc General IA 2026</p>
