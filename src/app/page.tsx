@@ -435,10 +435,10 @@ export default function Home() {
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
 
-                    {/* VS Badge - Physical between blocks on mobile, absolute center on desktop */}
-                    <div className="flex shrink-0 items-center justify-center w-full md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-auto z-20 my-10 md:my-0">
-                      <div className="w-14 h-14 rounded-full bg-amber-200 shadow-[0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-center border-2 border-[var(--jesuites-blue)]">
-                        <span className="text-[var(--jesuites-blue)] font-black text-sm tracking-tighter">VS</span>
+                    {/* Subtle VS Watermark - Absolute centered, no extra spacing */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none flex items-center justify-center opacity-20">
+                      <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/5 backdrop-blur-[2px] flex items-center justify-center">
+                        <span className="text-white font-black text-5xl md:text-7xl tracking-tighter select-none">VS</span>
                       </div>
                     </div>
 
