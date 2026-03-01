@@ -9,7 +9,7 @@ import {
   ChevronDown, Users, Eye, Search, Heart, ShieldCheck,
   ArrowRightLeft, FileText, Gavel, Sparkles, Settings,
   Target, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight,
-  Menu, X, BarChart3
+  Menu, X, BarChart3, AlertCircle, HelpCircle, Check
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -281,6 +281,7 @@ function ExamplesCarousel({ examples }: { examples: any[] }) {
 
 function ResultsDashboard() {
   const [activeSection, setActiveSection] = useState("valors");
+  const [sortBy, setSortBy] = useState<string | null>(null);
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -305,6 +306,13 @@ function ResultsDashboard() {
     inspired: "bg-purple-500"
   };
 
+  const VOTE_ICONS: Record<string, any> = {
+    agree: CheckCircle2,
+    worry: AlertCircle,
+    doubt: HelpCircle,
+    inspired: Lightbulb
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -325,39 +333,82 @@ function ResultsDashboard() {
     }));
   };
 
+  const currentItems = SECTIONS.find(s => s.id === activeSection)?.items || [];
+
+  const sortedItems = [...currentItems].sort((a, b) => {
+    if (!sortBy) return 0;
+    const statsA = getStats(a).find(s => s.type === sortBy)?.percent || 0;
+    const statsB = getStats(b).find(s => s.type === sortBy)?.percent || 0;
+    return statsB - statsA;
+  });
+
   return (
-    <div className="bg-white/5 backdrop-blur-xl rounded-[4rem] p-8 md:p-16 border border-white/10">
-      <div className="flex flex-wrap gap-4 mb-20 justify-center">
+    <div className="bg-white/5 backdrop-blur-3xl rounded-[4rem] p-6 md:p-16 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.3)]">
+      {/* Selector de Secció */}
+      <div className="flex flex-wrap gap-3 mb-12 justify-center">
         {SECTIONS.map(s => (
           <button
             key={s.id}
             onClick={() => setActiveSection(s.id)}
-            className={`px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeSection === s.id ? 'bg-amber-200 text-[var(--jesuites-blue)] shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+            className={`px-8 py-4 rounded-3xl text-[10px] font-bold uppercase tracking-widest transition-all duration-500 ${activeSection === s.id ? 'bg-amber-200 text-[var(--jesuites-blue)] shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10 border border-white/5'}`}
           >
             {s.name}
           </button>
         ))}
       </div>
 
+      {/* Selector d'Ordenació */}
+      <div className="flex flex-wrap gap-2 mb-16 justify-center border-t border-white/5 pt-10">
+        <span className="w-full text-center text-[9px] uppercase tracking-[0.3em] text-white/30 mb-4 font-bold italic">Ordena per percepció dominat:</span>
+        {Object.entries(VOTE_LABELS).map(([id, label]) => (
+          <button
+            key={id}
+            onClick={() => setSortBy(sortBy === id ? null : id)}
+            className={`px-6 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest flex items-center gap-3 transition-all ${sortBy === id ? 'bg-white text-[var(--jesuites-blue)] shadow-lg scale-105' : 'bg-white/5 text-white/30 hover:bg-white/10'}`}
+          >
+            {sortBy === id && <Check size={12} strokeWidth={4} />}
+            {label}
+          </button>
+        ))}
+      </div>
+
       {isLoading ? (
-        <div className="flex justify-center py-20 animate-pulse text-amber-200 uppercase tracking-widest text-xs font-bold">Carregant dades en viu...</div>
+        <div className="flex flex-col items-center justify-center py-40 gap-6">
+          <div className="w-12 h-12 border-4 border-amber-200 border-t-transparent rounded-full animate-spin" />
+          <div className="animate-pulse text-amber-200 uppercase tracking-widest text-xs font-bold">Processant dades de la comunitat...</div>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {SECTIONS.find(s => s.id === activeSection)?.items.map(itemId => {
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+          {sortedItems.map(itemId => {
             const stats = getStats(itemId);
+            const dominant = [...stats].sort((a, b) => b.percent - a.percent)[0];
+
             return (
-              <div key={itemId} className="bg-white/5 rounded-[3rem] p-8 border border-white/5 hover:bg-white/10 transition-all">
-                <h4 className="text-sm font-bold uppercase tracking-widest text-amber-200 mb-8 border-b border-white/10 pb-4">{itemId.replace("nivell", "Nivell ")}</h4>
-                <div className="space-y-6">
+              <div key={itemId} className="group bg-white/[0.03] backdrop-blur-md rounded-[3.5rem] p-8 md:p-12 border border-white/5 hover:border-amber-200/30 transition-all duration-500 hover:bg-white/[0.06] hover:-translate-y-2">
+                <div className="flex justify-between items-start mb-10">
+                  <h4 className="text-lg md:text-xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
+                    {itemId.replace("nivell", "Nivell ").replace("D", "Dimensió D")}
+                  </h4>
+                  {dominant && dominant.percent > 50 && (
+                    <div className={`px-4 py-1.5 rounded-full ${VOTE_COLORS[dominant.type]} text-white text-[9px] font-black uppercase tracking-widest shadow-lg animate-pulse`}>
+                      Consens: {VOTE_LABELS[dominant.type]}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-8">
                   {stats.map(s => (
-                    <div key={s.type} className="space-y-2">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white/50 px-2">
-                        <span>{VOTE_LABELS[s.type]}</span>
-                        <span className="text-white">{s.percent}%</span>
+                    <div key={s.type} className="space-y-3">
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest px-2 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${VOTE_COLORS[s.type]} shadow-[0_0_10px_rgba(255,255,255,0.2)]`} />
+                          <span className={s.percent > 0 ? 'text-white' : 'text-white/30'}>{VOTE_LABELS[s.type]}</span>
+                        </div>
+                        <span className={`text-[12px] font-serif italic ${s.percent > 0 ? 'text-amber-200' : 'text-white/20'}`}>{s.percent}%</span>
                       </div>
-                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-4 bg-black/20 rounded-full overflow-hidden p-1 shadow-inner">
                         <div
-                          className={`h-full ${VOTE_COLORS[s.type]} transition-all duration-1000 ease-out`}
+                          className={`h-full ${VOTE_COLORS[s.type]} transition-all duration-[1.5s] ease-out rounded-full shadow-[0_0_15px_rgba(255,255,255,0.1)]`}
                           style={{ width: `${s.percent}%` }}
                         />
                       </div>
@@ -387,7 +438,8 @@ export default function Home() {
     { name: "Valors Rectors", id: "principles-section" },
     { name: "Tensions", id: "tensions-section" },
     { name: "Model 4D", id: "model-4d-section" },
-    { name: "Resultats", id: "results-dashboard" }
+    { name: "Nivells", id: "delegation-section" },
+    { name: "Visió Compartida", id: "results-dashboard" }
   ];
 
   useEffect(() => {
