@@ -434,10 +434,10 @@ export default function Home() {
                       <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line group-hover:-translate-x-2 transition-transform">{t.left.replace(" ", "\n")}</h4>
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
-                    {/* Visual Marker with VS */}
-                    <div className="flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-full md:w-32 bg-white/10 items-center justify-center z-20">
-                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white shadow-[0_0_40px_rgba(255,255,255,0.4)] flex items-center justify-center border-2 border-[var(--jesuites-blue)]">
-                        <span className="text-[var(--jesuites-blue)] font-black text-xs md:text-sm tracking-tighter">VS</span>
+                    {/* Visual Marker with diffused VS */}
+                    <div className="flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-full md:w-32 bg-white/5 items-center justify-center z-0 pointer-events-none">
+                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/[0.03] backdrop-blur-sm flex items-center justify-center">
+                        <span className="text-white/20 font-black text-4xl md:text-6xl tracking-tighter select-none">VS</span>
                       </div>
                     </div>
                     {/* Right Pole */}
