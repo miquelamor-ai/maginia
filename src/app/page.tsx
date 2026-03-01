@@ -9,7 +9,7 @@ import {
   ChevronDown, Users, Eye, Search, Heart, ShieldCheck,
   ArrowRightLeft, FileText, Gavel, User, Cpu, Sparkles, Settings,
   MessageSquare, Layers, Quote, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight,
-  Info
+  Info, Target, Lightbulb
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -78,12 +78,51 @@ const PRINCIPLES = [
 ];
 
 const TENSIONS = [
-  { id: "humanisme", left: "Humanisme", right: "Posthumanisme", title: "Integritat Humana", desc: "Entre l'eina externa i l'hibridació. La tecnologia amplifica la humanitat, no l'anul·la." },
-  { id: "agencia", left: "Offloading", right: "Outsourcing", title: "Autonomia i Agència", desc: "Descarregar tasques mecàniques vs. externalitzar el judici crític." },
-  { id: "cognicio", left: "Fricció productiva", right: "Eficiència", title: "Profunditat Cognitiva", desc: "Defensa de la dificultat desitjable i el pensament lent davant la immediatesa." },
-  { id: "presencia", left: "Atenció", right: "Acompanyament", title: "Vincles i Presència", desc: "De la fragmentació digital a la intencionalitat en la trobada humana." },
-  { id: "justicia", left: "Biaixos", right: "Justícia Algorítmica", title: "Justícia i Equitat", desc: "Auditoria social activa per evitar que la IA perpetuï desigualtats." },
-  { id: "veritat", left: "Plausibilitat", right: "Realisme", title: "Integritat Intel·lectual", desc: "Diferenciar la bona aparença (versemblança) del de la veritat factual." }
+  { id: "humanisme", left: "Humanisme clàssic (Eina externa)", right: "Posthumanisme crític (Hibridació)", title: "Integritat Humana", desc: "Entre l'eina externa i l'hibridació. La tecnologia amplifica la humanitat, no l'anul·la." },
+  { id: "agencia", left: "Offloading (Descàrrega mecànica)", right: "Outsourcing (Externalitzar judici)", title: "Autonomia i Agència", desc: "Diferenciem entre la descàrrega de tasques mecàniques i l'externalització del judici crític." },
+  { id: "cognicio", left: "Fricció productiva (Esforç)", right: "Eficiència (Immediatesa)", title: "Profunditat Cognitiva", desc: "Defensa de la dificultat desitjable i el pensament lent davant la temptació de la resposta fàcil." },
+  { id: "presencia", left: "Economia de l'Atenció (Fragmentació)", right: "Economia de la Intenció (Presència)", title: "Vincles i Presència", desc: "De la fragmentació digital a la intencionalitat en l'acompanyament docent." },
+  { id: "justicia", left: "Biaixos (Dades històriques)", right: "Justícia Algorítmica (Inclusió)", title: "Justícia i Equitat", desc: "Auditoria social activa per passar dels biaixos heretats a la justícia algorítmica." },
+  { id: "veritat", left: "Plausibilitat (Versemblança estadística)", right: "Realisme (Veritat factual)", title: "Integritat Intel·lectual", desc: "Capacitat de diferenciar el que 'sembla correcte' del que és realment cert." }
+];
+
+const MODEL_4D = [
+  {
+    id: "D1",
+    name: "Delegació",
+    label: "Delegation",
+    icon: ArrowRightLeft,
+    subtitle: "Saber decidir qui fa què.",
+    desc: "Prendre decisions reflexives sobre quin treball és per a un mateix i quin per a la IA. No deleguem per evitar l'esforç, sinó per optimitzar el propòsit d'excel·lència.",
+    details: ["Consciència del problema", "Consciència de la plataforma", "Triatge estratègic"]
+  },
+  {
+    id: "D2",
+    name: "Descripció",
+    label: "Description",
+    icon: FileText,
+    subtitle: "Saber demanar amb precisió.",
+    desc: "Traduir la intenció humana en instruccions semàntiques (prompts). La qualitat de l'output depèn directament de la nostra claredat de pensament.",
+    details: ["Definició de producte", "Descripció de procés (Chain of Thought)", "Rol i performance"]
+  },
+  {
+    id: "D3",
+    name: "Discerniment",
+    label: "Discernment",
+    icon: Gavel,
+    subtitle: "Saber jutjar el resultat.",
+    desc: "Avaluar de manera crítica i reflexiva tot allò que produeix l'IA. Actua com el sistema de control de qualitat ètic i epistèmic.",
+    details: ["Verificació factual", "Detecció d'al·lucinacions", "Filtre de veracitat i biaixos"]
+  },
+  {
+    id: "D4",
+    name: "Diligència",
+    label: "Diligence",
+    icon: ShieldCheck,
+    subtitle: "Saber-se responsable final.",
+    desc: "Governança ètica i responsabilitat en l'acció. Transforma l'habilitat tècnica en ciutadania digital compromesa.",
+    details: ["Seguretat i privadesa", "Transparència i autoria", "Impacte socioambiental"]
+  }
 ];
 
 const DELEGATION_LEVELS = [
@@ -187,71 +226,77 @@ function DelegationLevelCard({ l }: { l: any }) {
   const prevEx = () => setCurrentEx((prev) => (prev - 1 + l.examples.length) % l.examples.length);
 
   return (
-    <div className="bg-white rounded-[4rem] p-12 md:p-16 border border-black/[0.03] shadow-lg group">
-      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-12 items-start">
+    <div className="bg-white rounded-[4rem] p-12 md:p-20 border border-black/[0.03] shadow-lg group">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
         {/* L0-5 Num & Name */}
-        <div className="lg:col-span-3 flex items-center gap-6">
-          <span className="text-7xl md:text-8xl font-bold text-[var(--jesuites-blue)] opacity-10 leading-none font-serif">{l.lv}</span>
+        <div className="lg:col-span-3 flex items-center gap-8">
+          <span className="text-8xl md:text-9xl font-bold text-[var(--jesuites-blue)] opacity-20 leading-none font-serif">{l.lv}</span>
           <div>
-            <h4 className="text-3xl font-bold text-[var(--jesuites-blue)] tracking-tighter uppercase mb-2 font-serif leading-none">{l.name}</h4>
-            <span className="text-[10px] font-bold text-gray-400 border border-black/10 px-4 py-1.5 rounded-full uppercase tracking-widest">{l.sub}</span>
+            <h4 className="text-4xl font-bold text-[var(--jesuites-blue)] tracking-tighter uppercase mb-2 font-serif leading-none">{l.name}</h4>
+            <span className="text-xs font-bold text-gray-400 border border-black/10 px-6 py-2 rounded-full uppercase tracking-widest">{l.sub}</span>
           </div>
         </div>
 
         {/* Description & Carousel */}
-        <div className="lg:col-span-7 space-y-10 w-full">
-          <p className="text-xl font-light text-gray-500 leading-relaxed italic">{l.desc}</p>
+        <div className="lg:col-span-12 xl:col-span-7 space-y-12">
+          <p className="text-2xl font-light text-gray-500 leading-relaxed italic">{l.desc}</p>
 
-          <div className="bg-[var(--jesuites-cream)] rounded-[2.5rem] p-10 relative overflow-hidden group/item border border-black/[0.02]">
-            <div className="flex justify-between items-center mb-8 border-b border-black/5 pb-4">
-              <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-400 block">Exemples d'aula (+14 ANYS)</span>
-              <div className="flex gap-2">
-                <button onClick={prevEx} className="p-2 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white/50">
-                  <ChevronLeft size={14} />
+          <div className="bg-[var(--jesuites-cream)] rounded-[3rem] p-12 relative overflow-hidden group/item border border-black/[0.02]">
+            <div className="flex justify-between items-center mb-10 border-b border-black/5 pb-6">
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-400 block">Exemples d'aula (+14 ANYS)</span>
+              <div className="flex gap-3">
+                <button onClick={prevEx} className="p-3 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white shadow-sm">
+                  <ChevronLeft size={18} />
                 </button>
-                <button onClick={nextEx} className="p-2 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white/50">
-                  <ChevronRight size={14} />
+                <button onClick={nextEx} className="p-3 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white shadow-sm">
+                  <ChevronRight size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="relative min-h-[5rem]">
+            <div className="relative min-h-[8rem] flex items-center">
               {l.examples.map((ex: any, idx: number) => (
                 <div
                   key={idx}
-                  className={`transition-all duration-700 transform ${idx === currentEx ? 'relative opacity-100 translate-x-0' : 'absolute inset-0 opacity-0 translate-x-8 pointer-events-none'}`}
+                  className={`transition-all duration-700 transform w-full ${idx === currentEx ? 'relative opacity-100 translate-x-0' : 'absolute inset-0 opacity-0 translate-x-12 pointer-events-none'}`}
                 >
-                  <div className="bg-white/80 p-6 rounded-3xl shadow-sm flex items-start gap-5">
-                    <div className="bg-[var(--jesuites-blue)]/5 p-3 rounded-xl shrink-0">
-                      <Sparkles size={16} className="text-[var(--jesuites-blue)]" />
+                  <div className="bg-white/90 p-8 rounded-[3rem] shadow-sm flex items-start gap-8">
+                    <div className="bg-[var(--jesuites-blue)]/5 p-4 rounded-2xl shrink-0">
+                      <Sparkles size={24} className="text-[var(--jesuites-blue)]" />
                     </div>
-                    <div>
-                      <span className="text-[9px] font-bold text-[var(--jesuites-blue)] uppercase mb-1.5 block tracking-widest">{ex.subject}</span>
-                      <p className="text-sm text-gray-600 font-light leading-relaxed">{ex.activity}</p>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] font-bold text-[var(--jesuites-blue)] uppercase mb-3 block tracking-widest">{ex.subject}</span>
+                      <p className="text-lg text-gray-700 font-light leading-snug break-words">{ex.activity}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-center gap-1.5 mt-8">
+            <div className="flex justify-center gap-2 mt-10">
               {l.examples.map((_: any, i: number) => (
-                <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === currentEx ? 'w-6 bg-[var(--jesuites-blue)]' : 'w-1.5 bg-[var(--jesuites-blue)]/10'}`} />
+                <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === currentEx ? 'w-10 bg-[var(--jesuites-blue)]' : 'w-2 bg-[var(--jesuites-blue)]/10'}`} />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Small Progress Vertical Indicator */}
-        <div className="lg:col-span-2 w-full flex lg:justify-end">
-          <div className="flex flex-col gap-4 w-full max-w-[120px]">
-            <div className="h-32 w-full bg-[var(--jesuites-cream)] rounded-3xl relative overflow-hidden ring-1 ring-black/[0.05]">
-              <div className="absolute bottom-0 left-0 right-0 bg-[var(--jesuites-blue)] transition-all duration-1000" style={{ height: `${l.human}%` }} />
-              <div className="absolute inset-0 flex flex-col justify-center items-center mix-blend-difference text-white">
-                <span className="text-3xl font-bold font-serif leading-none">{l.human}%</span>
-                <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">HUMÀ</span>
-              </div>
+        {/* Progress Circle Visual */}
+        <div className="lg:col-span-12 xl:col-span-2 flex justify-center xl:justify-end">
+          <div className="relative w-48 h-48">
+            <svg className="w-full h-full transform -rotate-90">
+              <circle cx="96" cy="96" r="88" className="stroke-black/[0.05] fill-transparent stroke-[12]" />
+              <circle cx="96" cy="96" r="88"
+                className="stroke-[var(--jesuites-blue)] fill-transparent stroke-[12] transition-all duration-1000"
+                strokeDasharray={`${2 * Math.PI * 88}`}
+                strokeDashoffset={`${2 * Math.PI * 88 * (1 - l.human / 100)}`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--jesuites-blue)]">
+              <span className="text-4xl font-bold font-serif leading-none">{l.human}%</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">HUMÀ</span>
             </div>
           </div>
         </div>
@@ -266,6 +311,7 @@ export default function Home() {
   const [votes, setVotes] = useState<any[]>([]);
   const [contributions, setContributions] = useState<any[]>([]);
   const [expandedValue, setExpandedValue] = useState<string | null>(null);
+  const [expandedD, setExpandedD] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -339,10 +385,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. INTRODUCCIÓ */}
+      {/* 2. INTRODUCCIÓ: MOTIUS I OBJECTIUS */}
       <section id="details-intro" className="reveal-section py-48 px-6 bg-white overflow-hidden border-b border-black/5">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center mb-40">
             <div className="relative group">
               <div className="absolute -inset-4 bg-[var(--jesuites-blue)]/5 rounded-[4rem] -rotate-2 group-hover:rotate-0 transition-transform duration-700" />
               <div className="relative aspect-square rounded-[3rem] overflow-hidden shadow-2xl">
@@ -350,31 +396,90 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Propòsit i Visió</span>
-              <h2 className="text-5xl md:text-7xl font-bold text-[var(--jesuites-blue)] mb-12 tracking-tighter leading-none font-serif uppercase">Per què <span className="italic opacity-60">aquest Marc?</span></h2>
-              <div className="space-y-8 text-xl text-gray-500 font-light">
-                <p className="flex gap-6">
-                  <span className="text-[var(--jesuites-blue)] font-bold">01</span>
-                  <span><strong className="text-[var(--jesuites-blue)] font-bold">Lideratge de servei:</strong> Triem habitar l'ecosistema digital com una oportunitat per renovar la nostra tradició educativa a través del discerniment.</span>
-                </p>
-                <p className="flex gap-6 border-y border-black/5 py-8">
-                  <span className="text-[var(--jesuites-blue)] font-bold">02</span>
-                  <span><strong className="text-[var(--jesuites-blue)] font-bold">Excel·lència i Qualitat:</strong> La IA no només és més eficiència, sinó més profunditat. Alliberar el docent per acompanyar millor la persona.</span>
-                </p>
-                <p className="flex gap-6">
-                  <span className="text-[var(--jesuites-blue)] font-bold">03</span>
-                  <span><strong className="text-[var(--jesuites-blue)] font-bold">Integritat Acadèmica:</strong> Evolucionar del 'no copiar' a l'avaluació del pensament propi davant les capacitats de l'algoritme.</span>
-                </p>
+              <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">El per què</span>
+              <h2 className="text-5xl md:text-7xl font-bold text-[var(--jesuites-blue)] mb-12 tracking-tighter leading-none font-serif uppercase">Raons de <span className="italic opacity-60">fons</span></h2>
+              <div className="space-y-8 text-xl text-gray-500 font-light italic">
+                <p>"Ens trobem davant d'un canvi cultural que afecta la mateixa essència de la persona. No és una mera qüestió tecnològica."</p>
+                <div className="space-y-6 text-base not-italic font-normal">
+                  <div className="bg-black/5 p-8 rounded-[2.5rem] border border-black/5">
+                    <h4 className="font-bold text-[var(--jesuites-blue)] mb-2 uppercase text-sm tracking-widest">Renovació de la tradició</h4>
+                    <p>Integrar la IA com una oportunitat per renovar la nostra tradició educativa a través del discerniment ignasià.</p>
+                  </div>
+                  <div className="bg-black/5 p-8 rounded-[2.5rem] border border-black/5">
+                    <h4 className="font-bold text-[var(--jesuites-blue)] mb-2 uppercase text-sm tracking-widest">Acompanyament en l'error</h4>
+                    <p>Educar en la imaginació, l'ironia i l'error com a oportunitat de creixement, elements que cap algoritme pot substituir.</p>
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {[
+              { title: "Gestió Institucional", icon: Settings, desc: "Millora en l'eficàcia i l'eficiència per alliberar-nos de càrregues no essencials." },
+              { title: "Pràctica Docent", icon: Lightbulb, desc: "Eines per a una docència més integral, personalitzadora i basada en l'evidència." },
+              { title: "Aprenentatge Alumnat", icon: Target, desc: "Desenvolupar responsabilitat ètica, competència digital i pensament crític." }
+            ].map((obj, i) => (
+              <div key={i} className="bg-[var(--jesuites-cream)] p-12 rounded-[3.5rem] border border-black/[0.03] group hover:bg-[var(--jesuites-blue)] hover:text-white transition-all duration-700">
+                <obj.icon size={40} className="mb-10 text-[var(--jesuites-blue)] group-hover:text-amber-200 transition-colors" />
+                <h3 className="text-2xl font-bold font-serif mb-6 uppercase tracking-tight">{obj.title}</h3>
+                <p className="text-lg font-light opacity-60 leading-relaxed">{obj.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4D MODEL SECTION (NEW) */}
+      <section className="reveal-section py-48 px-6 bg-[var(--jesuites-cream)]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center mb-32">
+            <div>
+              <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Model Operatiu</span>
+              <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] mb-10 tracking-tighter uppercase font-serif leading-none">Fluidesa <br />en IA <span className="italic opacity-40 font-light font-sans text-5xl md:text-7xl">Model 4D</span></h2>
+              <p className="text-2xl text-gray-500 font-light max-w-xl leading-relaxed">
+                Un marc sòcio-tècnic basat en el judici crític i la responsabilitat ètica, estructurat en quatre dimensions recursives.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8">
+              {MODEL_4D.map((d) => (
+                <div
+                  key={d.id}
+                  onClick={() => setExpandedD(expandedD === d.id ? null : d.id)}
+                  className={`bg-white p-12 rounded-[4rem] shadow-sm cursor-pointer transition-all duration-700 border border-black/[0.04] group relative hover:shadow-2xl overflow-hidden ${expandedD === d.id ? 'col-span-2 ring-4 ring-[var(--jesuites-blue)]/10 scale-105 z-20' : ''}`}
+                >
+                  <div className="flex justify-between items-start mb-8">
+                    <span className="text-4xl font-bold text-[var(--jesuites-blue)] opacity-10 font-serif">{d.id}</span>
+                    <d.icon size={24} className="text-[var(--jesuites-blue)] group-hover:scale-125 transition-transform" />
+                  </div>
+                  <h4 className="text-2xl font-bold text-[var(--jesuites-blue)] mb-2 uppercase tracking-tight font-serif">{d.name}</h4>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">{d.subtitle}</p>
+
+                  {expandedD === d.id && (
+                    <div className="animate-fade-in space-y-8 border-t border-black/5 pt-10">
+                      <p className="text-lg text-gray-600 font-light leading-relaxed italic">"{d.desc}"</p>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {d.details.map((dt, idx) => (
+                          <li key={idx} className="flex gap-4 items-center text-xs font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter">
+                            <CheckCircle2 size={16} className="text-amber-500" /> {dt}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {!expandedD && <Info size={18} className="absolute bottom-12 right-12 text-gray-200" />}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. VALORS */}
+      {/* 3. VALORS (CARD EXPANSION) */}
       <section className="reveal-section py-48 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-32">
-          <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Fonaments Ètics</span>
+          <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Compromís Innegociable</span>
           <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] tracking-tighter font-serif uppercase">Valors Rectors</h2>
         </div>
 
@@ -415,7 +520,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. TENSIONS */}
+      {/* 4. TENSIONS (IMPROVED INTERACTION) */}
       <section className="reveal-section py-48 bg-[var(--jesuites-blue)] text-white overflow-hidden relative">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <Image src="/imatges/mirades-obertes-3.jpg" alt="Bg" fill className="object-cover grayscale" />
@@ -424,31 +529,36 @@ export default function Home() {
           <div className="mb-40 text-center">
             <span className="text-white/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Reflexió Crítica</span>
             <h2 className="text-6xl md:text-9xl font-bold mb-10 tracking-tighter italic font-serif leading-none uppercase">Habitar les <br />Tensions</h2>
+            <p className="text-xl text-white/50 font-light max-w-2xl mx-auto italic">
+              "No volem eliminar-les de manera simplista, sinó gestionar-les des del discerniment, reconeixent que la intel·ligència artificial no és neutra."
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-40 tensions-container">
+          <div className="grid grid-cols-1 gap-48 tensions-container">
             {TENSIONS.map((t) => (
               <div key={t.id} className="relative group">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-12 px-12">
-                  <div className="flex-1 text-center md:text-left">
-                    <span className="text-xs font-bold uppercase tracking-[0.4em] text-white/30 mb-4 block">Eix A</span>
-                    <h4 className="text-3xl font-bold font-serif uppercase tracking-tight group-hover:text-amber-200 transition-colors">{t.left}</h4>
+                <div className="flex flex-col md:flex-row justify-between items-start gap-16 px-12">
+                  <div className="flex-1 text-center md:text-left space-y-6">
+                    <span className="text-xs font-bold uppercase tracking-[0.4em] text-white/30 block">Eix A</span>
+                    <h4 className="text-4xl font-bold font-serif uppercase tracking-tight group-hover:text-amber-200 transition-colors leading-none">{t.left.split(' (')[0]}</h4>
+                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">{t.left.split(' (')[1]?.replace(')', '')}</p>
                   </div>
 
-                  <div className="relative w-full max-w-sm h-[2px] bg-white/20">
-                    <div className="tension-marker absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-[0_0_30px_rgba(255,255,255,0.8)] flex items-center justify-center">
-                      <ArrowRightLeft size={14} className="text-[var(--jesuites-blue)]" />
+                  <div className="relative w-full max-w-md h-[2px] bg-white/20 mt-12 md:mt-24">
+                    <div className="tension-marker absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-[0_0_40px_rgba(255,255,255,0.8)] flex items-center justify-center cursor-ew-resize group-hover:scale-125 transition-transform duration-500">
+                      <ArrowRightLeft size={16} className="text-[var(--jesuites-blue)]" />
                     </div>
                   </div>
 
-                  <div className="flex-1 text-center md:text-right">
-                    <span className="text-xs font-bold uppercase tracking-[0.4em] text-white/30 mb-4 block">Eix B</span>
-                    <h4 className="text-3xl font-bold font-serif uppercase tracking-tight group-hover:text-amber-200 transition-colors">{t.right}</h4>
+                  <div className="flex-1 text-center md:text-right space-y-6">
+                    <span className="text-xs font-bold uppercase tracking-[0.4em] text-white/30 block">Eix B</span>
+                    <h4 className="text-4xl font-bold font-serif uppercase tracking-tight group-hover:text-amber-200 transition-colors leading-none">{t.right.split(' (')[0]}</h4>
+                    <p className="text-xs font-bold text-white/40 uppercase tracking-widest">{t.right.split(' (')[1]?.replace(')', '')}</p>
                   </div>
                 </div>
-                <div className="mt-16 text-center max-w-2xl mx-auto border-t border-white/10 pt-10">
-                  <h5 className="text-xl font-bold uppercase tracking-widest text-amber-200 mb-4 font-serif">{t.title}</h5>
-                  <p className="text-lg font-light text-white/60 italic leading-relaxed">{t.desc}</p>
+                <div className="mt-20 text-center max-w-3xl mx-auto border-t border-white/10 pt-12 bg-white/5 p-12 rounded-[4rem] backdrop-blur-sm">
+                  <h5 className="text-2xl font-bold uppercase tracking-widest text-amber-200 mb-6 font-serif">{t.title}</h5>
+                  <p className="text-xl font-light text-white/80 italic leading-relaxed">{t.desc}</p>
                 </div>
               </div>
             ))}
@@ -464,7 +574,7 @@ export default function Home() {
             <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] mb-10 tracking-tighter font-serif uppercase leading-none">Graus de <br className="md:hidden" /> Delegació</h2>
           </div>
 
-          <div className="space-y-12">
+          <div className="space-y-16">
             {DELEGATION_LEVELS.map((l) => (
               <DelegationLevelCard key={l.lv} l={l} />
             ))}
