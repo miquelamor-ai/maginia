@@ -3,16 +3,56 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-    Users, Eye, Search, Heart, ShieldCheck,
     CheckCircle2, AlertCircle, HelpCircle, Lightbulb,
-    Send
+    Send, Sparkles, ChevronRight
 } from "lucide-react";
 
-const SECTIONS = [
-    { id: "valors", name: "Valors i Principis" },
-    { id: "tensions", name: "Tensions Dialèctiques" },
-    { id: "4d", name: "Model 4D" },
-    { id: "delegacio", name: "Graus de Delegació" }
+interface SubItem {
+    id: string;
+    name: string;
+}
+
+interface Section {
+    id: string;
+    name: string;
+    items: SubItem[];
+}
+
+const CONTENT: Section[] = [
+    {
+        id: "valors",
+        name: "Valors i Principis",
+        items: [
+            { id: "antropocentrisme", name: "Antropocentrisme" },
+            { id: "transparencia", name: "Transparència" },
+            { id: "verificacio", name: "Verificació i Crítica" },
+            { id: "equitat", name: "Equitat i Inclusió" },
+            { id: "benestar", name: "Benestar" }
+        ]
+    },
+    {
+        id: "tensions",
+        name: "Tensions Dialèctiques",
+        items: [
+            { id: "humanisme", name: "Integritat Humana" },
+            { id: "agencia", name: "Autonomia i Agència" },
+            { id: "cognicio", name: "Profunditat Cognitiva" },
+            { id: "presencia", name: "Vincles i Presència" },
+            { id: "justicia", name: "Justícia i Equitat" }
+        ]
+    },
+    {
+        id: "delegacio",
+        name: "Graus de Delegació",
+        items: [
+            { id: "nivell0", name: "Preservació (L0)" },
+            { id: "nivell1", name: "Exploració (L1)" },
+            { id: "nivell2", name: "Suport (L2)" },
+            { id: "nivell3", name: "Cocreació (L3)" },
+            { id: "nivell4", name: "Delegació (L4)" },
+            { id: "nivell5", name: "Agència (L5)" }
+        ]
+    }
 ];
 
 const VOTE_TYPES = [
@@ -23,18 +63,28 @@ const VOTE_TYPES = [
 ];
 
 export default function Participar() {
-    const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
+    const [activeTab, setActiveTab] = useState<"sections" | "voting">("sections");
+    const [selectedSection, setSelectedSection] = useState<Section | null>(null);
+    const [selectedItem, setSelectedItem] = useState<SubItem | null>(null);
+
     const [isSending, setIsSending] = useState(false);
     const [feedback, setFeedback] = useState<string | null>(null);
     const [contribution, setContribution] = useState("");
 
+    const handleSelectItem = (section: Section, item: SubItem) => {
+        setSelectedSection(section);
+        setSelectedItem(item);
+        setActiveTab("voting");
+    };
+
     const sendVote = async (type: string) => {
+        if (!selectedItem) return;
         setIsSending(true);
         const { error } = await supabase.from("votes").insert([
             {
-                section_id: activeSection,
-                vote_type: type,
-                item_id: "general" // Podem polir-ho per item específic més endavant
+                section_id: selectedSection?.id,
+                item_id: selectedItem.id,
+                vote_type: type
             }
         ]);
 
@@ -46,12 +96,12 @@ export default function Participar() {
     };
 
     const sendContribution = async () => {
-        if (!contribution.trim()) return;
+        if (!contribution.trim() || !selectedItem) return;
         setIsSending(true);
         const { error } = await supabase.from("contributions").insert([
             {
-                section_id: activeSection,
-                content: contribution.trim()
+                section_id: selectedSection?.id,
+                content: `[${selectedItem.name}] ${contribution.trim()}`
             }
         ]);
 
@@ -66,97 +116,96 @@ export default function Participar() {
     return (
         <main className="min-h-screen bg-[var(--jesuites-cream)] p-6 md:p-12 font-sans select-none">
             <div className="max-w-md mx-auto">
+
                 {/* Header */}
                 <header className="mb-12 text-center">
-                    <div className="w-16 h-16 bg-[var(--jesuites-blue)] rounded-2xl flex items-center justify-center mx-auto mb-6 text-white shadow-lg">
-                        <SparkleIcon size={32} />
+                    <div className="w-16 h-16 bg-[var(--jesuites-blue)] rounded-3xl flex items-center justify-center mx-auto mb-6 text-white shadow-xl">
+                        <Sparkles size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tight">Participar</h1>
-                    <p className="text-sm text-gray-500 font-light mt-2 uppercase tracking-widest">Marc General IA</p>
+                    {selectedItem && activeTab === "voting" && (
+                        <p className="text-xs text-[var(--jesuites-blue)] font-bold mt-2 uppercase tracking-widest bg-white/50 py-1 px-4 rounded-full inline-block border border-black/5">
+                            {selectedItem.name}
+                        </p>
+                    )}
                 </header>
 
-                {/* Section Selector */}
-                <div className="flex gap-2 mb-12 overflow-x-auto pb-4 no-scrollbar">
-                    {SECTIONS.map((s) => (
+                {activeTab === "sections" ? (
+                    <div className="space-y-12">
+                        {CONTENT.map((section) => (
+                            <div key={section.id}>
+                                <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-6 px-2">{section.name}</h3>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {section.items.map((item) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => handleSelectItem(section, item)}
+                                            className="bg-white p-6 rounded-3xl flex justify-between items-center group active:scale-95 transition-all border border-black/[0.03] shadow-sm"
+                                        >
+                                            <span className="text-sm font-bold text-[var(--jesuites-blue)] uppercase tracking-tight">{item.name}</span>
+                                            <ChevronRight size={18} className="text-gray-300 group-hover:text-[var(--jesuites-blue)]" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="space-y-12 animate-fade-in">
                         <button
-                            key={s.id}
-                            onClick={() => setActiveSection(s.id)}
-                            className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${activeSection === s.id
-                                    ? "bg-[var(--jesuites-blue)] text-white border-[var(--jesuites-blue)]"
-                                    : "bg-white text-gray-400 border-black/5"
-                                }`}
+                            onClick={() => setActiveTab("sections")}
+                            className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2"
                         >
-                            {s.name}
+                            ← Tornar a la llista
                         </button>
-                    ))}
-                </div>
 
-                {/* Action Panel */}
-                <div className="space-y-8">
-                    <section>
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">El teu pols</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            {VOTE_TYPES.map((v) => (
+                        <section>
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">Com ho veus?</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                {VOTE_TYPES.map((v) => (
+                                    <button
+                                        key={v.id}
+                                        disabled={isSending}
+                                        onClick={() => sendVote(v.id)}
+                                        className="bg-white p-6 rounded-[2.5rem] border border-black/[0.03] shadow-sm active:scale-95 transition-all flex flex-col items-center justify-center gap-4 group"
+                                    >
+                                        <div className={`p-4 rounded-2xl ${v.color} text-white transition-transform group-active:scale-110 shadow-lg`}>
+                                            <v.icon size={28} />
+                                        </div>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-600">{v.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section>
+                            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">La teva mirada</h3>
+                            <div className="relative">
+                                <textarea
+                                    value={contribution}
+                                    onChange={(e) => setContribution(e.target.value)}
+                                    placeholder={`Escriu aquí sobre ${selectedItem?.name}...`}
+                                    className="w-full h-40 bg-white rounded-[2.5rem] p-8 text-sm border border-black/[0.03] shadow-sm focus:ring-2 focus:ring-[var(--jesuites-blue)] outline-none transition-all placeholder:text-gray-300 leading-relaxed"
+                                />
                                 <button
-                                    key={v.id}
-                                    disabled={isSending}
-                                    onClick={() => sendVote(v.id)}
-                                    className="bg-white p-6 rounded-3xl border border-black/[0.03] shadow-sm active:scale-95 transition-all flex flex-col items-center justify-center gap-4 group"
+                                    disabled={isSending || !contribution.trim()}
+                                    onClick={sendContribution}
+                                    className="absolute bottom-6 right-6 bg-[var(--jesuites-blue)] text-white p-4 rounded-2xl shadow-xl active:scale-90 disabled:opacity-30 transition-all"
                                 >
-                                    <div className={`p-3 rounded-xl ${v.color} text-white transition-transform group-active:scale-110`}>
-                                        <v.icon size={24} />
-                                    </div>
-                                    <span className="text-xs font-bold uppercase tracking-tight text-gray-600">{v.label}</span>
+                                    <Send size={22} />
                                 </button>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section>
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-6 px-2">Mirada Nova</h3>
-                        <div className="relative">
-                            <textarea
-                                value={contribution}
-                                onChange={(e) => setContribution(e.target.value)}
-                                placeholder="Escriu aquí algun suggeriment o dubte..."
-                                className="w-full h-32 bg-white rounded-3xl p-6 text-sm border border-black/[0.03] shadow-sm focus:ring-2 focus:ring-[var(--jesuites-blue)] outline-none transition-all placeholder:text-gray-300"
-                            />
-                            <button
-                                disabled={isSending || !contribution.trim()}
-                                onClick={sendContribution}
-                                className="absolute bottom-4 right-4 bg-[var(--jesuites-blue)] text-white p-3 rounded-2xl shadow-lg active:scale-90 disabled:opacity-30 transition-all"
-                            >
-                                <Send size={20} />
-                            </button>
-                        </div>
-                    </section>
-                </div>
+                            </div>
+                        </section>
+                    </div>
+                )}
 
                 {/* Feedback Message */}
                 {feedback && (
-                    <div className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-[var(--jesuites-blue)] text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl animate-fade-in-up">
+                    <div className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-[var(--jesuites-blue)] text-white px-8 py-4 rounded-full text-xs font-bold shadow-2xl animate-fade-in-up uppercase tracking-widest">
                         {feedback}
                     </div>
                 )}
             </div>
         </main>
-    );
-}
-
-function SparkleIcon({ size = 24 }) {
-    return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-            <path d="M5 3v4" /><path d="M3 5h4" /><path d="M21 17v4" /><path d="M19 19h4" />
-        </svg>
     );
 }

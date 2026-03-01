@@ -1,6 +1,30 @@
+@font-face {
+  font-family: 'Akko Pro';
+  src: url('/fonts/Akko-Pro-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Akko Pro';
+  src: url('/fonts/Akko-Pro-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Akko Pro Condensed';
+  src: url('/fonts/Akko-Pro-Medium-Condensed.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @import "tailwindcss";
 
 :root {
+  --font-akko: 'Akko Pro', sans-serif;
+  --font-akko-cond: 'Akko Pro Condensed', sans-serif;
+
   /* Jesuïtes Educació Identity */
   --jesuites-blue: #003a6c;
   --jesuites-cream: #faf7f2;
@@ -53,7 +77,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--jesuites-blue);
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-akko);
+  --font-serif: var(--font-akko-cond);
 }
 
 body {
