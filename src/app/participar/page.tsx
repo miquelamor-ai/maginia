@@ -43,6 +43,16 @@ const CONTENT: Section[] = [
         ]
     },
     {
+        id: "model4d",
+        name: "Model 4D: Fluidesa en IA",
+        items: [
+            { id: "D1", name: "D1: Delegació" },
+            { id: "D2", name: "D2: Descripció" },
+            { id: "D3", name: "D3: Discerniment" },
+            { id: "D4", name: "D4: Diligència" }
+        ]
+    },
+    {
         id: "delegacio",
         name: "Graus de Delegació",
         items: [
@@ -116,14 +126,14 @@ export default function Participar() {
                     <div className="w-14 h-14 bg-[var(--jesuites-blue)] rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg">
                         <Sparkles size={28} />
                     </div>
-                    <h1 className="text-xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter">PARTICIPACIÓ ÀGIL</h1>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Comparteix la teva mirada en un toc</p>
+                    <h1 className="text-2xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter">LA VOSTRA MIRADA</h1>
+                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">Construïm el futur de l'educació jesuïta</p>
                 </header>
 
                 <div className="space-y-16">
                     {CONTENT.map((section) => (
                         <div key={section.id} className="reveal-section">
-                            <h3 className="text-[11px] font-bold uppercase tracking-[0.4em] text-[var(--jesuites-blue)]/40 mb-8 px-4 border-l-4 border-[var(--jesuites-blue)]">
+                            <h3 className="text-xl md:text-3xl font-bold uppercase tracking-tighter text-[var(--jesuites-blue)] mb-8 px-4 border-l-4 border-[var(--jesuites-blue)] font-serif">
                                 {section.name}
                             </h3>
 
