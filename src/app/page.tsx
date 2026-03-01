@@ -286,6 +286,7 @@ function ResultsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   const SECTIONS = [
+    { id: "objectius", name: "Objectius", items: ["institucional", "docent", "alumnat"] },
     { id: "valors", name: "Valors", items: ["antropocentrisme", "transparencia", "verificacio", "equitat", "benestar"] },
     { id: "tensions", name: "Tensions", items: ["humanisme", "agencia", "cognicio", "presencia", "justicia", "plausibilitat"] },
     { id: "model4d", name: "Model 4D", items: ["D1", "D2", "D3", "D4"] },

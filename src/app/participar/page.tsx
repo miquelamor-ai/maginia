@@ -20,6 +20,15 @@ interface Section {
 
 const CONTENT: Section[] = [
     {
+        id: "objectius",
+        name: "Objectius Estratègics",
+        items: [
+            { id: "institucional", name: "Eficàcia Institucional" },
+            { id: "docent", name: "Docència de Qualitat" },
+            { id: "alumnat", name: "Responsabilitat de l'Alumnat" }
+        ]
+    },
+    {
         id: "valors",
         name: "Valors i Principis",
         items: [
