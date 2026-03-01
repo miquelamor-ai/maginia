@@ -354,9 +354,9 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {[
-                { title: "Institucional", icon: Settings, desc: "Millora l'eficàcia institucional per alliberar-nos de càrregues no essencials." },
-                { title: "Docent", icon: Lightbulb, desc: "Eines per a una docència més integral, personalitzada i basada en l'evidència." },
-                { title: "Alumnat", icon: Target, desc: "Desenvolupar responsabilitat ètica, competència digital i un judici crític adult." }
+                { title: "Institucional", icon: Settings, desc: "Maximitzar l'eficàcia i eficiència institucional per alliberar-nos de càrregues no essencials." },
+                { title: "Docent", icon: Lightbulb, desc: "Eines per a una docència de qualitat, més integral, personalitzada i basada en l'evidència." },
+                { title: "Alumnat", icon: Target, desc: "Desenvolupar responsabilitat ètica i millora contínua en la seva competència digital." }
               ].map((obj, i) => (
                 <div key={i} className="bg-[var(--jesuites-cream)] p-12 rounded-[4rem] border border-black/[0.03] group hover:bg-[var(--jesuites-blue)] hover:text-white transition-all duration-700">
                   <obj.icon size={48} className="mb-10 text-[var(--jesuites-blue)] group-hover:text-amber-200 transition-colors" />
@@ -430,17 +430,19 @@ export default function Home() {
                 <div className={`transition-all duration-700 overflow-hidden ${expandedTension === t.id ? 'max-h-[1000px] opacity-100 p-10 md:p-20 pt-0' : 'max-h-0 opacity-0'}`}>
                   <div className="border-t border-white/10 pt-16 flex flex-col md:flex-row justify-between items-start gap-20 md:gap-32 relative">
                     {/* Left Pole */}
-                    <div className="flex-1 text-center md:text-left space-y-8 w-full">
-                      <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.left.replace(" ", "\n")}</h4>
+                    <div className="flex-1 text-center md:text-left space-y-8 w-full relative z-10">
+                      <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line group-hover:-translate-x-2 transition-transform">{t.left.replace(" ", "\n")}</h4>
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
-                    {/* Visual Marker */}
-                    <div className="hidden md:flex absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-32 bg-white/20 items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-white shadow-[0_0_60px_rgba(255,255,255,0.8)] flex items-center justify-center"><ArrowRightLeft size={28} className="text-[var(--jesuites-blue)]" /></div>
+                    {/* Visual Marker with VS */}
+                    <div className="flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-full md:w-32 bg-white/10 items-center justify-center z-20">
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white shadow-[0_0_40px_rgba(255,255,255,0.4)] flex items-center justify-center border-2 border-[var(--jesuites-blue)]">
+                        <span className="text-[var(--jesuites-blue)] font-black text-xs md:text-sm tracking-tighter">VS</span>
+                      </div>
                     </div>
                     {/* Right Pole */}
-                    <div className="flex-1 text-center md:text-right space-y-8 w-full">
-                      <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.right.replace(" ", "\n")}</h4>
+                    <div className="flex-1 text-center md:text-right space-y-8 w-full relative z-10">
+                      <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line group-hover:translate-x-2 transition-transform">{t.right.replace(" ", "\n")}</h4>
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.rightDesc}</p>
                     </div>
                   </div>
@@ -448,7 +450,12 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <SectionArrow targetId="model-4d-section" />
+          <div
+            className="flex justify-center mt-20 mb-4 opacity-70 animate-bounce cursor-pointer hover:opacity-100 transition-opacity"
+            onClick={() => document.getElementById('model-4d-section')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            <ChevronDown size={32} className="text-amber-200" />
+          </div>
         </div>
       </section>
 
