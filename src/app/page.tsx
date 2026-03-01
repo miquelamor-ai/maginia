@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { supabase } from "@/lib/supabase";
 import {
   ChevronDown, Users, Eye, Search, Heart, ShieldCheck,
   ArrowRightLeft, Scale, Zap, MessageSquare, Gavel, FileText,
@@ -47,8 +48,30 @@ const DELEGATION_LEVELS = [
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [votes, setVotes] = useState<any[]>([]);
+  const [contributions, setContributions] = useState<any[]>([]);
 
   useEffect(() => {
+    // 1. Initial Fetch
+    const fetchData = async () => {
+      const { data: v } = await supabase.from("votes").select("*");
+      const { data: c } = await supabase.from("contributions").select("*");
+      if (v) setVotes(v);
+      if (c) setContributions(c);
+    };
+    fetchData();
+
+    // 2. Realtime Subscription
+    const channel = supabase
+      .channel('realtime-updates')
+      .on('postgres_changes', { event: 'INSERT', table: 'votes' }, (payload) => {
+        setVotes((current) => [...current, payload.new]);
+      })
+      .on('postgres_changes', { event: 'INSERT', table: 'contributions' }, (payload) => {
+        setContributions((current) => [...current, payload.new]);
+      })
+      .subscribe();
+
     const ctx = gsap.context(() => {
       // INTRO
       gsap.timeline({ defaults: { ease: "expo.out" } })
@@ -76,8 +99,16 @@ export default function Home() {
       });
 
     }, containerRef);
-    return () => ctx.revert();
+
+    return () => {
+      ctx.revert();
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const getVoteCount = (sectionId: string, type: string) => {
+    return votes.filter(v => v.section_id === sectionId && v.vote_type === type).length;
+  };
 
   return (
     <main ref={containerRef} className="relative min-h-screen bg-[var(--jesuites-cream)] selection:bg-[var(--jesuites-blue)] selection:text-white pb-32">
@@ -94,6 +125,23 @@ export default function Home() {
           <Image src="/imatges/FJE blanc.png" alt="Logo" width={280} height={90} className="mx-auto mb-16 brightness-0 invert opacity-90 h-auto w-48 md:w-64" priority />
           <h1 className="hero-text text-6xl md:text-9xl font-bold text-white uppercase tracking-tighter leading-[0.85] mb-4">Mirades<br />Obertes</h1>
           <p className="hero-text text-xl md:text-2xl font-light text-white/70 uppercase tracking-widest">El nostre camí amb la IA</p>
+
+          {/* Global Pulse Indicator */}
+          <div className="mt-12 flex justify-center gap-6">
+            <div className="flex flex-col items-center">
+              <span className="text-3xl font-bold text-green-400">{votes.filter(v => v.vote_type === 'agree').length}</span>
+              <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Acords</span>
+            </div>
+            <div className="flex flex-col items-center border-x border-white/10 px-6">
+              <span className="text-3xl font-bold text-purple-400">{contributions.length}</span>
+              <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Idees</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-3xl font-bold text-orange-400">{votes.filter(v => v.vote_type === 'worry').length}</span>
+              <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Inquietuds</span>
+            </div>
+          </div>
+
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce"><ChevronDown size={40} className="text-white" /></div>
         </div>
       </section>
@@ -103,6 +151,11 @@ export default function Home() {
         <div className="text-center mb-24">
           <span className="text-[var(--jesuites-blue)]/50 font-bold tracking-widest uppercase text-xs mb-4 block">Els Fonaments</span>
           <h2 className="text-4xl md:text-6xl font-bold text-[var(--jesuites-blue)] tracking-tight">Valors i Principis Rectors</h2>
+          {/* Section Votes */}
+          <div className="flex justify-center gap-4 mt-8 opacity-60">
+            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-green-100 text-green-700 rounded-full">✅ {getVoteCount('valors', 'agree')}</span>
+            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 bg-orange-100 text-orange-700 rounded-full">⚠️ {getVoteCount('valors', 'worry')}</span>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           {PRINCIPLES.map((p) => (
@@ -118,6 +171,15 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* Real-time Contributions for this section */}
+        <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {contributions.filter(c => c.section_id === 'valors').map((c, i) => (
+            <div key={i} className="bg-[var(--jesuites-blue)] text-white p-6 rounded-3xl text-sm font-light italic shadow-lg animate-fade-in">
+              "{c.content}"
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* 3. TENSIONS */}
@@ -128,6 +190,10 @@ export default function Home() {
             <p className="max-w-2xl text-xl text-gray-500 font-light leading-relaxed italic">
               "No volem eliminar-les de manera simplista, sinó gestionar-les i acollir-les."
             </p>
+            <div className="flex gap-4 mt-8 opacity-60">
+              <span className="text-xs font-bold tracking-wider px-3 py-1 bg-green-100 text-green-700 rounded-full">✅ {getVoteCount('tensions', 'agree')}</span>
+              <span className="text-xs font-bold tracking-wider px-3 py-1 bg-orange-100 text-orange-700 rounded-full">⚠️ {getVoteCount('tensions', 'worry')}</span>
+            </div>
           </div>
           <div className="tensions-grid space-y-20">
             {TENSIONS.map((t, i) => (
@@ -159,6 +225,10 @@ export default function Home() {
               <p className="text-xl text-gray-600 font-light leading-relaxed mb-12">
                 Un marc sòcio-tècnic basat en el judici crític i la responsabilitat ètica, estructurat en quatre dimensions recursives.
               </p>
+              <div className="flex gap-4 opacity-60">
+                <span className="text-xs font-bold tracking-wider px-3 py-1 bg-green-100 text-green-700 rounded-full">✅ {getVoteCount('4d', 'agree')}</span>
+                <span className="text-xs font-bold tracking-wider px-3 py-1 bg-orange-100 text-orange-700 rounded-full">⚠️ {getVoteCount('4d', 'worry')}</span>
+              </div>
             </div>
             <div className="flex-1 grid grid-cols-2 gap-4">
               {MODEL_4D.map((d) => (
@@ -184,6 +254,10 @@ export default function Home() {
           <div className="text-center mb-24">
             <h2 className="text-4xl md:text-6xl font-bold text-[var(--jesuites-blue)] mb-8 tracking-tighter italic">Graus de Delegació</h2>
             <p className="text-lg text-gray-500 font-light max-w-2xl mx-auto leading-relaxed">Sis nivells que defineixen la relació persona-IA de manera transversal a la institució.</p>
+            <div className="flex justify-center gap-4 mt-8 opacity-60">
+              <span className="text-xs font-bold tracking-wider px-3 py-1 bg-green-100 text-green-700 rounded-full">✅ {getVoteCount('delegacio', 'agree')}</span>
+              <span className="text-xs font-bold tracking-wider px-3 py-1 bg-orange-100 text-orange-700 rounded-full">⚠️ {getVoteCount('delegacio', 'worry')}</span>
+            </div>
           </div>
 
           <div className="space-y-4">
