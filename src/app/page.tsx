@@ -434,12 +434,14 @@ export default function Home() {
                       <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line group-hover:-translate-x-2 transition-transform">{t.left.replace(" ", "\n")}</h4>
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
-                    {/* Visual Marker with diffused VS */}
-                    <div className="flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-full md:w-32 bg-white/5 items-center justify-center z-0 pointer-events-none">
-                      <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/[0.03] backdrop-blur-sm flex items-center justify-center">
-                        <span className="text-white/20 font-black text-4xl md:text-6xl tracking-tighter select-none">VS</span>
+
+                    {/* VS Badge - Physical between blocks on mobile, absolute center on desktop */}
+                    <div className="flex shrink-0 items-center justify-center w-full md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-auto z-20 my-10 md:my-0">
+                      <div className="w-14 h-14 rounded-full bg-amber-200 shadow-[0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-center border-2 border-[var(--jesuites-blue)]">
+                        <span className="text-[var(--jesuites-blue)] font-black text-sm tracking-tighter">VS</span>
                       </div>
                     </div>
+
                     {/* Right Pole */}
                     <div className="flex-1 text-center md:text-right space-y-8 w-full relative z-10">
                       <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line group-hover:translate-x-2 transition-transform">{t.right.replace(" ", "\n")}</h4>
