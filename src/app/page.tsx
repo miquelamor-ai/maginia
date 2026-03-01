@@ -7,7 +7,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { supabase } from "@/lib/supabase";
 import {
   ChevronDown, Users, Eye, Search, Heart, ShieldCheck,
-  ArrowRightLeft, FileText, Gavel, User, Cpu, Sparkles, Settings
+  ArrowRightLeft, FileText, Gavel, User, Cpu, Sparkles, Settings,
+  MessageSquare
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -119,7 +120,7 @@ export default function Home() {
       {/* 1. HERO */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0 bg-black">
-          <Image src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=2000" alt="Background" fill className="object-cover opacity-60" priority />
+          <Image src="/imatges/mirades-obertes-1.jpg" alt="Background" fill className="object-cover opacity-60" priority />
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[var(--jesuites-cream)]" />
         </div>
         <div className="hero-content relative z-10 text-center px-6">
@@ -129,12 +130,41 @@ export default function Home() {
 
           <div className="mt-20 flex justify-center gap-12">
             <div className="flex flex-col items-center">
-              <span className="text-4xl font-bold text-green-400 font-serif">{votes.length}</span>
+              <span className="text-4xl font-bold text-white font-serif">{votes.length}</span>
               <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Interaccions</span>
             </div>
             <div className="flex flex-col items-center border-x border-white/10 px-12">
-              <span className="text-4xl font-bold text-purple-400 font-serif">{contributions.length}</span>
+              <span className="text-4xl font-bold text-white font-serif">{contributions.length}</span>
               <span className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Mirades Noves</span>
+            </div>
+          </div>
+
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce cursor-pointer" onClick={() => {
+            const el = document.getElementById('details-intro');
+            el?.scrollIntoView({ behavior: 'smooth' });
+          }}>
+            <ChevronDown size={40} className="text-white" />
+          </div>
+        </div>
+      </section>
+
+      {/* Intro Context Section */}
+      <section id="details-intro" className="reveal-section py-32 md:py-48 px-6 bg-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h3 className="text-3xl md:text-5xl font-bold text-[var(--jesuites-blue)] mb-12 tracking-tight font-serif leading-tight">
+            Un marc educatiu per navegar l'era de la <span className="italic">intel·ligència artificial.</span>
+          </h3>
+          <p className="text-xl md:text-2xl text-gray-500 font-light leading-relaxed mb-16">
+            Aquest document recull la visió institucional de Jesuïtes Educació sobre com habitem aquest canvi d'època. <br /><br />
+            Prioritzem el <span className="font-bold text-[var(--jesuites-blue)]">discerniment</span>, la <span className="font-bold text-[var(--jesuites-blue)]">persona</span> i la <span className="font-bold text-[var(--jesuites-blue)]">integritat</span> intel·lectual de l'estudiant per sobre de la immediatesa tecnològica.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden group">
+              <Image src="/imatges/mirades-obertes-2.jpg" alt="Interior" fill className="object-cover group-hover:scale-110 transition-transform duration-1000" />
+            </div>
+            <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden group">
+              <Image src="/imatges/mirades-obertes-3.jpg" alt="Interaction" fill className="object-cover group-hover:scale-110 transition-transform duration-1000" />
             </div>
           </div>
         </div>
