@@ -8,8 +8,7 @@ import { supabase } from "@/lib/supabase";
 import {
   ChevronDown, Users, Eye, Search, Heart, ShieldCheck,
   ArrowRightLeft, FileText, Gavel, Sparkles, Settings,
-  Target, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight,
-  Info
+  Target, Lightbulb, CheckCircle2, ChevronLeft, ChevronRight
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -24,7 +23,7 @@ const PRINCIPLES = [
     points: [
       "Responsabilitat humana (Human-in-the-loop)",
       "Enfortiment de la relació humana",
-      "Prevenció de la dependència cognitiva (IA com a copilot, no pilot)"
+      "Prevenció de la dependència cognitiva"
     ]
   },
   {
@@ -47,7 +46,7 @@ const PRINCIPLES = [
     full: "Davant models probabilístics que generen resultats plausibles però no sempre certs, eduquem en el contrast de fonts i la vigilància activa contra biaixos de gènere o culturals.",
     points: [
       "Desenvolupament del pensament crític permanent",
-      "Fiabilitat i contrast sistemàtic amb fonts externes",
+      "Fiabilitat i contrast sistemàtic amb fonts",
       "Mitigació activa de biaixos algorítmics"
     ]
   },
@@ -59,7 +58,7 @@ const PRINCIPLES = [
     full: "L'IA ha de ser una eina per arribar a tothom. L'utilitzem per atendre múltiples necessitats educatives sota supervisió docent, evitant que les versions de pagament generin avantatges injustos.",
     points: [
       "Accés universal a eines institucionals",
-      "Accessibilitat per disseny (Diversitat funcional)",
+      "Accessibilitat per disseny",
       "Personalització inclusiva de l'aprenentatge"
     ]
   },
@@ -136,36 +135,24 @@ const TENSIONS = [
 
 const MODEL_4D = [
   {
-    id: "D1",
-    name: "Delegació",
-    subtitle: "Saber decidir qui fa què.",
-    desc: "Prendre decisions reflexives sobre quin treball és per a un mateix i quin per a l'IA. No deleguem per evitar l'esforç, sinó per optimitzar el propòsit d'excel·lència.",
-    icon: ArrowRightLeft,
-    details: ["Consciència del problema", "Consciència de la plataforma", "Triatge estratègic"]
+    id: "D1", name: "Delegació", subtitle: "Saber decidir qui fa què.",
+    desc: "Prendre decisions reflexives sobre quin treball és per a un mateix i quin per a l'IA. No deleguem per evitar l'esforç.",
+    icon: ArrowRightLeft, details: ["Consciència del problema", "Consciència de la plataforma", "Triatge estratègic"]
   },
   {
-    id: "D2",
-    name: "Descripció",
-    subtitle: "Saber demanar amb precisió.",
-    desc: "Traduir la intenció humana en instruccions semàntiques (prompts). La qualitat de l'output depèn directament de la nostra claredat de pensament.",
-    icon: FileText,
-    details: ["Definició de producte", "Descripció de procés (CoT)", "Rol i performance"]
+    id: "D2", name: "Descripció", subtitle: "Saber demanar amb precisió.",
+    desc: "Traduir la intenció humana en instruccions semàntiques (prompts). La qualitat de l'output depèn de la claredat.",
+    icon: FileText, details: ["Definició de producte", "Descripció de procés (CoT)", "Rol i performance"]
   },
   {
-    id: "D3",
-    name: "Discerniment",
-    subtitle: "Saber jutjar el resultat.",
-    desc: "Avaluar de manera crítica i reflexiva tot allò que produeix l'IA. Actua com el sistema de control de qualitat ètic i epistèmic.",
-    icon: Gavel,
-    details: ["Verificació factual", "Detecció d'al·lucinacions", "Filtre de veracitat i biaixos"]
+    id: "D3", name: "Discerniment", subtitle: "Saber jutjar el resultat.",
+    desc: "Avaluar de manera crítica i reflexiva tot allò que produeix l'IA. Actua com el sistema de control de qualitat.",
+    icon: Gavel, details: ["Verificació factual", "Detecció d'al·lucinacions", "Filtre de veracitat"]
   },
   {
-    id: "D4",
-    name: "Diligència",
-    subtitle: "Saber-se responsable final.",
-    desc: "Governança ètica i responsabilitat en l'acció. Transforma l'habilitat tècnica en ciutadania digital compromesa.",
-    icon: ShieldCheck,
-    details: ["Seguretat i privadesa", "Transparència i autoria", "Impacte socioambiental"]
+    id: "D4", name: "Diligència", subtitle: "Saber-se responsable final.",
+    desc: "Governança ètica i responsabilitat en l'acció. Transforma l'habilitat tècnica en ciutadania compromesa.",
+    icon: ShieldCheck, details: ["Seguretat i privadesa", "Transparència i autoria", "Impacte socioambiental"]
   }
 ];
 
@@ -251,18 +238,18 @@ function SectionArrow({ targetId }: { targetId: string }) {
 
 function ExamplesCarousel({ examples }: { examples: any[] }) {
   const [currentEx, setCurrentEx] = useState(0);
-  const nextEx = () => setCurrentEx((prev) => (prev + 1) % examples.length);
-  const prevEx = () => setCurrentEx((prev) => (prev - 1 + examples.length) % examples.length);
+  const nextEx = (e: any) => { e.stopPropagation(); setCurrentEx((prev) => (prev + 1) % examples.length); };
+  const prevEx = (e: any) => { e.stopPropagation(); setCurrentEx((prev) => (prev - 1 + examples.length) % examples.length); };
 
   return (
     <div className="bg-[var(--jesuites-cream)] rounded-[2.5rem] p-6 md:p-8 relative overflow-hidden border border-black/[0.02] w-full mt-4">
       <div className="flex justify-between items-center mb-6 border-b border-black/5 pb-4">
         <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-gray-400 block">Exemples d'aula (+14 ANYS)</span>
         <div className="flex gap-3">
-          <button onClick={prevEx} className="p-2.5 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white shadow-sm">
+          <button onClick={prevEx} className="p-2.5 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white shadow-sm ring-1 ring-black/5">
             <ChevronLeft size={16} />
           </button>
-          <button onClick={nextEx} className="p-2.5 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white shadow-sm">
+          <button onClick={nextEx} className="p-2.5 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors border border-black/5 bg-white shadow-sm ring-1 ring-black/5">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -270,7 +257,7 @@ function ExamplesCarousel({ examples }: { examples: any[] }) {
       <div className="relative min-h-[6rem] flex items-center">
         {examples.map((ex, idx) => (
           <div key={idx} className={`transition-all duration-700 transform w-full ${idx === currentEx ? 'relative opacity-100 translate-x-0' : 'absolute inset-0 opacity-0 translate-x-12 pointer-events-none'}`}>
-            <div className="bg-white/95 p-6 rounded-[2rem] shadow-sm flex items-start gap-6">
+            <div className="bg-white/95 p-5 md:p-6 rounded-[2rem] shadow-sm flex items-start gap-6">
               <div className="bg-[var(--jesuites-blue)]/5 p-4 rounded-2xl shrink-0 hidden md:block">
                 <Sparkles size={20} className="text-[var(--jesuites-blue)]" />
               </div>
@@ -284,7 +271,7 @@ function ExamplesCarousel({ examples }: { examples: any[] }) {
       </div>
       <div className="flex justify-center gap-2 mt-8">
         {examples.map((_, i) => (
-          <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === currentEx ? 'w-10 bg-[var(--jesuites-blue)]' : 'w-2 bg-[var(--jesuites-blue)]/10'}`} />
+          <div onClick={(e) => { e.stopPropagation(); setCurrentEx(i); }} key={i} className={`h-1 cursor-pointer transition-all duration-500 ${i === currentEx ? 'w-10 bg-[var(--jesuites-blue)]' : 'w-2 bg-[var(--jesuites-blue)]/10'}`} />
         ))}
       </div>
     </div>
@@ -317,10 +304,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-[var(--jesuites-cream)]" />
         </div>
         <div className="hero-content relative z-10 text-center px-6 max-w-7xl mx-auto">
-          <Image src="/imatges/FJE-trans.png" alt="Logo" width={280} height={100} className="mx-auto mb-16 h-auto w-40 md:w-56" priority />
+          <Image src="/imatges/FJE-trans.png" alt="Logo" width={280} height={100} className="mx-auto mb-16 h-auto w-40 md:w-52" priority />
           <div className="hero-text mb-10">
-            <span className="text-[var(--jesuites-cream)]/70 font-bold tracking-[0.6em] uppercase text-2xl md:text-5xl mb-6 block font-serif">Marc General d'Integració d'IA</span>
-            <h1 className="text-6xl md:text-[9rem] font-bold text-white leading-[0.8] tracking-tighter uppercase drop-shadow-2xl font-serif">MIRADES<br />OBERES</h1>
+            <span className="text-[var(--jesuites-cream)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Marc General d'Integració d'IA</span>
+            <h1 className="text-8xl md:text-[14rem] font-bold text-white leading-[0.75] tracking-tighter uppercase drop-shadow-2xl font-serif">MIRADES<br />OBERES</h1>
           </div>
           <p className="hero-text text-xl md:text-3xl font-light text-white/50 uppercase tracking-[0.4em] font-serif max-w-5xl mx-auto italic">Navegant l'Era de la Intel·ligència Artificial <br className="hidden md:block" /> des de l'Humanisme i el Diàleg</p>
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce cursor-pointer" onClick={() => document.getElementById('details-intro')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -332,25 +319,25 @@ export default function Home() {
       {/* 2. INTRODUCCIÓ (MOTIUS I OBJECTIUS) */}
       <section id="details-intro" className="reveal-section py-40 px-6 bg-white overflow-hidden border-b border-black/5">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-stretch mb-48">
-            <div className="relative group min-h-[500px]">
-              <div className="absolute -inset-4 bg-[var(--jesuites-blue)]/5 rounded-[4rem] -rotate-2 group-hover:rotate-0 transition-transform duration-700" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-start mb-48">
+            <div className="relative group w-full aspect-square md:aspect-auto md:h-[600px]">
+              <div className="absolute -inset-4 bg-[var(--jesuites-blue)]/5 rounded-[4rem] -rotate-2" />
               <div className="relative h-full w-full rounded-[3rem] overflow-hidden shadow-2xl">
-                <Image src="/imatges/mirades-obertes-2.jpg" alt="Visió" fill className="object-cover" />
+                <Image src="/imatges/mirades-obertes-2.jpg" alt="Visió" fill className="object-contain bg-[var(--jesuites-cream)] p-8" />
               </div>
             </div>
-            <div className="flex flex-col justify-between py-2">
+            <div className="flex flex-col justify-between h-full py-4 space-y-16 lg:space-y-0">
               <div>
                 <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Propòsit Docent</span>
-                <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] tracking-tighter leading-none font-serif uppercase">Raons de <span className="italic opacity-60">fons</span></h2>
+                <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] mb-0 tracking-tighter leading-none font-serif uppercase">Raons de <span className="italic opacity-60">fons</span></h2>
               </div>
-              <div className="space-y-6">
-                <div className="bg-black/5 p-12 rounded-[3.5rem] border border-black/5 hover:translate-x-3 transition-transform">
-                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-3 uppercase text-base tracking-widest font-serif">Renovació de la tradició</h4>
+              <div className="space-y-8">
+                <div className="bg-black/5 p-10 rounded-[3.5rem] border border-black/5 hover:bg-[var(--jesuites-cream)] transition-all">
+                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-2 uppercase text-base tracking-widest font-serif">Renovació de la tradició</h4>
                   <p className="text-2xl text-gray-500 font-light leading-snug">Integrar l'IA com una oportunitat per renovar la nostra tradició educativa a través del pensament crític.</p>
                 </div>
-                <div className="bg-black/5 p-12 rounded-[3.5rem] border border-black/5 hover:translate-x-3 transition-transform">
-                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-3 uppercase text-base tracking-widest font-serif">Acompanyament en l'error</h4>
+                <div className="bg-black/5 p-10 rounded-[3.5rem] border border-black/5 hover:bg-[var(--jesuites-cream)] transition-all">
+                  <h4 className="font-bold text-[var(--jesuites-blue)] mb-2 uppercase text-base tracking-widest font-serif">Acompanyament en l'error</h4>
                   <p className="text-2xl text-gray-500 font-light leading-snug">Educar en la imaginació i l'error com a oportunitat de creixement, elements que cap algoritme pot substituir.</p>
                 </div>
               </div>
@@ -382,7 +369,7 @@ export default function Home() {
 
       {/* 3. VALORS RECTORS */}
       <section id="principles-section" className="reveal-section py-40 px-6 max-w-7xl mx-auto">
-        <div className="text-center mb-32">
+        <div className="text-center mb-32 px-6">
           <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Cultura Institucional</span>
           <h2 className="text-6xl md:text-[10rem] font-bold text-[var(--jesuites-blue)] tracking-tighter font-serif uppercase leading-tight">Valors Rectors</h2>
         </div>
@@ -398,11 +385,11 @@ export default function Home() {
                 <div className={`w-12 h-12 rounded-full border border-black/10 flex items-center justify-center transition-all duration-500 ${expandedValue === p.id ? 'bg-[var(--jesuites-blue)] text-white rotate-180' : 'text-[var(--jesuites-blue)]'}`}><ChevronDown size={20} /></div>
               </div>
               <div className={`transition-all duration-700 overflow-hidden ${expandedValue === p.id ? 'max-h-[1200px] opacity-100 p-8 md:p-12 md:pb-16 pt-0' : 'max-h-0 opacity-0'}`}>
-                <div className="border-t border-black/5 pt-8 space-y-10">
+                <div className="border-t border-black/5 pt-6 md:pt-8 space-y-6 md:space-y-8">
                   <p className="text-xl md:text-2xl text-gray-600 font-light italic leading-snug md:px-6">"{p.full}"</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:px-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:px-6">
                     {p.points.map((pt, i) => (
-                      <div key={i} className="flex gap-4 items-center text-sm font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter italic bg-[var(--jesuites-cream)] p-6 rounded-3xl">
+                      <div key={i} className="flex gap-4 items-center text-sm font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter italic bg-[var(--jesuites-cream)] p-5 rounded-3xl">
                         <CheckCircle2 size={20} className="text-green-500 shrink-0" /> {pt}
                       </div>
                     ))}
@@ -428,17 +415,17 @@ export default function Home() {
               <div key={t.id} className="relative group max-w-6xl mx-auto w-full">
                 {/* Desktop/Tablet Layout */}
                 <div className="hidden md:flex flex-col items-center">
-                  <div className="text-center mb-24 max-w-4xl mx-auto">
+                  <div className="text-center mb-20 max-w-5xl mx-auto">
                     <h5 className="text-5xl font-bold uppercase tracking-widest text-amber-200 mb-8 font-serif leading-none">{t.title}</h5>
                     <p className="text-2xl font-light text-white/70 italic leading-snug px-6">{t.desc}</p>
                   </div>
-                  <div className="flex justify-between items-start gap-32 w-full relative">
+                  <div className="flex justify-between items-start gap-32 w-full relative pt-12">
                     <div className="flex-1 text-left space-y-8">
                       <h4 className="text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line">{t.left.replace(" ", "\n")}</h4>
                       <p className="text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
                     {/* Visual Opposition Indicator */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-32 bg-white/20 flex items-center justify-center">
+                    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-32 bg-white/20 flex items-center justify-center">
                       <div className="tension-marker absolute w-16 h-16 rounded-full bg-white shadow-[0_0_60px_rgba(255,255,255,0.8)] flex items-center justify-center group-hover:scale-125 transition-transform"><ArrowRightLeft size={28} className="text-[var(--jesuites-blue)]" /></div>
                     </div>
                     <div className="flex-1 text-right space-y-8">
@@ -448,18 +435,18 @@ export default function Home() {
                   </div>
                 </div>
                 {/* Mobile Layout */}
-                <div className="md:hidden flex flex-col items-center text-center px-4 space-y-14">
+                <div className="md:hidden flex flex-col items-center text-center px-4 space-y-12">
                   <div className="space-y-6">
-                    <h5 className="text-4xl font-bold uppercase tracking-widest text-amber-200 font-serif">{t.title}</h5>
-                    <p className="text-xl font-light text-white/60 italic leading-tight">{t.desc}</p>
+                    <h5 className="text-3xl font-bold uppercase tracking-widest text-amber-200 font-serif">{t.title}</h5>
+                    <p className="text-lg font-light text-white/60 italic leading-tight">{t.desc}</p>
                   </div>
-                  <div className="flex flex-col gap-12 w-full">
-                    <div className="space-y-4">
+                  <div className="flex flex-col gap-10 w-full">
+                    <div className="space-y-3">
                       <h4 className="text-5xl font-bold font-serif uppercase text-white leading-none">{t.left}</h4>
                       <p className="text-base font-light text-white/40 italic">{t.leftDesc}</p>
                     </div>
-                    <div className="h-px w-full bg-white/10 flex items-center justify-center"><ArrowRightLeft size={20} className="text-white/20" /></div>
-                    <div className="space-y-4">
+                    <div className="flex items-center justify-center opacity-30"><ArrowRightLeft size={20} /></div>
+                    <div className="space-y-3">
                       <h4 className="text-5xl font-bold font-serif uppercase text-white leading-none">{t.right}</h4>
                       <p className="text-base font-light text-white/40 italic">{t.rightDesc}</p>
                     </div>
@@ -480,9 +467,9 @@ export default function Home() {
             <h2 className="text-7xl md:text-9xl font-bold text-[var(--jesuites-blue)] mb-10 tracking-tighter uppercase font-serif leading-none">Fluidesa <br />en IA <br /><span className="italic opacity-30 font-light font-sans text-5xl md:text-7xl">Model 4D</span></h2>
             <p className="text-2xl md:text-3xl text-gray-500 font-light max-w-xl leading-snug">Marc sòcio-tècnic estructurat en quatre dimensions que s'alimenten recursivament.</p>
           </div>
-          <div className="lg:col-span-7 flex flex-col gap-4">
+          <div className="lg:col-span-7 flex flex-col gap-3">
             {MODEL_4D.map((d) => (
-              <div key={d.id} onClick={() => setExpandedD(expandedD === d.id ? null : d.id)} className={`bg-white rounded-[2.5rem] shadow-sm cursor-pointer transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedD === d.id ? 'ring-4 ring-[var(--jesuites-blue)]/10 z-10' : 'opacity-90'}`}>
+              <div key={d.id} onClick={() => setExpandedD(expandedD === d.id ? null : d.id)} className={`bg-white rounded-[2rem] shadow-sm cursor-pointer transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedD === d.id ? 'ring-4 ring-[var(--jesuites-blue)]/10 z-10' : 'opacity-90'}`}>
                 <div className="p-6 md:p-8">
                   <div className="flex justify-between items-center gap-6">
                     <div className="flex items-center gap-6 min-w-0">
@@ -492,12 +479,12 @@ export default function Home() {
                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate">{d.subtitle}</p>
                       </div>
                     </div>
-                    <d.icon size={28} className={`transition-all shrink-0 ${expandedD === d.id ? 'text-amber-500 rotate-12' : 'text-[var(--jesuites-blue)]/20'}`} />
+                    <d.icon size={24} className={`transition-all shrink-0 ${expandedD === d.id ? 'text-amber-500 rotate-12' : 'text-[var(--jesuites-blue)]/20'}`} />
                   </div>
-                  <div className={`transition-all duration-700 overflow-hidden ${expandedD === d.id ? 'max-h-[1000px] opacity-100 mt-8 pt-8 border-t border-black/5' : 'max-h-0 opacity-0'}`}>
+                  <div className={`transition-all duration-700 overflow-hidden ${expandedD === d.id ? 'max-h-[1000px] opacity-100 mt-6 pt-6 border-t border-black/5' : 'max-h-0 opacity-0'}`}>
                     <p className="text-xl md:text-2xl text-gray-600 font-light italic mb-8">"{d.desc}"</p>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">{d.details.map((dt, idx) => (
-                      <li key={idx} className="flex gap-4 items-center text-xs font-bold text-[var(--jesuites-blue)] uppercase italic bg-[var(--jesuites-cream)] p-4 rounded-xl"><CheckCircle2 size={20} className="text-amber-500 shrink-0" /> {dt}</li>
+                      <li key={idx} className="flex gap-4 items-center text-xs font-bold text-[var(--jesuites-blue)] uppercase italic bg-[var(--jesuites-cream)] p-4 rounded-xl"><CheckCircle2 size={18} className="text-amber-500 shrink-0" /> {dt}</li>
                     ))}</ul>
                   </div>
                 </div>
@@ -518,30 +505,30 @@ export default function Home() {
           <div className="space-y-6">
             {DELEGATION_LEVELS.map((l) => (
               <div key={l.lv} onClick={() => setExpandedLv(expandedLv === l.lv ? null : l.lv)} className={`bg-white rounded-[3.5rem] md:rounded-[4rem] transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedLv === l.lv ? 'shadow-2xl ring-4 ring-[var(--jesuites-blue)]/5' : 'shadow-sm opacity-90'}`}>
-                <div className="p-8 md:p-12 cursor-pointer flex flex-col md:flex-row items-center gap-10 group">
-                  <div className="flex-1 flex items-center gap-8 md:gap-14 min-w-0 w-full overflow-hidden">
-                    <span className="text-7xl md:text-[11rem] font-bold text-[var(--jesuites-blue)] opacity-15 font-serif leading-none md:-mt-4 shrink-0 transition-all group-hover:opacity-30">{l.lv}</span>
+                <div className="p-8 md:p-10 flex flex-col md:flex-row items-center gap-10 cursor-pointer group">
+                  <div className="flex-1 flex items-center gap-10 md:gap-14 min-w-0 w-full overflow-hidden">
+                    <span className="text-8xl md:text-[11.5rem] font-bold text-[var(--jesuites-blue)] opacity-15 font-serif leading-none md:-mt-4 shrink-0 transition-opacity group-hover:opacity-30">{l.lv}</span>
                     <div className="min-w-0">
-                      <h4 className="text-3xl md:text-6xl font-bold text-[var(--jesuites-blue)] uppercase font-serif leading-none mb-3 truncate pr-4">{l.name}</h4>
-                      <span className="text-[10px] md:text-sm font-bold text-gray-500/60 uppercase tracking-[.3em] block truncate">{l.sub}</span>
+                      <h4 className="text-4xl md:text-[5.5rem] font-bold text-[var(--jesuites-blue)] uppercase font-serif leading-none mb-3 truncate pr-4">{l.name}</h4>
+                      <span className="text-xs md:text-base font-bold text-gray-400 uppercase tracking-[.4em] block truncate">{l.sub}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-12 shrink-0">
-                    <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-[10px] border-black/[0.05]" />
+                    <div className="relative w-24 h-24 md:w-36 md:h-36 flex items-center justify-center">
+                      <div className="absolute inset-0 rounded-full border-[10px] md:border-[14px] border-black/[0.05]" />
                       <svg className="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="42%" className="stroke-[var(--jesuites-blue)] fill-transparent stroke-[10]" strokeDasharray="1000" strokeDashoffset={(1000 - (1000 * (l.human / 100))).toString()} strokeLinecap="round" />
+                        <circle cx="50%" cy="50%" r="41%" className="stroke-[var(--jesuites-blue)] fill-transparent stroke-[10] md:stroke-[14]" strokeDasharray="1000" strokeDashoffset={(1000 - (1000 * (l.human / 100))).toString()} strokeLinecap="round" />
                       </svg>
                       <div className="flex flex-col items-center">
-                        <span className="text-2xl md:text-4xl font-bold font-serif text-[var(--jesuites-blue)]">{l.human}%</span>
-                        <span className="text-[8px] font-bold text-gray-400">HUMÀ</span>
+                        <span className="text-2xl md:text-5xl font-bold font-serif text-[var(--jesuites-blue)] leading-none">{l.human}%</span>
+                        <span className="text-[8px] md:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">HUMÀ</span>
                       </div>
                     </div>
                     <div className={`w-12 h-12 rounded-full border border-black/10 flex items-center justify-center transition-all ${expandedLv === l.lv ? 'bg-[var(--jesuites-blue)] text-white rotate-180' : 'text-[var(--jesuites-blue)]'}`}><ChevronDown size={20} /></div>
                   </div>
                 </div>
-                <div className={`transition-all duration-700 overflow-hidden ${expandedLv === l.lv ? 'max-h-[1400px] opacity-100 p-8 md:p-14 md:pt-4' : 'max-h-0 opacity-0'}`}>
-                  <div className="border-t border-black/5 pt-10 space-y-12">
+                <div className={`transition-all duration-700 overflow-hidden ${expandedLv === l.lv ? 'max-h-[1400px] opacity-100 p-8 md:p-14 md:pt-2' : 'max-h-0 opacity-0'}`}>
+                  <div className="border-t border-black/5 pt-8 space-y-8">
                     <p className="text-xl md:text-3xl font-light text-gray-600 italic leading-snug md:px-10">"{l.desc}"</p>
                     <div className="md:px-10"><ExamplesCarousel examples={l.examples} /></div>
                   </div>
