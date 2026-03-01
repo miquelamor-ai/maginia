@@ -104,7 +104,9 @@ const DELEGATION_LEVELS = [
     examples: [
       { subject: "Dibuix", activity: "Grafoescritura i coordinació oculomanual bàsica." },
       { subject: "Filosofia", activity: "Discerniment ètic en situacions de crisi humana." },
-      { subject: "Educació Física", activity: "Desenvolupament de la consciència corporal i motricitat." }
+      { subject: "Educació Física", activity: "Desenvolupament de la consciència corporal i motricitat." },
+      { subject: "Interioritat", activity: "Pràctica del silenci i la consciència plena sense dispositius." },
+      { subject: "Teatre", activity: "Expressió emocional i llenguatge no verbal en viu." }
     ]
   },
   {
@@ -117,7 +119,9 @@ const DELEGATION_LEVELS = [
     examples: [
       { subject: "Ciències", activity: "Interrogar l'IA per entendre un concepte abstracte o buscar analogies." },
       { subject: "Llengua", activity: "Pluja d'idees assistida per IA per definir el tema d'un relat." },
-      { subject: "Visual i Plàstica", activity: "Recerca de referents artístics i moviments estètics." }
+      { subject: "Visual i Plàstica", activity: "Recerca de referents artístics i moviments estètics." },
+      { subject: "Socials", activity: "Cerca de context històric i mapes conceptuals inicials." },
+      { subject: "Tecnologia", activity: "Exploració de possibles solucions a un repte de disseny." }
     ]
   },
   {
@@ -130,7 +134,9 @@ const DELEGATION_LEVELS = [
     examples: [
       { subject: "Història", activity: "Revisió d'un assaig: l'IA suggereix millores en l'estructura o el to." },
       { subject: "Anglès", activity: "Autocorrecció de gramàtica i propostes de vocabulari més variat." },
-      { subject: "Matemàtiques", activity: "L'IA actua com a tutor socràtic que ajuda a detectar l'error en un procediment." }
+      { subject: "Matemàtiques", activity: "L'IA actua com a tutor socràtic que ajuda a detectar l'error en un procediment." },
+      { subject: "Física", activity: "Millora de la redacció de les conclusions d'un laboratori." },
+      { subject: "Llengua", activity: "Detecció de faltes de coherència o repeticions en un text propi." }
     ]
   },
   {
@@ -143,7 +149,9 @@ const DELEGATION_LEVELS = [
     examples: [
       { subject: "Música", activity: "Creació d'una melodia conjuntament: l'IA proposa acords, l'humà refina la lletra." },
       { subject: "Tecnologia", activity: "Programació assistida: co-escriptura de codi amb realimentació en temps real." },
-      { subject: "Projectes", activity: "Disseny de guions per a podcast i edició d'àudio híbrida." }
+      { subject: "Projectes", activity: "Disseny de guions per a podcast i edició d'àudio híbrida." },
+      { subject: "Emprenedoria", activity: "Desenvolupament d'un model de negoci iterant idees amb l'IA." },
+      { subject: "Art", activity: "Creació d'una instal·lació interactiva on l'IA processa dades en viu." }
     ]
   },
   {
@@ -156,7 +164,9 @@ const DELEGATION_LEVELS = [
     examples: [
       { subject: "Recerca", activity: "Generació de resums de lectura tancats a partir de fonts pròpies." },
       { subject: "Administració", activity: "Creació de plantilles de pressupost a partir de dades en brut." },
-      { subject: "Disseny", activity: "Producció de visuals complexos a partir de prompts tècnics d'estil." }
+      { subject: "Disseny", activity: "Producció de visuals complexos a partir de prompts tècnics d'estil." },
+      { subject: "Idiomes", activity: "Traducció de textos tècnics amb supervisió humana del matís." },
+      { subject: "Mates", activity: "Optimització de càlculs complexos partint de fórmules definides." }
     ]
   },
   {
@@ -169,10 +179,93 @@ const DELEGATION_LEVELS = [
     examples: [
       { subject: "Personalització", activity: "Plataformes d'aprenentatge adaptatiu amb itineraris automàtics." },
       { subject: "Anàlisi", activity: "Monitorització d'indicadors de benestar emocional de grup via sentiment analysis." },
-      { subject: "Operacions", activity: "Sistemes de gestió administrativa recurrent (facturació, assistència)." }
+      { subject: "Operacions", activity: "Sistemes de gestió administrativa recurrent (facturació, assistència)." },
+      { subject: "Recerca", activity: "Anàlisi de grans volums de dades per identificar patrons." },
+      { subject: "Educació", activity: "Generació automàtica de qüestionaris adaptatius basats en el progrés de l'alumne." }
     ]
   }
 ];
+
+// Helper component for Delegation Carousel
+function DelegationLevelCard({ l, getVotes }: { l: any, getVotes: Function }) {
+  const [currentEx, setCurrentEx] = useState(0);
+
+  const nextEx = () => setCurrentEx((prev) => (prev + 1) % l.examples.length);
+  const prevEx = () => setCurrentEx((prev) => (prev - 1 + l.examples.length) % l.examples.length);
+
+  return (
+    <div className="bg-white rounded-[4rem] p-12 md:p-20 border border-black/[0.03] shadow-lg group">
+      <div className="flex flex-col lg:flex-row gap-20 items-center">
+        <div className="flex-1 flex items-center gap-12">
+          <span className="text-8xl md:text-[12rem] font-bold text-[var(--jesuites-blue)] opacity-5 leading-none font-serif">{l.lv}</span>
+          <div>
+            <h4 className="text-4xl md:text-5xl font-bold text-[var(--jesuites-blue)] tracking-tighter uppercase mb-4 font-serif">{l.name}</h4>
+            <span className="text-xs font-bold text-gray-400 border border-black/10 px-6 py-2 rounded-full uppercase tracking-widest">{l.sub}</span>
+          </div>
+        </div>
+
+        <div className="flex-[1.5] space-y-12">
+          <p className="text-3xl font-light text-gray-500 leading-tight italic">{l.desc}</p>
+
+          <div className="bg-[var(--jesuites-cream)] rounded-[3rem] p-12 relative overflow-hidden group/item">
+            <div className="flex justify-between items-center mb-10 border-b border-black/5 pb-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-400 block">Exemples d'aula (+14 ANYS)</span>
+              <div className="flex gap-2">
+                <button onClick={prevEx} className="p-2 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors">
+                  <ChevronLeft size={16} />
+                </button>
+                <button onClick={nextEx} className="p-2 hover:bg-[var(--jesuites-blue)] hover:text-white rounded-full transition-colors">
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative h-32 md:h-24">
+              {l.examples.map((ex: any, idx: number) => (
+                <div
+                  key={idx}
+                  className={`absolute inset-0 transition-all duration-700 transform ${idx === currentEx ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12 pointer-events-none'}`}
+                >
+                  <div className="bg-white/80 p-8 rounded-[2rem] shadow-sm flex items-start gap-6 h-full">
+                    <div className="bg-[var(--jesuites-blue)]/5 p-4 rounded-2xl">
+                      <Sparkles size={18} className="text-[var(--jesuites-blue)]" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-[var(--jesuites-blue)] uppercase mb-2 block tracking-widest">{ex.subject}</span>
+                      <p className="text-sm text-gray-600 font-light leading-snug">{ex.activity}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-center gap-1.5 mt-8">
+              {l.examples.map((_: any, i: number) => (
+                <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === currentEx ? 'w-8 bg-[var(--jesuites-blue)]' : 'w-2 bg-[var(--jesuites-blue)]/10'}`} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 w-full lg:w-48">
+          <div className="flex flex-col gap-6">
+            <div className="h-40 w-full bg-[var(--jesuites-cream)] rounded-3xl relative overflow-hidden">
+              <div className="absolute bottom-0 left-0 right-0 bg-[var(--jesuites-blue)] transition-all duration-1000" style={{ height: `${l.human}%` }} />
+              <div className="absolute inset-0 flex flex-col justify-between p-6 mix-blend-difference text-white">
+                <span className="text-4xl font-bold font-serif">{l.human}%</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">HUMÀ</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center px-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Persona</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">IA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -381,51 +474,7 @@ export default function Home() {
 
           <div className="space-y-12">
             {DELEGATION_LEVELS.map((l) => (
-              <div key={l.lv} className="bg-white rounded-[4rem] p-12 md:p-20 border border-black/[0.03] shadow-lg group">
-                <div className="flex flex-col lg:flex-row gap-20 items-center">
-                  <div className="flex-1 flex items-center gap-12">
-                    <span className="text-8xl md:text-[12rem] font-bold text-[var(--jesuites-blue)] opacity-5 leading-none font-serif">{l.lv}</span>
-                    <div>
-                      <h4 className="text-4xl md:text-5xl font-bold text-[var(--jesuites-blue)] tracking-tighter uppercase mb-4 font-serif">{l.name}</h4>
-                      <span className="text-xs font-bold text-gray-400 border border-black/10 px-6 py-2 rounded-full uppercase tracking-widest">{l.sub}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex-[1.5] space-y-12">
-                    <p className="text-3xl font-light text-gray-500 leading-tight italic">{l.desc}</p>
-
-                    {/* Examples Carousel Mock/Container */}
-                    <div className="bg-[var(--jesuites-cream)] rounded-[3rem] p-12 relative overflow-hidden group/item">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-400 block mb-10 border-b border-black/5 pb-4">Activitats d'aula (+14 ANYS)</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                        {l.examples.map((ex, idx) => (
-                          <div key={idx} className="bg-white/80 p-8 rounded-[2rem] shadow-sm hover:scale-105 transition-transform duration-500">
-                            <span className="text-[9px] font-bold text-[var(--jesuites-blue)] uppercase mb-2 block">{ex.subject}</span>
-                            <p className="text-sm text-gray-600 font-light">{ex.activity}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <Sparkles className="absolute -top-10 -right-10 text-[var(--jesuites-blue)] opacity-5 w-40 h-40" />
-                    </div>
-                  </div>
-
-                  <div className="flex-1 w-full lg:w-48">
-                    <div className="flex flex-col gap-6">
-                      <div className="h-40 w-full bg-[var(--jesuites-cream)] rounded-3xl relative overflow-hidden">
-                        <div className="absolute bottom-0 left-0 right-0 bg-[var(--jesuites-blue)] transition-all duration-1000" style={{ height: `${l.human}%` }} />
-                        <div className="absolute inset-0 flex flex-col justify-between p-6 mix-blend-difference text-white">
-                          <span className="text-4xl font-bold font-serif">{l.human}%</span>
-                          <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Human Balance</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center px-4">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Persona</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">IA</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <DelegationLevelCard key={l.lv} l={l} getVotes={getVotes} />
             ))}
           </div>
         </div>
