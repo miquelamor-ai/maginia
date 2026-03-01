@@ -187,7 +187,7 @@ const DELEGATION_LEVELS = [
       { subject: "Anglès", activity: "Autocorrecció de gramàtica i propostes de vocabulari variat." },
       { subject: "Matemàtiques", activity: "Tutor socràtic que ajuda a detectar l'error en un procediment." },
       { subject: "Física", activity: "Millora de la redacció de les conclusions d'un laboratori." },
-      { subject: "Llengua", activity: "Detecció de faltes de coherència o repeticions en un text propi." }
+      { subject: "Llengua", activity: "Detecció de faltes de coferència o repeticions en un text propi." }
     ]
   },
   {
@@ -228,7 +228,7 @@ const DELEGATION_LEVELS = [
 function SectionArrow({ targetId }: { targetId: string }) {
   return (
     <div
-      className="flex justify-center mt-20 mb-4 opacity-30 animate-bounce cursor-pointer hover:opacity-100 transition-opacity"
+      className="flex justify-center mt-20 mb-4 opacity-50 animate-bounce cursor-pointer hover:opacity-100 transition-opacity"
       onClick={() => document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' })}
     >
       <ChevronDown size={32} className="text-[var(--jesuites-blue)]" />
@@ -341,12 +341,14 @@ export default function Home() {
                   <h4 className="font-bold text-[var(--jesuites-blue)] mb-3 uppercase text-base tracking-widest font-serif">Acompanyament en l'error</h4>
                   <p className="text-2xl text-gray-500 font-light leading-snug">Educar en la imaginació i l'error com a oportunitat de creixement, elements que cap algoritme pot substituir.</p>
                 </div>
+                {/* Internal arrow requested for "Raons de fons" */}
+                <div className="pt-8"><SectionArrow targetId="objectives-heading" /></div>
               </div>
             </div>
           </div>
 
           <div>
-            <div className="mb-20">
+            <div id="objectives-heading" className="mb-20">
               <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Fites Estratègiques</span>
               <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] tracking-tighter font-serif uppercase">Objectius</h2>
             </div>
@@ -368,7 +370,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. VALORS RECTORS */}
+      {/* 3. VALORS RECTORS */}
       <section id="principles-section" className="reveal-section py-40 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-32 px-6">
           <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Cultura Institucional</span>
@@ -403,7 +405,7 @@ export default function Home() {
         <SectionArrow targetId="tensions-section" />
       </section>
 
-      {/* 5. TENSIONS (NEW ACCORDION STYLE) */}
+      {/* 4. TENSIONS (NEW ACCORDION STYLE) */}
       <section id="tensions-section" className="reveal-section py-40 bg-[var(--jesuites-blue)] text-white overflow-hidden relative border-b border-white/5">
         <div className="absolute inset-0 opacity-10 pointer-events-none"><Image src="/imatges/mirades-obertes-3.jpg" alt="Bg" fill className="object-cover grayscale" /></div>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -450,7 +452,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. MODEL 4D */}
+      {/* 5. MODEL 4D */}
       <section id="model-4d-section" className="reveal-section py-40 px-6 bg-[var(--jesuites-cream)] overflow-hidden">
         <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-12 gap-24 items-start">
           <div className="lg:col-span-5 mb-16 lg:mb-0">
@@ -461,7 +463,7 @@ export default function Home() {
           <div className="lg:col-span-7 flex flex-col gap-4">
             {MODEL_4D.map((d) => (
               <div key={d.id} onClick={() => setExpandedD(expandedD === d.id ? null : d.id)} className={`bg-white rounded-[2rem] shadow-sm cursor-pointer transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedD === d.id ? 'ring-4 ring-[var(--jesuites-blue)]/10 z-10' : 'opacity-90'}`}>
-                <div className="p-7 md:p-9">
+                <div className="p-8 md:p-10">
                   <div className="flex justify-between items-center gap-6">
                     <div className="flex items-center gap-6 min-w-0">
                       <span className="text-4xl md:text-5xl font-bold text-[var(--jesuites-blue)] opacity-10 font-serif leading-none">{d.id}</span>
@@ -486,7 +488,7 @@ export default function Home() {
         <SectionArrow targetId="delegation-section" />
       </section>
 
-      {/* 7. NIVELLS DE DELEGACIÓ */}
+      {/* 6. NIVELLS DE DELEGACIÓ */}
       <section id="delegation-section" className="reveal-section py-40 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="mb-48">
