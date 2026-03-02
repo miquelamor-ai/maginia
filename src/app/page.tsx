@@ -44,12 +44,12 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-[var(--jesuites-cream)]" />
         </div>
         <div className="hero-content relative z-10 text-center px-6 max-w-7xl mx-auto">
-          <Image src="/imatges/FJE-trans.png" alt="Logo" width={280} height={100} className="mx-auto mb-16 h-auto w-40 md:w-52" priority />
-          <div className="hero-text mb-10">
-            <span className="text-[var(--jesuites-cream)]/40 font-bold tracking-[0.4em] uppercase text-base md:text-xl mb-8 block font-serif">Marc General d&apos;Integració d&apos;IA</span>
-            <h1 className="text-8xl md:text-[14rem] font-bold text-white leading-[0.75] tracking-tighter uppercase drop-shadow-2xl font-serif">MIRADES<br />OBERTES</h1>
+          <Image src="/imatges/FJE-trans.png" alt="Logo" width={280} height={100} className="mx-auto mb-6 md:mb-8 h-auto w-32 md:w-44" priority />
+          <div className="hero-text mb-6 md:mb-8">
+            <span className="text-[var(--jesuites-cream)]/40 font-bold tracking-[0.4em] uppercase text-sm md:text-lg mb-4 block font-serif">Marc General d&apos;Integració d&apos;IA</span>
+            <h1 className="text-7xl md:text-[10rem] lg:text-[12rem] xl:text-[14rem] font-bold text-white leading-[0.75] tracking-tighter uppercase drop-shadow-2xl font-serif">MIRADES<br />OBERTES</h1>
           </div>
-          <p className="hero-text text-xl md:text-3xl font-light text-white/50 uppercase tracking-[0.4em] font-serif max-w-5xl mx-auto italic">Navegant l&apos;Era de la Intel·ligència Artificial <br className="hidden md:block" />des de l&apos;Humanisme i el Diàleg</p>
+          <p className="hero-text text-lg md:text-2xl lg:text-3xl font-light text-white/50 uppercase tracking-[0.4em] font-serif max-w-5xl mx-auto italic">Navegant l&apos;Era de la Intel·ligència Artificial <br className="hidden md:block" />des de l&apos;Humanisme i el Diàleg</p>
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce cursor-pointer" onClick={() => scrollToSection('details-intro')}>
             <ChevronDown size={40} className="text-white" />
           </div>
