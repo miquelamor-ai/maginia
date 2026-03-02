@@ -2,85 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { PARTICIPATION_CONTENT, VOTE_TYPES } from "@/lib/data";
+import type { ParticipationSection, ParticipationSubItem } from "@/lib/types";
 import {
-    CheckCircle2, AlertCircle, HelpCircle, Lightbulb,
-    Send, Sparkles, ChevronDown, MessageSquare, Check
+    Send, Sparkles, MessageSquare, Check
 } from "lucide-react";
 
-interface SubItem {
-    id: string;
-    name: string;
-}
+// ─── Session ID for vote deduplication ───────────────────────────
 
-interface Section {
-    id: string;
-    name: string;
-    items: SubItem[];
-}
-
-const CONTENT: Section[] = [
-    {
-        id: "objectius",
-        name: "Objectius Estratègics",
-        items: [
-            { id: "institucional", name: "Eficàcia Institucional" },
-            { id: "docent", name: "Docència de Qualitat" },
-            { id: "alumnat", name: "Responsabilitat de l'Alumnat" }
-        ]
-    },
-    {
-        id: "valors",
-        name: "Valors i Principis",
-        items: [
-            { id: "antropocentrisme", name: "Antropocentrisme" },
-            { id: "transparencia", name: "Transparència" },
-            { id: "verificacio", name: "Verificació i Crítica" },
-            { id: "equitat", name: "Equitat i Inclusió" },
-            { id: "benestar", name: "Benestar" }
-        ]
-    },
-    {
-        id: "tensions",
-        name: "Tensions Dialèctiques",
-        items: [
-            { id: "humanisme", name: "Integritat Humana" },
-            { id: "agencia", name: "Autonomia i Agència" },
-            { id: "cognicio", name: "Profunditat Cognitiva" },
-            { id: "presencia", name: "Vincles i Presència" },
-            { id: "justicia", name: "Justícia i Equitat" },
-            { id: "plausibilitat", name: "Integritat Intel·lectual" }
-        ]
-    },
-    {
-        id: "model4d",
-        name: "Model 4D: Fluidesa en IA",
-        items: [
-            { id: "D1", name: "D1: Delegació" },
-            { id: "D2", name: "D2: Descripció" },
-            { id: "D3", name: "D3: Discerniment" },
-            { id: "D4", name: "D4: Diligència" }
-        ]
-    },
-    {
-        id: "delegacio",
-        name: "Graus de Delegació",
-        items: [
-            { id: "nivell0", name: "L0: Preservació" },
-            { id: "nivell1", name: "L1: Exploració" },
-            { id: "nivell2", name: "L2: Suport" },
-            { id: "nivell3", name: "L3: Cocreació" },
-            { id: "nivell4", name: "L4: Delegació" },
-            { id: "nivell5", name: "L5: Agència" }
-        ]
+function getSessionId(): string {
+    if (typeof window === "undefined") return "";
+    let id = localStorage.getItem("maginia_session_id");
+    if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem("maginia_session_id", id);
     }
-];
-
-const VOTE_TYPES = [
-    { id: "agree", label: "D'acord", color: "bg-green-500", icon: CheckCircle2 },
-    { id: "worry", label: "M'inquieta", color: "bg-orange-500", icon: AlertCircle },
-    { id: "doubt", label: "Tinc dubtes", color: "bg-blue-500", icon: HelpCircle },
-    { id: "inspired", label: "M'inspira", color: "bg-purple-500", icon: Lightbulb }
-];
+    return id;
+}
 
 export default function Participar() {
     const [votes, setVotes] = useState<Record<string, string>>({});
@@ -88,23 +26,54 @@ export default function Participar() {
     const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
     const [isSendingId, setIsSendingId] = useState<string | null>(null);
     const [feedback, setFeedback] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState("");
+
+    // Load session and existing votes on mount
+    useEffect(() => {
+        const sid = getSessionId();
+        setSessionId(sid);
+
+        // Load existing votes for this session
+        const loadVotes = async () => {
+            const { data, error } = await supabase
+                .from("votes")
+                .select("item_id, vote_type")
+                .eq("session_id", sid);
+            if (!error && data) {
+                const existingVotes: Record<string, string> = {};
+                data.forEach((v: { item_id: string; vote_type: string }) => {
+                    existingVotes[v.item_id] = v.vote_type;
+                });
+                setVotes(existingVotes);
+            }
+        };
+        loadVotes();
+    }, []);
 
     const handleVote = async (itemId: string, sectionId: string, type: string) => {
-        // Toggle logic: if clicking same type, remove vote. Else update.
         const newType = votes[itemId] === type ? "" : type;
-
         setVotes(prev => ({ ...prev, [itemId]: newType }));
 
         if (newType) {
             setIsSendingId(itemId + "_vote");
-            const { error } = await supabase.from("votes").insert([
-                { section_id: sectionId, item_id: itemId, vote_type: type }
-            ]);
-            if (!error) {
-                setFeedback("Vot registrat");
-                setTimeout(() => setFeedback(null), 1500);
-            }
+            await supabase.from("votes").upsert(
+                {
+                    session_id: sessionId,
+                    section_id: sectionId,
+                    item_id: itemId,
+                    vote_type: type
+                },
+                { onConflict: "session_id,item_id" }
+            );
+            setFeedback("Vot registrat");
+            setTimeout(() => setFeedback(null), 1500);
             setIsSendingId(null);
+        } else {
+            // Remove vote
+            await supabase.from("votes")
+                .delete()
+                .eq("session_id", sessionId)
+                .eq("item_id", itemId);
         }
     };
 
@@ -114,7 +83,7 @@ export default function Participar() {
 
         setIsSendingId(itemId + "_comment");
         const { error } = await supabase.from("contributions").insert([
-            { section_id: sectionId, content: `[${itemId}] ${text}` }
+            { session_id: sessionId, section_id: sectionId, content: `[${itemId}] ${text}` }
         ]);
 
         if (!error) {
@@ -136,11 +105,11 @@ export default function Participar() {
                         <Sparkles size={28} />
                     </div>
                     <h1 className="text-2xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter">LA VOSTRA MIRADA</h1>
-                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">Construïm el futur de l'educació jesuïta</p>
+                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">Construïm el futur de l&apos;educació jesuïta</p>
                 </header>
 
                 <div className="space-y-16">
-                    {CONTENT.map((section) => (
+                    {PARTICIPATION_CONTENT.map((section) => (
                         <div key={section.id} className="reveal-section">
                             <h3 className="text-xl md:text-3xl font-bold uppercase tracking-tighter text-[var(--jesuites-blue)] mb-8 px-4 border-l-4 border-[var(--jesuites-blue)] font-serif">
                                 {section.name}
@@ -206,7 +175,6 @@ export default function Participar() {
                     ))}
                 </div>
 
-                {/* Barra de progrés flotant opcional? Millor un feedback net */}
                 {feedback && (
                     <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-[var(--jesuites-blue)] text-white px-8 py-4 rounded-full text-[10px] font-bold shadow-2xl animate-fade-in-up uppercase tracking-[0.3em] z-[100] border border-white/10">
                         {feedback}
