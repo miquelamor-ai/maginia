@@ -108,7 +108,7 @@ export default function ResultsDashboard() {
                                         {activeSection === "global" && (
                                             <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-amber-200/50 block mb-2">{itemSectionMap[itemId]}</span>
                                         )}
-                                        <h4 className="text-lg md:text-xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
+                                        <h4 className="text-xl md:text-2xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
                                             {itemId.replace("nivell", "Nivell ").replace("D", "Dimensió D")}
                                         </h4>
                                     </div>
@@ -122,12 +122,12 @@ export default function ResultsDashboard() {
                                 <div className="space-y-8">
                                     {stats.map(s => (
                                         <div key={s.type} className="space-y-3">
-                                            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest px-2 transition-all">
+                                            <div className="flex justify-between items-center text-xs md:text-sm font-bold uppercase tracking-widest px-2 transition-all">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-2 h-2 rounded-full ${VOTE_COLORS[s.type]} shadow-[0_0_10px_rgba(255,255,255,0.2)]`} />
                                                     <span className={s.percent > 0 ? 'text-white' : 'text-white/30'}>{VOTE_LABELS[s.type]}</span>
                                                 </div>
-                                                <span className={`text-[12px] font-serif italic ${s.percent > 0 ? 'text-amber-200' : 'text-white/20'}`}>{s.percent}%</span>
+                                                <span className={`text-base md:text-lg font-serif italic ${s.percent > 0 ? 'text-amber-200' : 'text-white/20'}`}>{s.percent}%</span>
                                             </div>
                                             <div className="h-4 bg-black/20 rounded-full overflow-hidden p-1 shadow-inner">
                                                 <div

@@ -298,7 +298,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex justify-center mb-16 opacity-30 grayscale brightness-0"><Image src="/imatges/FJE-trans.png" alt="Logo FJE" width={280} height={100} className="h-auto w-48 md:w-64" /></div>
           <p className="text-[11px] font-bold uppercase tracking-[0.5em] text-gray-300 mt-20">Jesuïtes Educació • Marc General IA 2026</p>
-          <p className="text-[10px] text-gray-300 mt-4 tracking-widest uppercase">Darrera revisió: Març 2026 · Contacte: innovacio@ffrfrje.edu</p>
+          <p className="text-[10px] text-gray-300 mt-4 tracking-widest uppercase">Darrera revisió: Març 2026 · Contacte: laia@fje.edu</p>
         </div>
       </footer>
     </main>
