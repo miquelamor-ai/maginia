@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { CheckCircle2, AlertCircle, HelpCircle, Lightbulb, Check } from "lucide-react";
+import { Check, Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { DASHBOARD_SECTIONS, VOTE_LABELS, VOTE_COLORS } from "@/lib/data";
 
 export default function ResultsDashboard() {
-    const [activeSection, setActiveSection] = useState("objectius");
+    const [activeSection, setActiveSection] = useState("global");
     const [sortBy, setSortBy] = useState<string | null>(null);
     const [data, setData] = useState<{ item_id: string; vote_type: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +33,17 @@ export default function ResultsDashboard() {
         };
     }, [data]);
 
-    const currentItems = DASHBOARD_SECTIONS.find(s => s.id === activeSection)?.items || [];
+    const allItems = useMemo(() => DASHBOARD_SECTIONS.flatMap(s => s.items), []);
+    const currentItems = activeSection === "global"
+        ? allItems
+        : DASHBOARD_SECTIONS.find(s => s.id === activeSection)?.items || [];
+
+    // Map item → section name for global view labels
+    const itemSectionMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        DASHBOARD_SECTIONS.forEach(s => s.items.forEach(item => { map[item] = s.name; }));
+        return map;
+    }, []);
 
     const sortedItems = useMemo(() => {
         return [...currentItems].sort((a, b) => {
@@ -48,6 +58,12 @@ export default function ResultsDashboard() {
         <div className="bg-white/5 backdrop-blur-3xl rounded-[4rem] p-6 md:p-16 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.3)]">
             {/* Selector de Secció */}
             <div className="flex flex-wrap gap-3 mb-12 justify-center">
+                <button
+                    onClick={() => setActiveSection("global")}
+                    className={`px-8 py-4 rounded-3xl text-[10px] font-bold uppercase tracking-widest transition-all duration-500 flex items-center gap-2 ${activeSection === "global" ? 'bg-white text-[var(--jesuites-blue)] shadow-xl scale-105 ring-2 ring-amber-200' : 'bg-white/10 text-white/60 hover:bg-white/15 border border-white/10'}`}
+                >
+                    <Globe size={14} /> Global
+                </button>
                 {DASHBOARD_SECTIONS.map(s => (
                     <button
                         key={s.id}
@@ -88,9 +104,14 @@ export default function ResultsDashboard() {
                         return (
                             <div key={itemId} className="group bg-white/[0.03] backdrop-blur-md rounded-[3.5rem] p-8 md:p-12 border border-white/5 hover:border-amber-200/30 transition-all duration-500 hover:bg-white/[0.06] hover:-translate-y-2">
                                 <div className="flex justify-between items-start mb-10">
-                                    <h4 className="text-lg md:text-xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
-                                        {itemId.replace("nivell", "Nivell ").replace("D", "Dimensió D")}
-                                    </h4>
+                                    <div>
+                                        {activeSection === "global" && (
+                                            <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-amber-200/50 block mb-2">{itemSectionMap[itemId]}</span>
+                                        )}
+                                        <h4 className="text-lg md:text-xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
+                                            {itemId.replace("nivell", "Nivell ").replace("D", "Dimensió D")}
+                                        </h4>
+                                    </div>
                                     {dominant && dominant.percent > 50 && (
                                         <div className={`px-4 py-1.5 rounded-full ${VOTE_COLORS[dominant.type]} text-white text-[9px] font-black uppercase tracking-widest shadow-lg animate-pulse`}>
                                             Consens: {VOTE_LABELS[dominant.type]}
