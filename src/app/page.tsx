@@ -166,14 +166,14 @@ export default function Home() {
                 </div>
 
                 <div className={`transition-all duration-700 overflow-hidden ${expandedTension === t.id ? 'max-h-[1000px] opacity-100 p-10 md:p-20 pt-0' : 'max-h-0 opacity-0'}`}>
-                  <div className="border-t border-white/10 pt-16 flex flex-col md:flex-row justify-between items-start gap-20 md:gap-32 relative">
+                  <div className="border-t border-white/10 pt-16 flex flex-col md:flex-row justify-between items-start gap-10 md:gap-32 relative">
                     <div className="flex-1 text-center md:text-left space-y-8 w-full relative z-10">
                       <h4 className="text-5xl md:text-7xl font-bold font-serif uppercase tracking-tight text-white leading-none whitespace-pre-line group-hover:-translate-x-2 transition-transform">{t.left.replace(" ", "\n")}</h4>
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
 
                     {/* Subtle VS Watermark (Responsive flow) */}
-                    <div className="md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 flex items-center justify-center py-6 md:py-0 w-full md:w-auto relative z-0">
+                    <div className="md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 flex items-center justify-center py-2 md:py-0 w-full md:w-auto relative z-0">
                       <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-transparent backdrop-blur-md flex items-center justify-center border border-white/10 shadow-xl">
                         <span className="text-white font-black text-sm md:text-base tracking-tighter select-none">VS</span>
                       </div>
