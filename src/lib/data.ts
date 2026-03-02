@@ -51,7 +51,7 @@ export const PRINCIPLES: Principle[] = [
         id: "equitat",
         title: "Equitat i Inclusió",
         icon: Heart,
-        intro: "Instrument per reduir bretxes i diversitat.",
+        intro: "Instrument per reduir bretxes i eliminar barreres.",
         full: "L'IA ha de ser una eina per arribar a tothom. L'utilitzem per atendre múltiples necessitats educatives sota supervisió docent, evitant que les versions de pagament generin avantatges injustos.",
         points: [
             "Accés universal a eines institucionals",

@@ -172,9 +172,9 @@ export default function Home() {
                       <p className="text-xl md:text-2xl font-light text-white/40 italic leading-snug">{t.leftDesc}</p>
                     </div>
 
-                    {/* Subtle VS Watermark */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none flex items-center justify-center">
-                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-transparent backdrop-blur-md flex items-center justify-center border border-white/10">
+                    {/* Subtle VS Watermark (Responsive flow) */}
+                    <div className="md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 flex items-center justify-center py-6 md:py-0 w-full md:w-auto relative z-0">
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-white/20 via-white/5 to-transparent backdrop-blur-md flex items-center justify-center border border-white/10 shadow-xl">
                         <span className="text-white font-black text-sm md:text-base tracking-tighter select-none">VS</span>
                       </div>
                     </div>
