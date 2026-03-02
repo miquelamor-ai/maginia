@@ -212,7 +212,7 @@ export default function Home() {
                   <div className={`w-16 h-16 md:w-20 md:h-20 rounded-[2rem] flex items-center justify-center shrink-0 transition-all ${expandedD === d.id ? 'bg-[var(--jesuites-blue)] text-white' : 'bg-[var(--jesuites-cream)] text-[var(--jesuites-blue)] group-hover:scale-110'}`}><d.icon size={32} /></div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-3xl md:text-5xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter font-serif mb-1 leading-none">{d.name}</h4>
-                    <p className="text-sm text-gray-400 font-light italic uppercase tracking-widest truncate">{d.subtitle}</p>
+                    <p className="text-sm text-gray-400 font-light italic uppercase tracking-widest">{d.subtitle}</p>
                   </div>
                   <div className={`w-12 h-12 rounded-full border border-black/10 flex items-center justify-center transition-all ${expandedD === d.id ? 'bg-[var(--jesuites-blue)] text-white rotate-180' : 'text-[var(--jesuites-blue)]'}`}><ChevronDown size={20} /></div>
                 </div>
@@ -251,18 +251,19 @@ export default function Home() {
                       <span className="text-xs md:text-base font-bold text-gray-400 uppercase tracking-[.4em] block truncate">{l.sub}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-12 shrink-0">
-                    <div className="relative w-24 h-24 md:w-36 md:h-36 flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-[10px] md:border-[14px] border-black/[0.05]" />
-                      <svg className="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="50%" cy="50%" r="41.5%" className="stroke-[var(--jesuites-blue)] fill-transparent stroke-[10] md:stroke-[14]" strokeDasharray="1000" strokeDashoffset={(1000 - (1000 * (l.human / 100))).toString()} strokeLinecap="round" />
+                  <div className="flex items-center gap-6 md:gap-12 shrink-0">
+                    <div className="relative w-20 h-20 md:w-36 md:h-36 flex items-center justify-center">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--jesuites-blue)]/5 to-transparent" />
+                      <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" className="fill-transparent stroke-black/[0.05]" strokeWidth="8" />
+                        <circle cx="50" cy="50" r="42" className="fill-transparent stroke-[var(--jesuites-blue)]" strokeWidth="8" strokeDasharray={`${2 * Math.PI * 42}`} strokeDashoffset={`${2 * Math.PI * 42 * (1 - l.human / 100)}`} strokeLinecap="round" />
                       </svg>
-                      <div className="flex flex-col items-center">
-                        <span className="text-2xl md:text-5xl font-bold font-serif text-[var(--jesuites-blue)] leading-none">{l.human}%</span>
-                        <span className="text-[8px] md:text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">HUMÀ</span>
+                      <div className="flex flex-col items-center relative z-10">
+                        <span className="text-xl md:text-4xl font-bold font-serif text-[var(--jesuites-blue)] leading-none">{l.human}%</span>
+                        <span className="text-[7px] md:text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-widest">HUMÀ</span>
                       </div>
                     </div>
-                    <div className={`w-12 h-12 rounded-full border border-black/10 flex items-center justify-center transition-all ${expandedLv === l.lv ? 'bg-[var(--jesuites-blue)] text-white rotate-180' : 'text-[var(--jesuites-blue)]'}`}><ChevronDown size={20} /></div>
+                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full border border-black/10 flex items-center justify-center transition-all ${expandedLv === l.lv ? 'bg-[var(--jesuites-blue)] text-white rotate-180' : 'text-[var(--jesuites-blue)]'}`}><ChevronDown size={20} /></div>
                   </div>
                 </div>
                 <div className={`transition-all duration-700 overflow-hidden ${expandedLv === l.lv ? 'max-h-[1400px] opacity-100 p-8 md:p-14 md:pt-0' : 'max-h-0 opacity-0'}`}>
