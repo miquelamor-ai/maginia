@@ -68,12 +68,8 @@ export default function Home() {
             </div>
             <div className="flex flex-col justify-between h-full py-4 space-y-16 lg:space-y-0">
               <div>
-                <h3 className="text-2xl md:text-3xl tracking-[0.1em] uppercase font-serif text-[var(--jesuites-blue)] mb-6">Introducció</h3>
-                <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-12 font-serif leading-tight">Raons de <br />fons</h2>
-
-                <p className="text-[var(--jesuites-text)]/60 text-lg max-w-4xl mx-auto leading-relaxed mb-16">
-                  La integració de l'IA neix d'una doble convicció: renovar la nostra tradició educativa i preparar-nos per un món en transformació accelerada. Els següents principis i objectius guien aquesta mirada humanitzadora i crítica.
-                </p>
+                <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Propòsit Docent</span>
+                <h2 className="text-6xl md:text-8xl font-bold text-[var(--jesuites-blue)] mb-0 tracking-tighter leading-none font-serif uppercase">Raons de <span className="italic opacity-60">fons</span></h2>
               </div>
               <div className="space-y-10">
                 <div className="bg-black/5 p-12 rounded-[3.5rem] border border-black/5 hover:bg-[var(--jesuites-cream)] transition-all">
@@ -116,7 +112,7 @@ export default function Home() {
       <section id="principles-section" className="reveal-section py-40 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-32 px-6">
           <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Cultura Institucional</span>
-          <h2 className="text-6xl md:text-[10rem] font-bold text-[var(--jesuites-blue)] tracking-tighter font-serif uppercase leading-tight">Valors i Principis</h2>
+          <h2 className="text-6xl md:text-[10rem] font-bold text-[var(--jesuites-blue)] tracking-tighter font-serif uppercase leading-tight">Valors Rectors</h2>
         </div>
         <div className="space-y-6">
           {PRINCIPLES.map((p) => (
@@ -152,8 +148,8 @@ export default function Home() {
         <div className="absolute inset-0 opacity-10 pointer-events-none"><Image src="/imatges/mirades-obertes-3.jpg" alt="Bg" fill className="object-cover grayscale" /></div>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="mb-32 text-center px-6">
-            <span className="text-white/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Marc de Reflexió Crítica i Ètica</span>
-            <h2 className="text-6xl md:text-[12rem] font-bold mb-10 tracking-tighter italic font-serif leading-none uppercase">Tensions<br />Dialèctiques</h2>
+            <span className="text-white/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Reflexió Dialèctica</span>
+            <h2 className="text-6xl md:text-[12rem] font-bold mb-10 tracking-tighter italic font-serif leading-none uppercase">Habitar les <br />Tensions</h2>
           </div>
 
           <div className="space-y-8 max-w-6xl mx-auto tensions-container">
@@ -207,7 +203,7 @@ export default function Home() {
           <div className="lg:col-span-5 mb-16 lg:mb-0">
             <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Capacitació Operativa</span>
             <h2 className="text-6xl md:text-[10rem] font-bold text-[var(--jesuites-blue)] tracking-tighter leading-none font-serif uppercase mb-12 italic">Model<br />4D</h2>
-            <p className="text-2xl md:text-3xl font-light text-gray-500 leading-snug italic">Quatre destreses operatives que converteixen qualsevol educador o alumne en un agent capaç i crític amb la IA. Adaptat del model de Dakan & Feller.</p>
+            <p className="text-2xl md:text-3xl font-light text-gray-500 leading-snug italic">Quatre destreses que converteixen qualsevol docent o alumne en un agent capaç i crític amb la IA.</p>
           </div>
           <div className="lg:col-span-7 space-y-6">
             {MODEL_4D.map((d) => (
@@ -243,9 +239,6 @@ export default function Home() {
           <div className="mb-48">
             <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Interacció Humà - IA</span>
             <h2 className="text-6xl md:text-[10rem] font-bold text-[var(--jesuites-blue)] mb-12 tracking-tighter font-serif uppercase leading-none italic">NIVELLS DE <br />DELEGACIÓ</h2>
-            <p className="text-[var(--jesuites-text)]/60 text-lg md:text-xl max-w-5xl mx-auto leading-relaxed mb-16 text-center">
-              Sis graus de col·laboració entre persones i IA, des de la preservació total de l'activitat humana fins a l'agència autònoma supervisada. La visualització en escala permet veure la gradació del nivell de responsabilitat humana a cada pas.
-            </p>
           </div>
           <div className="space-y-6">
             {DELEGATION_LEVELS.map((l) => (

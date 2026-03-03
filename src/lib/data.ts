@@ -256,8 +256,8 @@ export const VOTE_COLORS: Record<string, string> = {
 export const NAV_LINKS: NavLink[] = [
     { name: "Inici", id: "hero-top" },
     { name: "Raons de fons", id: "details-intro" },
-    { name: "Valors i Principis", id: "principles-section" },
-    { name: "Tensions Dialèctiques", id: "tensions-section" },
+    { name: "Valors Rectors", id: "principles-section" },
+    { name: "Tensions", id: "tensions-section" },
     { name: "Model 4D", id: "model-4d-section" },
     { name: "Nivells", id: "delegation-section" },
     { name: "Visió Compartida", id: "results-dashboard" }
