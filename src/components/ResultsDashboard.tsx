@@ -59,11 +59,13 @@ export default function ResultsDashboard() {
     const visibleItems = useMemo(() => {
         if (!filterBy) return currentItems;
         return currentItems.filter(itemId => {
+            const hasVotes = data.some(v => v.item_id === itemId);
+            if (!hasVotes) return false;
             const stats = getStats(itemId);
             const dominant = [...stats].sort((a, b) => b.percent - a.percent)[0];
             return dominant?.type === filterBy;
         });
-    }, [currentItems, filterBy, getStats]);
+    }, [currentItems, filterBy, getStats, data]);
 
     return (
         <div className="bg-white/5 backdrop-blur-3xl rounded-[4rem] p-6 md:p-16 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.3)]">
