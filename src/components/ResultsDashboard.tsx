@@ -122,11 +122,11 @@ export default function ResultsDashboard() {
                                 <div className="flex justify-between items-start mb-4 gap-3">
                                     <div className="min-w-0">
                                         {activeSection === "global" && (
-                                            <span className={`text-xs font-black uppercase tracking-widest ${col.label} block mb-1`}>
+                                            <span className={`text-sm font-black uppercase tracking-widest ${col.label} block mb-1.5`}>
                                                 {itemSectionMap.nameMap[itemId]}
                                             </span>
                                         )}
-                                        <h4 className="text-lg md:text-xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
+                                        <h4 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
                                             {itemId.replace("nivell", "Nivell ").replace("D", "Dimensió D")}
                                         </h4>
                                     </div>
@@ -143,7 +143,7 @@ export default function ResultsDashboard() {
                                             <div className="flex justify-between items-center text-sm font-bold uppercase tracking-wider">
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full shrink-0 ${VOTE_COLORS[s.type]}`} />
-                                                    <span className={s.percent > 0 ? 'text-white/80' : 'text-white/25'}>{VOTE_LABELS[s.type]}</span>
+                                                    <span className={s.percent > 0 ? 'text-white' : 'text-white/50'}>{VOTE_LABELS[s.type]}</span>
                                                 </div>
                                                 <span className={`text-base font-serif italic ${s.percent > 0 ? 'text-amber-200' : 'text-white/20'}`}>{s.percent}%</span>
                                             </div>
