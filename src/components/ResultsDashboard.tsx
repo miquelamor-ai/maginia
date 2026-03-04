@@ -5,6 +5,14 @@ import { Check, Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { DASHBOARD_SECTIONS, VOTE_LABELS, VOTE_COLORS } from "@/lib/data";
 
+const SECTION_COLORS: Record<string, { border: string; label: string; activeBg: string; activeText: string }> = {
+    objectius: { border: "border-t-amber-400",   label: "text-amber-400",   activeBg: "bg-amber-400",   activeText: "text-[var(--jesuites-blue)]" },
+    valors:    { border: "border-t-emerald-400", label: "text-emerald-400", activeBg: "bg-emerald-400", activeText: "text-[var(--jesuites-blue)]" },
+    tensions:  { border: "border-t-rose-400",    label: "text-rose-400",    activeBg: "bg-rose-400",    activeText: "text-white" },
+    model4d:   { border: "border-t-violet-400",  label: "text-violet-400",  activeBg: "bg-violet-400",  activeText: "text-white" },
+    delegacio: { border: "border-t-cyan-400",    label: "text-cyan-400",    activeBg: "bg-cyan-400",    activeText: "text-[var(--jesuites-blue)]" },
+};
+
 export default function ResultsDashboard() {
     const [activeSection, setActiveSection] = useState("global");
     const [sortBy, setSortBy] = useState<string | null>(null);
@@ -38,11 +46,14 @@ export default function ResultsDashboard() {
         ? allItems
         : DASHBOARD_SECTIONS.find(s => s.id === activeSection)?.items || [];
 
-    // Map item → section name for global view labels
     const itemSectionMap = useMemo(() => {
-        const map: Record<string, string> = {};
-        DASHBOARD_SECTIONS.forEach(s => s.items.forEach(item => { map[item] = s.name; }));
-        return map;
+        const nameMap: Record<string, string> = {};
+        const idMap: Record<string, string> = {};
+        DASHBOARD_SECTIONS.forEach(s => s.items.forEach(item => {
+            nameMap[item] = s.name;
+            idMap[item] = s.id;
+        }));
+        return { nameMap, idMap };
     }, []);
 
     const sortedItems = useMemo(() => {
@@ -64,15 +75,18 @@ export default function ResultsDashboard() {
                 >
                     <Globe size={16} /> Global
                 </button>
-                {DASHBOARD_SECTIONS.map(s => (
-                    <button
-                        key={s.id}
-                        onClick={() => setActiveSection(s.id)}
-                        className={`px-6 py-3 md:px-8 md:py-4 rounded-3xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-500 ${activeSection === s.id ? 'bg-amber-200 text-[var(--jesuites-blue)] shadow-xl scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10 border border-white/5'}`}
-                    >
-                        {s.name}
-                    </button>
-                ))}
+                {DASHBOARD_SECTIONS.map(s => {
+                    const col = SECTION_COLORS[s.id];
+                    return (
+                        <button
+                            key={s.id}
+                            onClick={() => setActiveSection(s.id)}
+                            className={`px-6 py-3 md:px-8 md:py-4 rounded-3xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-500 ${activeSection === s.id ? `${col.activeBg} ${col.activeText} shadow-xl scale-105` : 'bg-white/5 text-white/40 hover:bg-white/10 border border-white/5'}`}
+                        >
+                            {s.name}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Selector d'Ordenació */}
@@ -96,19 +110,23 @@ export default function ResultsDashboard() {
                     <div className="animate-pulse text-amber-200 uppercase tracking-widest text-sm font-bold">Processant dades de la comunitat...</div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                     {sortedItems.map(itemId => {
                         const stats = getStats(itemId);
                         const dominant = [...stats].sort((a, b) => b.percent - a.percent)[0];
+                        const sectionId = itemSectionMap.idMap[itemId];
+                        const col = SECTION_COLORS[sectionId] ?? SECTION_COLORS.objectius;
 
                         return (
-                            <div key={itemId} className="group bg-white/[0.04] backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/5 hover:border-amber-200/30 transition-all duration-300 hover:bg-white/[0.07]">
-                                <div className="flex justify-between items-start mb-5 gap-3">
+                            <div key={itemId} className={`group bg-white/[0.04] backdrop-blur-md rounded-2xl border-t-2 ${col.border} border border-white/5 p-5 md:p-6 hover:bg-white/[0.08] transition-all duration-300`}>
+                                <div className="flex justify-between items-start mb-4 gap-3">
                                     <div className="min-w-0">
                                         {activeSection === "global" && (
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-200/50 block mb-1">{itemSectionMap[itemId]}</span>
+                                            <span className={`text-xs font-black uppercase tracking-widest ${col.label} block mb-1`}>
+                                                {itemSectionMap.nameMap[itemId]}
+                                            </span>
                                         )}
-                                        <h4 className="text-base md:text-lg font-bold uppercase tracking-tight text-white font-serif leading-tight">
+                                        <h4 className="text-lg md:text-xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
                                             {itemId.replace("nivell", "Nivell ").replace("D", "Dimensió D")}
                                         </h4>
                                     </div>
@@ -122,14 +140,14 @@ export default function ResultsDashboard() {
                                 <div className="space-y-3">
                                     {stats.map(s => (
                                         <div key={s.type} className="space-y-1.5">
-                                            <div className="flex justify-between items-center text-xs font-bold uppercase tracking-wider">
+                                            <div className="flex justify-between items-center text-sm font-bold uppercase tracking-wider">
                                                 <div className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full shrink-0 ${VOTE_COLORS[s.type]}`} />
                                                     <span className={s.percent > 0 ? 'text-white/80' : 'text-white/25'}>{VOTE_LABELS[s.type]}</span>
                                                 </div>
-                                                <span className={`font-serif italic ${s.percent > 0 ? 'text-amber-200' : 'text-white/20'}`}>{s.percent}%</span>
+                                                <span className={`text-base font-serif italic ${s.percent > 0 ? 'text-amber-200' : 'text-white/20'}`}>{s.percent}%</span>
                                             </div>
-                                            <div className="h-2 bg-black/30 rounded-full overflow-hidden">
+                                            <div className="h-2.5 bg-black/30 rounded-full overflow-hidden">
                                                 <div
                                                     className={`h-full ${VOTE_COLORS[s.type]} transition-all duration-[1.5s] ease-out rounded-full`}
                                                     style={{ width: `${s.percent}%` }}
