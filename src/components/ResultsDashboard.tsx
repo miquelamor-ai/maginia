@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Check, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { DASHBOARD_SECTIONS, VOTE_LABELS, VOTE_COLORS } from "@/lib/data";
 
@@ -15,7 +15,7 @@ const SECTION_COLORS: Record<string, { border: string; label: string; activeBg: 
 
 export default function ResultsDashboard() {
     const [activeSection, setActiveSection] = useState("global");
-    const [sortBy, setSortBy] = useState<string | null>(null);
+    const [filterBy, setFilterBy] = useState<string | null>(null);
     const [data, setData] = useState<{ item_id: string; vote_type: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -56,14 +56,14 @@ export default function ResultsDashboard() {
         return { nameMap, idMap };
     }, []);
 
-    const sortedItems = useMemo(() => {
-        return [...currentItems].sort((a, b) => {
-            if (!sortBy) return 0;
-            const statsA = getStats(a).find(s => s.type === sortBy)?.percent || 0;
-            const statsB = getStats(b).find(s => s.type === sortBy)?.percent || 0;
-            return statsB - statsA;
+    const visibleItems = useMemo(() => {
+        if (!filterBy) return currentItems;
+        return currentItems.filter(itemId => {
+            const stats = getStats(itemId);
+            const dominant = [...stats].sort((a, b) => b.percent - a.percent)[0];
+            return dominant?.type === filterBy;
         });
-    }, [currentItems, sortBy, getStats]);
+    }, [currentItems, filterBy, getStats]);
 
     return (
         <div className="bg-white/5 backdrop-blur-3xl rounded-[4rem] p-6 md:p-16 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.3)]">
@@ -71,7 +71,7 @@ export default function ResultsDashboard() {
             <div className="flex flex-wrap gap-3 mb-12 justify-center">
                 <button
                     onClick={() => setActiveSection("global")}
-                    className={`px-6 py-3 md:px-8 md:py-4 rounded-3xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-500 flex items-center gap-2 ${activeSection === "global" ? 'bg-white text-[var(--jesuites-blue)] shadow-xl scale-105 ring-2 ring-amber-200' : 'bg-white/10 text-white/60 hover:bg-white/15 border border-white/10'}`}
+                    className={`px-6 py-3 md:px-8 md:py-4 rounded-3xl text-sm md:text-base font-bold uppercase tracking-widest transition-all duration-500 flex items-center gap-2 ${activeSection === "global" ? 'bg-white text-[var(--jesuites-blue)] shadow-xl scale-105 ring-2 ring-amber-200' : 'bg-white/10 text-white/60 hover:bg-white/15 border border-white/10'}`}
                 >
                     <Globe size={16} /> Global
                 </button>
@@ -81,7 +81,7 @@ export default function ResultsDashboard() {
                         <button
                             key={s.id}
                             onClick={() => setActiveSection(s.id)}
-                            className={`px-6 py-3 md:px-8 md:py-4 rounded-3xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-500 ${activeSection === s.id ? `${col.activeBg} ${col.activeText} shadow-xl scale-105` : 'bg-white/5 text-white/40 hover:bg-white/10 border border-white/5'}`}
+                            className={`px-6 py-3 md:px-8 md:py-4 rounded-3xl text-sm md:text-base font-bold uppercase tracking-widest transition-all duration-500 ${activeSection === s.id ? `${col.activeBg} ${col.activeText} shadow-xl scale-105` : 'bg-white/5 text-white/50 hover:bg-white/10 border border-white/5'}`}
                         >
                             {s.name}
                         </button>
@@ -89,19 +89,31 @@ export default function ResultsDashboard() {
                 })}
             </div>
 
-            {/* Selector d'Ordenació */}
+            {/* Filtre per percepció dominant */}
             <div className="flex flex-wrap gap-3 mb-16 justify-center border-t border-white/5 pt-10">
-                <span className="w-full text-center text-xs uppercase tracking-widest text-white/40 mb-4 font-bold italic">Ordena per percepció dominant:</span>
+                <span className="w-full text-center text-sm uppercase tracking-widest text-white/50 mb-4 font-bold italic">
+                    Filtra per percepció dominant:
+                </span>
+                <button
+                    onClick={() => setFilterBy(null)}
+                    className={`px-7 py-3 md:px-9 md:py-4 rounded-2xl text-sm md:text-base font-bold uppercase tracking-widest transition-all duration-300 ${filterBy === null ? 'bg-white text-[var(--jesuites-blue)] shadow-lg scale-105' : 'bg-white/10 text-white/60 hover:bg-white/15 border border-white/10'}`}
+                >
+                    Totes
+                </button>
                 {Object.entries(VOTE_LABELS).map(([id, label]) => (
                     <button
                         key={id}
-                        onClick={() => setSortBy(sortBy === id ? null : id)}
-                        className={`px-5 py-2.5 md:px-6 md:py-3 rounded-2xl text-xs md:text-sm font-bold uppercase tracking-widest flex items-center gap-2 transition-all ${sortBy === id ? 'bg-white text-[var(--jesuites-blue)] shadow-lg scale-105' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+                        onClick={() => setFilterBy(filterBy === id ? null : id)}
+                        className={`px-7 py-3 md:px-9 md:py-4 rounded-2xl text-sm md:text-base font-bold uppercase tracking-widest transition-all duration-300 ${filterBy === id ? `${VOTE_COLORS[id]} text-white shadow-lg scale-105` : 'bg-white/5 text-white/60 hover:bg-white/10 border border-white/10'}`}
                     >
-                        {sortBy === id && <Check size={14} strokeWidth={4} />}
                         {label}
                     </button>
                 ))}
+                {filterBy && (
+                    <span className="w-full text-center text-xs text-white/30 mt-2 italic">
+                        {visibleItems.length} resultat{visibleItems.length !== 1 ? 's' : ''} on &quot;{VOTE_LABELS[filterBy]}&quot; és la percepció dominant
+                    </span>
+                )}
             </div>
 
             {isLoading ? (
@@ -109,9 +121,13 @@ export default function ResultsDashboard() {
                     <div className="w-12 h-12 border-4 border-amber-200 border-t-transparent rounded-full animate-spin" />
                     <div className="animate-pulse text-amber-200 uppercase tracking-widest text-sm font-bold">Processant dades de la comunitat...</div>
                 </div>
+            ) : visibleItems.length === 0 ? (
+                <div className="text-center py-24 text-white/30 text-lg font-bold uppercase tracking-widest italic">
+                    Cap resultat amb aquesta percepció dominant
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-                    {sortedItems.map(itemId => {
+                    {visibleItems.map(itemId => {
                         const stats = getStats(itemId);
                         const dominant = [...stats].sort((a, b) => b.percent - a.percent)[0];
                         const sectionId = itemSectionMap.idMap[itemId];
