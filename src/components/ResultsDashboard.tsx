@@ -5,6 +5,12 @@ import { Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { DASHBOARD_SECTIONS, VOTE_LABELS, VOTE_COLORS } from "@/lib/data";
 
+const ITEM_NAMES: Record<string, string> = {
+    D1: "Delegació", D2: "Descripció", D3: "Discerniment", D4: "Diligència",
+    nivell0: "L0: Preservació", nivell1: "L1: Exploració", nivell2: "L2: Suport",
+    nivell3: "L3: Cocreació",   nivell4: "L4: Delegació",  nivell5: "L5: Agència",
+};
+
 const SECTION_COLORS: Record<string, { border: string; label: string; activeBg: string; activeText: string }> = {
     objectius: { border: "border-t-amber-400",   label: "text-amber-400",   activeBg: "bg-amber-400",   activeText: "text-[var(--jesuites-blue)]" },
     valors:    { border: "border-t-emerald-400", label: "text-emerald-400", activeBg: "bg-emerald-400", activeText: "text-[var(--jesuites-blue)]" },
@@ -145,7 +151,7 @@ export default function ResultsDashboard() {
                                             </span>
                                         )}
                                         <h4 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-white font-serif leading-tight">
-                                            {itemId.replace("nivell", "Nivell ").replace("D", "Dimensió D")}
+                                            {ITEM_NAMES[itemId] ?? itemId}
                                         </h4>
                                     </div>
                                     {dominant && dominant.percent > 50 && (
