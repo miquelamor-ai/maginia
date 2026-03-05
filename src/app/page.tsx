@@ -21,7 +21,7 @@ export default function Home() {
   const [expandedLv, setExpandedLv] = useState<number | null>(null);
   const [expandedTension, setExpandedTension] = useState<string | null>(null);
 
-  const SECTION_IDS = ['hero-top', 'details-intro', 'principles-section', 'tensions-section', 'model-4d-section', 'delegation-section', 'results-dashboard', 'footer-fje'];
+  const SECTION_IDS = ['hero-top', 'video-section', 'details-intro', 'principles-section', 'tensions-section', 'model-4d-section', 'delegation-section', 'results-dashboard', 'footer-fje'];
 
   const scrollToTop = (el: HTMLElement) => {
     const top = el.getBoundingClientRect().top + window.scrollY;
@@ -79,9 +79,28 @@ export default function Home() {
             <h1 className="text-7xl md:text-[10rem] lg:text-[12rem] xl:text-[14rem] font-bold text-white leading-[0.75] tracking-tighter uppercase drop-shadow-2xl font-serif">MIRADES<br />OBERTES</h1>
           </div>
           <p className="hero-text text-lg md:text-2xl lg:text-3xl font-light text-white/50 uppercase tracking-[0.4em] font-serif max-w-5xl mx-auto italic">Navegant l&apos;Era de la Intel·ligència Artificial <br className="hidden md:block" />des de l&apos;Humanisme i el Diàleg</p>
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce cursor-pointer" onClick={() => scrollToSection('details-intro')}>
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce cursor-pointer" onClick={() => scrollToSection('video-section')}>
             <ChevronDown size={40} className="text-white" />
           </div>
+        </div>
+      </section>
+
+      {/* 1b. VÍDEO */}
+      <section id="video-section" className="snap-start relative h-screen flex flex-col items-center justify-center overflow-hidden bg-[var(--jesuites-blue)]">
+        <div className="absolute inset-0 opacity-10 pointer-events-none"><Image src="/imatges/mirades-obertes-3.jpg" alt="Bg" fill className="object-cover grayscale" /></div>
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center">
+          <span className="text-white/30 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Presentació del Marc</span>
+          <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+            <iframe
+              src="https://www.youtube.com/embed/XKRatG2RCSo"
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 opacity-30 animate-bounce cursor-pointer" onClick={() => scrollToSection('details-intro')}>
+          <ChevronDown size={40} className="text-white" />
         </div>
       </section>
 
