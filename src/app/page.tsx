@@ -23,6 +23,11 @@ export default function Home() {
 
   const SECTION_IDS = ['hero-top', 'details-intro', 'principles-section', 'tensions-section', 'model-4d-section', 'delegation-section', 'results-dashboard', 'footer-fje'];
 
+  const scrollToTop = (el: HTMLElement) => {
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from(".hero-text", { y: 150, opacity: 0, stagger: 0.2, duration: 2, ease: "expo.out" });
@@ -140,7 +145,7 @@ export default function Home() {
         </div>
         <div className="space-y-6">
           {PRINCIPLES.map((p) => (
-            <div key={p.id} onClick={() => setExpandedValue(expandedValue === p.id ? null : p.id)} className={`bg-white rounded-[3.5rem] transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedValue === p.id ? 'shadow-2xl ring-4 ring-[var(--jesuites-blue)]/5' : 'shadow-sm'}`}>
+            <div key={p.id} onClick={(e) => { const opening = expandedValue !== p.id; if (opening) scrollToTop(e.currentTarget); setExpandedValue(opening ? p.id : null); }} className={`bg-white rounded-[3.5rem] transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedValue === p.id ? 'shadow-2xl ring-4 ring-[var(--jesuites-blue)]/5' : 'shadow-sm'}`}>
               <div className="p-8 md:p-10 flex flex-col md:flex-row items-center gap-10 cursor-pointer group">
                 <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shrink-0 transition-all duration-500 ${expandedValue === p.id ? 'bg-[var(--jesuites-blue)] text-white' : 'bg-[var(--jesuites-cream)] text-[var(--jesuites-blue)] group-hover:scale-110'}`}><p.icon size={36} /></div>
                 <div className="flex-1 text-center md:text-left">
@@ -178,7 +183,7 @@ export default function Home() {
 
           <div className="space-y-8 max-w-6xl mx-auto tensions-container">
             {TENSIONS.map((t) => (
-              <div key={t.id} onClick={() => setExpandedTension(expandedTension === t.id ? null : t.id)} className={`bg-white/5 backdrop-blur-md rounded-[3.5rem] border border-white/10 transition-all duration-700 overflow-hidden group cursor-pointer ${expandedTension === t.id ? 'ring-4 ring-white/10 shadow-2xl scale-[1.02]' : 'hover:bg-white/10'}`}>
+              <div key={t.id} onClick={(e) => { const opening = expandedTension !== t.id; if (opening) scrollToTop(e.currentTarget); setExpandedTension(opening ? t.id : null); }} className={`bg-white/5 backdrop-blur-md rounded-[3.5rem] border border-white/10 transition-all duration-700 overflow-hidden group cursor-pointer ${expandedTension === t.id ? 'ring-4 ring-white/10 shadow-2xl scale-[1.02]' : 'hover:bg-white/10'}`}>
                 <div className="p-10 md:p-12 flex flex-col md:flex-row justify-between items-center gap-10">
                   <div className="flex-1 text-center md:text-left">
                     <h4 className="text-3xl md:text-5xl font-bold uppercase tracking-widest text-amber-200 font-serif leading-none mb-4">{t.title}</h4>
@@ -231,7 +236,7 @@ export default function Home() {
           </div>
           <div className="lg:col-span-7 space-y-6">
             {MODEL_4D.map((d) => (
-              <div key={d.id} onClick={() => setExpandedD(expandedD === d.id ? null : d.id)} className={`bg-white rounded-[3.5rem] border border-black/[0.04] overflow-hidden transition-all duration-700 cursor-pointer ${expandedD === d.id ? 'shadow-2xl ring-4 ring-[var(--jesuites-blue)]/5' : 'shadow-sm'}`}>
+              <div key={d.id} onClick={(e) => { const opening = expandedD !== d.id; if (opening) scrollToTop(e.currentTarget); setExpandedD(opening ? d.id : null); }} className={`bg-white rounded-[3.5rem] border border-black/[0.04] overflow-hidden transition-all duration-700 cursor-pointer ${expandedD === d.id ? 'shadow-2xl ring-4 ring-[var(--jesuites-blue)]/5' : 'shadow-sm'}`}>
                 <div className="p-8 md:p-10 flex items-center gap-8 group">
                   <div className={`w-16 h-16 md:w-20 md:h-20 rounded-[2rem] flex items-center justify-center shrink-0 transition-all ${expandedD === d.id ? 'bg-[var(--jesuites-blue)] text-white' : 'bg-[var(--jesuites-cream)] text-[var(--jesuites-blue)] group-hover:scale-110'}`}><d.icon size={32} /></div>
                   <div className="flex-1 min-w-0">
@@ -266,7 +271,7 @@ export default function Home() {
           </div>
           <div className="space-y-6">
             {DELEGATION_LEVELS.map((l) => (
-              <div key={l.lv} onClick={() => setExpandedLv(expandedLv === l.lv ? null : l.lv)} className={`bg-white rounded-[3.5rem] md:rounded-[4rem] transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedLv === l.lv ? 'shadow-2xl ring-4 ring-[var(--jesuites-blue)]/5' : 'shadow-sm opacity-90'}`}>
+              <div key={l.lv} onClick={(e) => { const opening = expandedLv !== l.lv; if (opening) scrollToTop(e.currentTarget); setExpandedLv(opening ? l.lv : null); }} className={`bg-white rounded-[3.5rem] md:rounded-[4rem] transition-all duration-700 border border-black/[0.04] overflow-hidden ${expandedLv === l.lv ? 'shadow-2xl ring-4 ring-[var(--jesuites-blue)]/5' : 'shadow-sm opacity-90'}`}>
                 <div className="p-8 md:p-10 flex flex-col md:flex-row items-center gap-10 cursor-pointer group">
                   <div className="flex-1 flex items-center gap-10 md:gap-14 min-w-0 w-full overflow-hidden">
                     <span className="text-8xl md:text-[11.5rem] font-bold text-[var(--jesuites-blue)] opacity-15 font-serif leading-none md:-mt-4 shrink-0 transition-opacity group-hover:opacity-30">{l.lv}</span>
