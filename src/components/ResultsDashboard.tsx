@@ -123,88 +123,76 @@ export default function ResultsDashboard() {
                 </div>
             ) : viewMode === "resum" ? (
                 /* ── VISTA RESUM ── */
-                <div className="space-y-10">
+                <div className="space-y-8">
                     {/* Capçalera global */}
-                    <div className="flex flex-col md:flex-row items-center gap-6 bg-white/[0.03] rounded-2xl p-6 md:p-8 border border-white/5">
-                        <div className="text-center md:text-left shrink-0">
-                            <div className="text-5xl md:text-7xl font-bold font-serif text-white leading-none">{summary.totalVotes}</div>
-                            <div className="text-xs uppercase tracking-widest text-white/40 mt-1 font-bold">vots totals</div>
+                    <div className="bg-white/[0.03] rounded-2xl p-6 md:p-8 border border-white/5">
+                        <div className="flex items-baseline gap-4 mb-5">
+                            <span className="text-4xl md:text-5xl font-bold font-serif text-white leading-none">{summary.totalVotes}</span>
+                            <span className="text-sm uppercase tracking-widest text-white/40 font-bold">vots totals de la comunitat</span>
                         </div>
-                        <div className="flex-1 w-full space-y-3">
-                            {/* Barra global apilada */}
-                            <div className="flex h-8 rounded-full overflow-hidden gap-px">
-                                {summary.globalByType.map(t => (
-                                    <div
-                                        key={t.type}
-                                        className={`${VOTE_COLORS[t.type]} transition-all duration-[1.5s] ease-out first:rounded-l-full last:rounded-r-full`}
-                                        style={{ width: `${t.percent}%` }}
-                                        title={`${VOTE_LABELS[t.type]}: ${t.percent}%`}
-                                    />
-                                ))}
-                            </div>
-                            {/* Llegenda */}
-                            <div className="flex flex-wrap gap-x-5 gap-y-1">
-                                {summary.globalByType.map(t => (
-                                    <div key={t.type} className="flex items-center gap-2">
-                                        <div className={`w-3 h-3 rounded-full ${VOTE_COLORS[t.type]}`} />
-                                        <span className="text-xs font-bold text-white/70 uppercase tracking-wider">{VOTE_LABELS[t.type]}</span>
-                                        <span className="text-xs font-serif italic text-amber-200">{t.percent}%</span>
+                        <div className="space-y-2.5">
+                            {summary.globalByType.map(t => (
+                                <div key={t.type} className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 w-28 shrink-0">
+                                        <div className={`w-2.5 h-2.5 rounded-full ${VOTE_COLORS[t.type]}`} />
+                                        <span className="text-sm font-bold text-white uppercase tracking-wide">{VOTE_LABELS[t.type]}</span>
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="flex-1 h-3 bg-black/30 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full ${VOTE_COLORS[t.type]} transition-all duration-[1.5s] ease-out rounded-full`}
+                                            style={{ width: `${t.percent}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-base font-serif italic text-amber-200 w-10 text-right shrink-0">{t.percent}%</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Files per categoria */}
-                    <div className="space-y-3">
-                        {summary.bySection.map(s => {
-                            const col = SECTION_COLORS[s.id];
-                            return (
-                                <div key={s.id} className={`rounded-2xl p-5 md:p-6 border border-white/5 ${col.bg}`}>
-                                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                                        {/* Nom categoria */}
-                                        <div className="md:w-40 shrink-0">
-                                            <div className={`text-base font-black uppercase tracking-widest ${col.label}`}>{s.name}</div>
-                                            <div className="text-xs text-white/30 mt-0.5">{s.totalVotes} vots · {s.items.length} ítems</div>
-                                        </div>
-                                        {/* Barra apilada */}
-                                        <div className="flex-1 space-y-2">
-                                            {s.totalVotes > 0 ? (
-                                                <>
-                                                    <div className="flex h-5 rounded-full overflow-hidden gap-px">
-                                                        {s.byType.map(t => (
-                                                            <div
-                                                                key={t.type}
-                                                                className={`${VOTE_COLORS[t.type]} transition-all duration-[1.5s] ease-out first:rounded-l-full last:rounded-r-full`}
-                                                                style={{ width: `${t.percent}%` }}
-                                                                title={`${VOTE_LABELS[t.type]}: ${t.percent}%`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-                                                        {s.byType.filter(t => t.percent > 0).map(t => (
-                                                            <span key={t.type} className="text-xs text-white/50 uppercase tracking-wide">
-                                                                {VOTE_LABELS[t.type]} <span className="text-amber-200 font-serif italic">{t.percent}%</span>
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="h-5 rounded-full bg-white/10 flex items-center px-3">
-                                                    <span className="text-xs text-white/25 italic">Sense vots encara</span>
+                    {/* Targetes per categoria */}
+                    <div>
+                        <p className="text-xs uppercase tracking-widest text-white/30 font-bold mb-4 text-center">Percepció per àmbit</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {summary.bySection.map(s => {
+                                const col = SECTION_COLORS[s.id];
+                                return (
+                                    <div key={s.id} className={`rounded-2xl border-t-2 ${col.border} border border-white/5 p-5 ${col.bg}`}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className={`text-base font-black uppercase tracking-widest ${col.label}`}>{s.name}</div>
+                                                <div className="text-xs text-white/30 mt-0.5">{s.items.length} ítems · {s.totalVotes} vots</div>
+                                            </div>
+                                            {s.dominant && s.totalVotes > 0 && (
+                                                <div className={`px-2.5 py-1 rounded-full ${VOTE_COLORS[s.dominant.type]} text-white text-[10px] font-black uppercase tracking-wider shrink-0`}>
+                                                    {VOTE_LABELS[s.dominant.type]}
                                                 </div>
                                             )}
                                         </div>
-                                        {/* Percepció dominant */}
-                                        {s.dominant && s.totalVotes > 0 && (
-                                            <div className={`shrink-0 px-3 py-1.5 rounded-full ${VOTE_COLORS[s.dominant.type]} text-white text-xs font-black uppercase tracking-wider`}>
-                                                {VOTE_LABELS[s.dominant.type]} {s.dominant.percent}%
+                                        {s.totalVotes > 0 ? (
+                                            <div className="space-y-2.5">
+                                                {s.byType.map(t => (
+                                                    <div key={t.type} className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-1.5 w-24 shrink-0">
+                                                            <div className={`w-2 h-2 rounded-full shrink-0 ${VOTE_COLORS[t.type]}`} />
+                                                            <span className={`text-xs font-bold uppercase tracking-wide ${t.percent > 0 ? 'text-white' : 'text-white/30'}`}>{VOTE_LABELS[t.type]}</span>
+                                                        </div>
+                                                        <div className="flex-1 h-2 bg-black/30 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full ${VOTE_COLORS[t.type]} transition-all duration-[1.5s] ease-out rounded-full`}
+                                                                style={{ width: `${t.percent}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className={`text-sm font-serif italic w-8 text-right shrink-0 ${t.percent > 0 ? 'text-amber-200' : 'text-white/20'}`}>{t.percent}%</span>
+                                                    </div>
+                                                ))}
                                             </div>
+                                        ) : (
+                                            <p className="text-xs text-white/25 italic">Sense vots encara</p>
                                         )}
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             ) : (
