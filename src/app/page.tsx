@@ -21,6 +21,8 @@ export default function Home() {
   const [expandedLv, setExpandedLv] = useState<number | null>(null);
   const [expandedTension, setExpandedTension] = useState<string | null>(null);
 
+  const SECTION_IDS = ['hero-top', 'details-intro', 'principles-section', 'tensions-section', 'model-4d-section', 'delegation-section', 'results-dashboard', 'footer-fje'];
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from(".hero-text", { y: 150, opacity: 0, stagger: 0.2, duration: 2, ease: "expo.out" });
@@ -31,6 +33,28 @@ export default function Home() {
     return () => ctx.revert();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp'].includes(e.key)) return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      e.preventDefault();
+
+      const scrollY = window.scrollY + window.innerHeight * 0.4;
+      let currentIdx = 0;
+      for (let i = SECTION_IDS.length - 1; i >= 0; i--) {
+        const el = document.getElementById(SECTION_IDS[i]);
+        if (el && el.offsetTop <= scrollY) { currentIdx = i; break; }
+      }
+
+      const isDown = e.key === 'ArrowDown' || e.key === 'PageDown';
+      const nextIdx = isDown ? Math.min(currentIdx + 1, SECTION_IDS.length - 1) : Math.max(currentIdx - 1, 0);
+      if (nextIdx !== currentIdx) scrollToSection(SECTION_IDS[nextIdx]);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <main ref={containerRef} className="relative min-h-screen bg-[var(--jesuites-cream)] pb-64 font-sans leading-relaxed text-[var(--jesuites-text)]">
 
@@ -38,7 +62,7 @@ export default function Home() {
       <FloatingMenu />
 
       {/* 1. HERO */}
-      <section id="hero-top" className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section id="hero-top" className="snap-start relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0 bg-black">
           <Image src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2000" alt="Background" fill className="object-cover opacity-50 scale-10" priority />
           <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-[var(--jesuites-cream)]" />
@@ -57,7 +81,7 @@ export default function Home() {
       </section>
 
       {/* 2. INTRODUCCIÓ (MOTIUS I OBJECTIUS) */}
-      <section id="details-intro" className="reveal-section py-40 px-6 bg-white overflow-hidden border-b border-black/5">
+      <section id="details-intro" className="snap-start reveal-section py-40 px-6 bg-white overflow-hidden border-b border-black/5">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-start mb-48">
             <div className="relative group w-full aspect-square md:aspect-auto md:h-[650px]">
@@ -109,7 +133,7 @@ export default function Home() {
       </section>
 
       {/* 3. VALORS RECTORS */}
-      <section id="principles-section" className="reveal-section py-40 px-6 max-w-7xl mx-auto">
+      <section id="principles-section" className="snap-start reveal-section py-40 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-32 px-6">
           <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-6 block font-serif">Cultura Institucional</span>
           <h2 className="text-6xl md:text-[10rem] font-bold text-[var(--jesuites-blue)] tracking-tighter font-serif uppercase leading-tight">Valors Rectors</h2>
@@ -144,7 +168,7 @@ export default function Home() {
       </section>
 
       {/* 4. TENSIONS */}
-      <section id="tensions-section" className="reveal-section py-40 bg-[var(--jesuites-blue)] text-white overflow-hidden relative border-b border-white/5">
+      <section id="tensions-section" className="snap-start reveal-section py-40 bg-[var(--jesuites-blue)] text-white overflow-hidden relative border-b border-white/5">
         <div className="absolute inset-0 opacity-10 pointer-events-none"><Image src="/imatges/mirades-obertes-3.jpg" alt="Bg" fill className="object-cover grayscale" /></div>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="mb-32 text-center px-6">
@@ -198,7 +222,7 @@ export default function Home() {
       </section>
 
       {/* 5. MODEL 4D */}
-      <section id="model-4d-section" className="reveal-section py-40 px-6 bg-[var(--jesuites-cream)] overflow-hidden">
+      <section id="model-4d-section" className="snap-start reveal-section py-40 px-6 bg-[var(--jesuites-cream)] overflow-hidden">
         <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-12 gap-24 items-start">
           <div className="lg:col-span-5 mb-16 lg:mb-0">
             <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Capacitació Operativa</span>
@@ -234,7 +258,7 @@ export default function Home() {
       </section>
 
       {/* 6. NIVELLS DE DELEGACIÓ */}
-      <section id="delegation-section" className="reveal-section py-40 px-6 bg-white">
+      <section id="delegation-section" className="snap-start reveal-section py-40 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="mb-48">
             <span className="text-[var(--jesuites-blue)]/40 font-bold tracking-[0.4em] uppercase text-xs mb-8 block font-serif">Interacció Humà - IA</span>
@@ -279,7 +303,7 @@ export default function Home() {
       </section>
 
       {/* 7. DASHBOARD DE RESULTATS (VISIÓ COMPARTIDA) */}
-      <section id="results-dashboard" className="reveal-section py-40 px-6 bg-[var(--jesuites-blue)] text-white overflow-hidden relative">
+      <section id="results-dashboard" className="snap-start reveal-section py-40 px-6 bg-[var(--jesuites-blue)] text-white overflow-hidden relative">
         <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-24">
@@ -294,7 +318,7 @@ export default function Home() {
       </section>
 
       {/* 8. FOOTER */}
-      <footer id="footer-fje" className="py-40 text-center bg-white border-t border-black/5">
+      <footer id="footer-fje" className="snap-start py-40 text-center bg-white border-t border-black/5">
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex justify-center mb-16 opacity-30 grayscale brightness-0"><Image src="/imatges/FJE-trans.png" alt="Logo FJE" width={280} height={100} className="h-auto w-48 md:w-64" /></div>
           <p className="text-[11px] font-bold uppercase tracking-[0.5em] text-gray-300 mt-20">Jesuïtes Educació • Marc General IA 2026</p>
