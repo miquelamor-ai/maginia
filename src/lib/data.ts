@@ -231,17 +231,17 @@ export const DELEGATION_LEVELS: DelegationLevel[] = [
 // ─── VOTE TYPES ──────────────────────────────────────────────────
 
 export const VOTE_TYPES: VoteType[] = [
-    { id: "agree", label: "D'acord", color: "bg-green-500", icon: CheckCircle2 },
     { id: "worry", label: "M'inquieta", color: "bg-orange-500", icon: AlertCircle },
-    { id: "doubt", label: "Tinc dubtes", color: "bg-blue-500", icon: HelpCircle },
+    { id: "doubt", label: "Em genera dubtes", color: "bg-blue-500", icon: HelpCircle },
+    { id: "agree", label: "D'acord", color: "bg-green-500", icon: CheckCircle2 },
     { id: "inspired", label: "M'inspira", color: "bg-purple-500", icon: Lightbulb }
 ];
 
 export const VOTE_LABELS: Record<string, string> = {
+    worry: "M'inquieta",
+    doubt: "Em genera dubtes",
     agree: "D'acord",
-    worry: "Inquietud",
-    doubt: "Dubtes",
-    inspired: "Inspiració"
+    inspired: "M'inspira"
 };
 
 export const VOTE_COLORS: Record<string, string> = {
