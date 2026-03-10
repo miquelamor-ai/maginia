@@ -107,7 +107,7 @@ export default function FacilitadorPage() {
     setBaseUrl(window.location.origin);
   }, []);
 
-  const participantUrl = `${baseUrl}/mapa/${phase}`;
+  const participantUrl = `${baseUrl}/mapa/sessio`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(participantUrl)}&bgcolor=1a2744&color=ffffff&format=svg`;
 
   const scenarios = phase === "calibra" ? CALIBRA_SCENARIOS : VALIDA_SCENARIOS;
