@@ -233,47 +233,36 @@ export default function FacilitadorPage() {
     <main className="min-h-screen bg-[var(--jesuites-blue)] text-white font-sans select-none overflow-hidden">
       <div className="max-w-5xl mx-auto px-8 py-8 h-screen flex flex-col">
 
-        {/* Top Bar */}
-        <div className="flex items-center justify-between mb-6 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-              <Sparkles size={24} />
+        {/* Top Bar — Row 1: Logo + Controls */}
+        <div className="flex items-center justify-between mb-3 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+              <Sparkles size={20} />
             </div>
-            <div>
-              <h1 className="text-lg font-bold uppercase tracking-tighter">MAGINIA · Facilitador</h1>
-              <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Pantalla Gran</p>
-            </div>
+            <h1 className="text-base font-bold uppercase tracking-tight">MAGINIA · Facilitador</h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Session toggle */}
+          <div className="flex items-center gap-2">
             <button
               onClick={toggleSession}
               className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white shadow-lg animate-pulse" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
             >
               {sessionActive ? "Sessió activa" : "Iniciar sessió"}
             </button>
-
-            {/* Participant count */}
-            <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl">
-              <Users size={14} />
+            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-2 rounded-xl">
+              <Users size={13} />
               <span className="text-sm font-bold">{totalParticipants}</span>
-              <span className="text-[9px] text-white/50 font-bold uppercase tracking-wider">participants</span>
             </div>
-
-            {/* QR Code button */}
             <button
               onClick={() => setShowQR(true)}
-              className="p-2.5 rounded-xl bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+              className="p-2 rounded-xl bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
               title="Mostra QR per als participants"
             >
               <QrCode size={14} />
             </button>
-
-            {/* Auto-refresh toggle */}
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`p-2.5 rounded-xl transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/40"}`}
+              className={`p-2 rounded-xl transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/40"}`}
               title={autoRefresh ? "Auto-refresh actiu" : "Auto-refresh pausat"}
             >
               <RefreshCw size={14} className={autoRefresh ? "animate-spin" : ""} style={autoRefresh ? { animationDuration: "3s" } : {}} />
@@ -301,51 +290,49 @@ export default function FacilitadorPage() {
           </div>
         )}
 
-        {/* Phase Toggle */}
-        <div className="flex justify-center gap-2 mb-6 shrink-0">
+        {/* Phase Toggle + Progress */}
+        <div className="flex items-center justify-center gap-4 mb-4 shrink-0">
           <button
             onClick={() => switchPhase("calibra")}
-            className={`px-6 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+            className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
           >
-            Fase 1: Calibra ({CALIBRA_SCENARIOS.length})
+            Calibra ({CALIBRA_SCENARIOS.length})
           </button>
+          <div className="flex gap-1.5">
+            {scenarios.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => { setCurrentIdx(i); setIsRevealed(false); }}
+                className={`h-2 rounded-full transition-all cursor-pointer ${
+                  i === currentIdx ? "w-10 bg-white" :
+                  i < currentIdx ? "w-5 bg-white/40" : "w-5 bg-white/15"
+                }`}
+              />
+            ))}
+          </div>
           <button
             onClick={() => switchPhase("valida")}
-            className={`px-6 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all ${phase === "valida" ? "bg-amber-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+            className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${phase === "valida" ? "bg-amber-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
           >
-            Fase 3: Valida ({VALIDA_SCENARIOS.length})
+            Valida ({VALIDA_SCENARIOS.length})
           </button>
-        </div>
-
-        {/* Progress bar */}
-        <div className="flex gap-2 justify-center mb-8 shrink-0">
-          {scenarios.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => { setCurrentIdx(i); setIsRevealed(false); }}
-              className={`h-2 rounded-full transition-all cursor-pointer ${
-                i === currentIdx ? "w-12 bg-white" :
-                i < currentIdx ? "w-6 bg-white/40" : "w-6 bg-white/15"
-              }`}
-            />
-          ))}
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col justify-center min-h-0">
 
           {/* Scenario Display */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-white/30 text-xs font-bold uppercase tracking-[0.3em]">
-                Escenari {currentIdx + 1} de {scenarios.length}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-white/30 text-[10px] font-bold uppercase tracking-[0.3em]">
+                Escenari {currentIdx + 1}/{scenarios.length}
               </span>
-              <span className="text-sm font-bold bg-white/10 px-4 py-1.5 rounded-full">
+              <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full">
                 {scenario.context}
               </span>
             </div>
 
-            <p className="text-2xl md:text-3xl font-medium leading-relaxed text-white/90">
+            <p className="text-xl md:text-2xl font-medium leading-relaxed text-white/90">
               {scenario.text}
             </p>
           </div>
