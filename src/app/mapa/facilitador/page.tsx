@@ -230,42 +230,34 @@ export default function FacilitadorPage() {
   // ─── Render ────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-[var(--jesuites-blue)] text-white font-sans select-none overflow-hidden">
-      <div className="max-w-5xl mx-auto px-8 py-8 h-screen flex flex-col">
+    <main className="h-screen bg-[var(--jesuites-blue)] text-white font-sans select-none overflow-hidden">
+      <div className="max-w-6xl mx-auto px-6 py-3 h-full flex flex-col">
 
-        {/* Top Bar — Row 1: Logo + Controls */}
-        <div className="flex items-center justify-between mb-3 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-              <Sparkles size={20} />
-            </div>
-            <h1 className="text-base font-bold uppercase tracking-tight">MAGINIA · Facilitador</h1>
+        {/* Row 1: Header bar */}
+        <div className="flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-white/60" />
+            <span className="text-sm font-bold uppercase tracking-tight">Facilitador</span>
           </div>
-
           <div className="flex items-center gap-2">
             <button
               onClick={toggleSession}
-              className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white shadow-lg animate-pulse" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white animate-pulse" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
             >
               {sessionActive ? "Sessió activa" : "Iniciar sessió"}
             </button>
-            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-2 rounded-xl">
-              <Users size={13} />
-              <span className="text-sm font-bold">{totalParticipants}</span>
+            <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1.5 rounded-lg">
+              <Users size={12} />
+              <span className="text-xs font-bold">{totalParticipants}</span>
             </div>
-            <button
-              onClick={() => setShowQR(true)}
-              className="p-2 rounded-xl bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
-              title="Mostra QR per als participants"
-            >
-              <QrCode size={14} />
+            <button onClick={() => setShowQR(true)} className="p-1.5 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
+              <QrCode size={13} />
             </button>
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`p-2 rounded-xl transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/40"}`}
-              title={autoRefresh ? "Auto-refresh actiu" : "Auto-refresh pausat"}
+              className={`p-1.5 rounded-lg transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/40"}`}
             >
-              <RefreshCw size={14} className={autoRefresh ? "animate-spin" : ""} style={autoRefresh ? { animationDuration: "3s" } : {}} />
+              <RefreshCw size={13} className={autoRefresh ? "animate-spin" : ""} style={autoRefresh ? { animationDuration: "3s" } : {}} />
             </button>
           </div>
         </div>
@@ -290,224 +282,190 @@ export default function FacilitadorPage() {
           </div>
         )}
 
-        {/* Phase Toggle + Progress */}
-        <div className="flex items-center justify-center gap-4 mb-4 shrink-0 relative z-10">
+        {/* Row 2: Phase tabs + progress dots */}
+        <div className="flex items-center justify-center gap-3 py-2 shrink-0">
           <button
             onClick={() => switchPhase("calibra")}
-            className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
           >
-            Calibra ({CALIBRA_SCENARIOS.length})
+            Calibra
           </button>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1">
             {scenarios.map((_, i) => (
               <button
                 key={i}
                 onClick={() => { setCurrentIdx(i); setIsRevealed(false); }}
-                className={`h-2 rounded-full transition-all cursor-pointer ${
-                  i === currentIdx ? "w-10 bg-white" :
-                  i < currentIdx ? "w-5 bg-white/40" : "w-5 bg-white/15"
+                className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                  i === currentIdx ? "w-8 bg-white" :
+                  i < currentIdx ? "w-4 bg-white/40" : "w-4 bg-white/15"
                 }`}
               />
             ))}
           </div>
           <button
             onClick={() => switchPhase("valida")}
-            className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${phase === "valida" ? "bg-amber-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${phase === "valida" ? "bg-amber-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
           >
-            Valida ({VALIDA_SCENARIOS.length})
+            Valida
           </button>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pt-4">
-
-          {/* Scenario Display */}
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-white/30 text-[10px] font-bold uppercase tracking-[0.3em]">
-                Escenari {currentIdx + 1}/{scenarios.length}
-              </span>
-              <span className="text-xs font-bold bg-white/10 px-3 py-1 rounded-full">
-                {scenario.context}
-              </span>
-            </div>
-
-            <p className="text-xl md:text-2xl font-medium leading-relaxed text-white/90">
-              {scenario.text}
-            </p>
+        {/* Row 3: Scenario text — takes available space but no scroll */}
+        <div className="shrink-0 py-2">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-white/30 text-[9px] font-bold uppercase tracking-[0.2em]">
+              {currentIdx + 1}/{scenarios.length}
+            </span>
+            <span className="text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded-full">
+              {scenario.context}
+            </span>
           </div>
-
-          {/* Vote Counter + Reveal */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <BarChart3 size={16} className="text-white/40" />
-              <span className="text-sm font-bold text-white/60">
-                {phase === "calibra" ? calibraTotal : validaTotal} vots rebuts
-              </span>
-              {!isRevealed && (
-                <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest animate-pulse">
-                  esperant vots...
-                </span>
-              )}
-            </div>
-
-            <button
-              onClick={() => setIsRevealed(!isRevealed)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all ${
-                isRevealed
-                  ? "bg-white/20 text-white hover:bg-white/30"
-                  : "bg-white text-[var(--jesuites-blue)] shadow-lg hover:shadow-xl hover:scale-105"
-              }`}
-            >
-              {isRevealed ? <><EyeOff size={14} /> Amagar</> : <><Eye size={14} /> Revelar</>}
-            </button>
-          </div>
-
-          {/* Results Area */}
-          <div className={`transition-all duration-700 ${isRevealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
-            {phase === "calibra" && (
-              <div className="space-y-4">
-                {/* Distribution bars */}
-                <div className="grid grid-cols-6 gap-3">
-                  {calibraDistribution.map(dl => {
-                    const pct = calibraTotal > 0 ? (dl.count / calibraTotal) * 100 : 0;
-                    const isCorrect = dl.n === (scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel;
-                    return (
-                      <div key={dl.n} className="text-center">
-                        {/* Bar */}
-                        <div className="h-32 flex flex-col justify-end mb-2 relative">
-                          <div
-                            className={`rounded-t-xl transition-all duration-700 ${isCorrect ? "ring-2 ring-white" : ""} ${dl.color}`}
-                            style={{ height: `${calibraMaxCount > 0 ? (dl.count / calibraMaxCount) * 100 : 0}%`, minHeight: dl.count > 0 ? "12px" : "0" }}
-                          />
-                        </div>
-                        {/* Label */}
-                        <div className={`py-2 rounded-xl ${isCorrect ? "bg-white/20 ring-2 ring-white/50" : "bg-white/5"}`}>
-                          <span className="text-lg font-bold block">{dl.count}</span>
-                          <span className="text-[10px] font-bold block opacity-60">{dl.label}</span>
-                          <span className="text-[8px] block opacity-40">{dl.name}</span>
-                        </div>
-                        {isCorrect && (
-                          <span className="text-[9px] font-bold text-emerald-300 mt-1 block uppercase tracking-widest">✓ Correcte</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Correct answer explanation */}
-                <div className="bg-white/10 rounded-2xl px-6 py-4 mt-4 flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].color}`}>
-                    <span className="text-sm font-bold">{DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].label}</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white/80 leading-relaxed">
-                      {(scenario as typeof CALIBRA_SCENARIOS[number]).explanation}
-                    </p>
-                    <span className={`inline-block mt-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg ${
-                      (scenario as typeof CALIBRA_SCENARIOS[number]).tag === "outsourcing" ? "bg-red-500/30 text-red-200" : "bg-blue-500/30 text-blue-200"
-                    }`}>
-                      {(scenario as typeof CALIBRA_SCENARIOS[number]).tag === "outsourcing" ? "⚠ Outsourcing cognitiu" : "✓ Offloading legítim"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {phase === "valida" && (
-              <div className="space-y-4">
-                {/* Yes / No bars */}
-                <div className="grid grid-cols-2 gap-6">
-                  {/* Yes */}
-                  <div className="bg-emerald-500/20 rounded-3xl p-6 text-center border border-emerald-400/20">
-                    <span className="text-5xl font-bold text-emerald-300 block">{validaYes}</span>
-                    <span className="text-sm font-bold text-emerald-400/80 block mt-1">Sí, ho aprovo</span>
-                    {validaTotal > 0 && (
-                      <span className="text-2xl font-bold text-emerald-300/60 block mt-2">{Math.round((validaYes / validaTotal) * 100)}%</span>
-                    )}
-                  </div>
-                  {/* No */}
-                  <div className="bg-rose-500/20 rounded-3xl p-6 text-center border border-rose-400/20">
-                    <span className="text-5xl font-bold text-rose-300 block">{validaNo}</span>
-                    <span className="text-sm font-bold text-rose-400/80 block mt-1">No, ho rebutjo</span>
-                    {validaTotal > 0 && (
-                      <span className="text-2xl font-bold text-rose-300/60 block mt-2">{Math.round((validaNo / validaTotal) * 100)}%</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Consensus indicator */}
-                {validaTotal > 0 && (() => {
-                  const maxPct = Math.max(validaYes, validaNo) / validaTotal * 100;
-                  const vs = scenario as typeof VALIDA_SCENARIOS[number];
-                  return (
-                    <div className={`rounded-2xl px-6 py-4 text-center ${
-                      maxPct >= 80 ? "bg-emerald-500/20 border border-emerald-400/20" :
-                      maxPct >= 60 ? "bg-amber-500/20 border border-amber-400/20" :
-                      "bg-rose-500/20 border border-rose-400/20"
-                    }`}>
-                      <span className="text-lg font-bold block mb-1">
-                        {maxPct >= 80 ? "Consens fort" : maxPct >= 60 ? "Tendència clara" : "Divisió — Cal debat!"}
-                      </span>
-                      <div className="flex justify-center gap-3 mt-2">
-                        {vs.impliedLevel >= 0 && (
-                          <span className="text-[10px] font-bold bg-white/10 px-3 py-1.5 rounded-lg">
-                            {DELEG_LABELS[vs.impliedLevel].label} · {DELEG_LABELS[vs.impliedLevel].name}
-                          </span>
-                        )}
-                        {vs.impliedLevel === -1 && (
-                          <span className="text-[10px] font-bold bg-blue-500/30 text-blue-200 px-3 py-1.5 rounded-lg">Ús docent</span>
-                        )}
-                        <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg ${
-                          vs.tag === "outsourcing" ? "bg-red-500/30 text-red-200" : "bg-blue-500/30 text-blue-200"
-                        }`}>
-                          {vs.tag === "outsourcing" ? "⚠ Outsourcing" : "✓ Offloading"}
-                        </span>
-                        <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg ${
-                          vs.friction === "alta" ? "bg-emerald-500/30 text-emerald-200" :
-                          vs.friction === "nul·la" ? "bg-red-500/30 text-red-200" :
-                          "bg-amber-500/30 text-amber-200"
-                        }`}>
-                          Fricció {vs.friction}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
+          <p className="text-lg md:text-xl font-medium leading-snug text-white/90">
+            {scenario.text}
+          </p>
         </div>
 
-        {/* Bottom Controls */}
-        <div className="flex items-center justify-between pt-6 shrink-0 border-t border-white/10">
+        {/* Row 4: Vote count + Reveal button */}
+        <div className="flex items-center justify-between py-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <BarChart3 size={14} className="text-white/40" />
+            <span className="text-xs font-bold text-white/60">
+              {phase === "calibra" ? calibraTotal : validaTotal} vots
+            </span>
+            {!isRevealed && (
+              <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest animate-pulse">
+                esperant...
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setIsRevealed(!isRevealed)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+              isRevealed
+                ? "bg-white/20 text-white hover:bg-white/30"
+                : "bg-white text-[var(--jesuites-blue)] shadow-lg hover:shadow-xl"
+            }`}
+          >
+            {isRevealed ? <><EyeOff size={12} /> Amagar</> : <><Eye size={12} /> Revelar</>}
+          </button>
+        </div>
+
+        {/* Row 5: Results — flex-1 to fill remaining space */}
+        <div className={`flex-1 min-h-0 transition-all duration-500 ${isRevealed ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+          {phase === "calibra" && (
+            <div className="h-full flex flex-col gap-2">
+              {/* Distribution bars + labels */}
+              <div className="flex-1 grid grid-cols-6 gap-2 min-h-0">
+                {calibraDistribution.map(dl => {
+                  const isCorrect = dl.n === (scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel;
+                  return (
+                    <div key={dl.n} className="flex flex-col text-center min-h-0">
+                      {/* Bar area — takes remaining space */}
+                      <div className="flex-1 flex flex-col justify-end min-h-0">
+                        <div
+                          className={`rounded-t-lg transition-all duration-700 ${isCorrect ? "ring-2 ring-white" : ""} ${dl.color}`}
+                          style={{ height: `${calibraMaxCount > 0 ? (dl.count / calibraMaxCount) * 100 : 0}%`, minHeight: dl.count > 0 ? "8px" : "0" }}
+                        />
+                      </div>
+                      {/* Label */}
+                      <div className={`py-1.5 rounded-lg mt-1 ${isCorrect ? "bg-white/20 ring-1 ring-white/50" : "bg-white/5"}`}>
+                        <span className="text-base font-bold block">{dl.count}</span>
+                        <span className="text-[9px] font-bold block opacity-60">{dl.label} · {dl.name}</span>
+                      </div>
+                      {isCorrect && (
+                        <span className="text-[8px] font-bold text-emerald-300 mt-0.5 block uppercase">✓ Correcte</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Explanation — compact */}
+              <div className="bg-white/10 rounded-xl px-4 py-2 flex items-center gap-3 shrink-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].color}`}>
+                  <span className="text-xs font-bold">{DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].label}</span>
+                </div>
+                <p className="text-xs text-white/80 leading-snug flex-1">
+                  {(scenario as typeof CALIBRA_SCENARIOS[number]).explanation}
+                </p>
+                <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded shrink-0 ${
+                  (scenario as typeof CALIBRA_SCENARIOS[number]).tag === "outsourcing" ? "bg-red-500/30 text-red-200" : "bg-blue-500/30 text-blue-200"
+                }`}>
+                  {(scenario as typeof CALIBRA_SCENARIOS[number]).tag === "outsourcing" ? "⚠ Outsourcing" : "✓ Offloading"}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {phase === "valida" && (
+            <div className="h-full flex flex-col gap-2">
+              {/* Yes / No */}
+              <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
+                <div className="bg-emerald-500/20 rounded-2xl p-4 flex flex-col items-center justify-center border border-emerald-400/20">
+                  <span className="text-4xl font-bold text-emerald-300">{validaYes}</span>
+                  <span className="text-xs font-bold text-emerald-400/80 mt-1">Sí, ho aprovo</span>
+                  {validaTotal > 0 && <span className="text-xl font-bold text-emerald-300/60 mt-1">{Math.round((validaYes / validaTotal) * 100)}%</span>}
+                </div>
+                <div className="bg-rose-500/20 rounded-2xl p-4 flex flex-col items-center justify-center border border-rose-400/20">
+                  <span className="text-4xl font-bold text-rose-300">{validaNo}</span>
+                  <span className="text-xs font-bold text-rose-400/80 mt-1">No, ho rebutjo</span>
+                  {validaTotal > 0 && <span className="text-xl font-bold text-rose-300/60 mt-1">{Math.round((validaNo / validaTotal) * 100)}%</span>}
+                </div>
+              </div>
+              {/* Consensus */}
+              {validaTotal > 0 && (() => {
+                const maxPct = Math.max(validaYes, validaNo) / validaTotal * 100;
+                const vs = scenario as typeof VALIDA_SCENARIOS[number];
+                return (
+                  <div className={`rounded-xl px-4 py-2 flex items-center justify-between shrink-0 ${
+                    maxPct >= 80 ? "bg-emerald-500/20 border border-emerald-400/20" :
+                    maxPct >= 60 ? "bg-amber-500/20 border border-amber-400/20" :
+                    "bg-rose-500/20 border border-rose-400/20"
+                  }`}>
+                    <span className="text-sm font-bold">
+                      {maxPct >= 80 ? "Consens fort" : maxPct >= 60 ? "Tendència clara" : "Divisió — Cal debat!"}
+                    </span>
+                    <div className="flex gap-2">
+                      {vs.impliedLevel >= 0 && (
+                        <span className="text-[9px] font-bold bg-white/10 px-2 py-1 rounded">{DELEG_LABELS[vs.impliedLevel].label} · {DELEG_LABELS[vs.impliedLevel].name}</span>
+                      )}
+                      {vs.impliedLevel === -1 && (
+                        <span className="text-[9px] font-bold bg-blue-500/30 text-blue-200 px-2 py-1 rounded">Ús docent</span>
+                      )}
+                      <span className={`text-[9px] font-bold px-2 py-1 rounded ${vs.tag === "outsourcing" ? "bg-red-500/30 text-red-200" : "bg-blue-500/30 text-blue-200"}`}>
+                        {vs.tag === "outsourcing" ? "⚠ Outsourcing" : "✓ Offloading"}
+                      </span>
+                      <span className={`text-[9px] font-bold px-2 py-1 rounded ${
+                        vs.friction === "alta" ? "bg-emerald-500/30 text-emerald-200" :
+                        vs.friction === "nul·la" ? "bg-red-500/30 text-red-200" : "bg-amber-500/30 text-amber-200"
+                      }`}>Fricció {vs.friction}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+
+        {/* Row 6: Bottom nav */}
+        <div className="flex items-center justify-between pt-2 shrink-0 border-t border-white/10">
           <button
             onClick={goPrev}
             disabled={currentIdx === 0}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/10 text-sm font-bold uppercase tracking-widest disabled:opacity-20 hover:bg-white/20 transition-all"
+            className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/10 text-xs font-bold uppercase tracking-widest disabled:opacity-20 hover:bg-white/20 transition-all"
           >
-            <ChevronLeft size={16} /> Anterior
+            <ChevronLeft size={14} /> Anterior
           </button>
-
-          <div className="flex items-center gap-4">
-            <span className="text-white/30 text-xs font-bold">
-              {phase === "calibra" ? "CALIBRA" : "VALIDA"} · {currentIdx + 1}/{scenarios.length}
-            </span>
-          </div>
-
+          <span className="text-white/30 text-[10px] font-bold">
+            {phase === "calibra" ? "CALIBRA" : "VALIDA"} · {currentIdx + 1}/{scenarios.length}
+          </span>
           <button
             onClick={goNext}
             disabled={currentIdx === scenarios.length - 1}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/10 text-sm font-bold uppercase tracking-widest disabled:opacity-20 hover:bg-white/20 transition-all"
+            className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/10 text-xs font-bold uppercase tracking-widest disabled:opacity-20 hover:bg-white/20 transition-all"
           >
-            Següent <ChevronRight size={16} />
+            Següent <ChevronRight size={14} />
           </button>
         </div>
-
-        {/* Instructions */}
-        <p className="text-center text-[9px] text-white/20 font-bold uppercase tracking-widest mt-4">
-          Participants: obriu /mapa/calibra o /mapa/valida al mòbil
-        </p>
       </div>
     </main>
   );
