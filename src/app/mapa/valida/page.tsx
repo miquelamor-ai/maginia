@@ -214,23 +214,34 @@ export default function ValidaPage() {
 
   const totalAnswered = Object.keys(answers).filter(k => answers[k] !== null).length;
 
-  // Check consistency with map declarations
-  const checkConsistency = (s: ValidationScenario, approved: boolean): { consistent: boolean; reason: string } | null => {
-    if (Object.keys(myMap).length === 0) return null;
+  // ─── Course mapping ────────────────────────────────────────
+  const courseMapping: Record<string, string> = {
+    "val-01": "ESO-3",
+    "val-02": "ESO-4",
+    "val-03": "ESO-2",
+    "val-04": "BATX",
+    "val-05": "PRI-CS",
+    "val-06": "ESO-1",
+    "val-07": "ESO-2",
+    "val-08": "ESO-4",
+    "val-09": "ESO-1",
+    "val-10": "BATX",
+  };
 
-    // Map scenario context to course
-    const courseMapping: Record<string, string> = {
-      "val-01": "ESO-3",
-      "val-02": "ESO-4",
-      "val-03": "ESO-2",
-      "val-04": "BATX",
-      "val-05": "PRI-CS",
-      "val-06": "ESO-1",
-      "val-07": "ESO-2",
-      "val-08": "ESO-4",
-      "val-09": "ESO-1",
-      "val-10": "BATX",
+  interface ConsistencyResult {
+    consistent: boolean;
+    reason: string;
+    fix?: {
+      courseId: string;
+      field: string;        // e.g. "teacher_outside", "student_access", "delegation_n4"
+      currentValue: boolean;
+      label: string;        // human-readable action
     };
+  }
+
+  // Check consistency with map declarations
+  const checkConsistency = (s: ValidationScenario, approved: boolean): ConsistencyResult | null => {
+    if (Object.keys(myMap).length === 0) return null;
 
     const courseId = courseMapping[s.id];
     const courseData = myMap[courseId];
@@ -239,10 +250,18 @@ export default function ValidaPage() {
     // Teacher scenario (val-03)
     if (s.impliedLevel === -1) {
       if (approved && !courseData.teacher_outside) {
-        return { consistent: false, reason: `Has aprovat ús docent fora de l'aula, però al mapa has declarat que el docent NO usa IA fora de l'aula a ${courseId}.` };
+        return {
+          consistent: false,
+          reason: `Has aprovat ús docent fora de l'aula, però al mapa has declarat que el docent NO usa IA fora de l'aula a ${courseId}.`,
+          fix: { courseId, field: "teacher_outside", currentValue: false, label: `Activar "Docent fora de l'aula" a ${courseId}` },
+        };
       }
       if (!approved && courseData.teacher_outside) {
-        return { consistent: false, reason: `Has rebutjat ús docent fora de l'aula, però al mapa has declarat que SÍ que l'usa a ${courseId}.` };
+        return {
+          consistent: false,
+          reason: `Has rebutjat ús docent fora de l'aula, però al mapa has declarat que SÍ que l'usa a ${courseId}.`,
+          fix: { courseId, field: "teacher_outside", currentValue: true, label: `Desactivar "Docent fora de l'aula" a ${courseId}` },
+        };
       }
       return { consistent: true, reason: "Coherent amb la teva declaració de docent fora de l'aula." };
     }
@@ -250,22 +269,60 @@ export default function ValidaPage() {
     // Student scenarios
     if (approved) {
       if (!courseData.student_access) {
-        return { consistent: false, reason: `Has aprovat aquest ús d'alumnat, però al mapa has declarat que l'alumnat NO accedeix a la IA a ${courseId}.` };
+        return {
+          consistent: false,
+          reason: `Has aprovat aquest ús d'alumnat, però al mapa has declarat que l'alumnat NO accedeix a la IA a ${courseId}.`,
+          fix: { courseId, field: "student_access", currentValue: false, label: `Activar accés alumnat a IA a ${courseId}` },
+        };
       }
       const delegKey = `delegation_n${s.impliedLevel}` as keyof RowData;
       if (!(courseData[delegKey] as boolean)) {
-        return { consistent: false, reason: `Has aprovat un escenari de nivell ${DELEG_LABELS[s.impliedLevel].label} (${DELEG_LABELS[s.impliedLevel].name}), però al mapa no has activat aquest nivell per a ${courseId}.` };
+        return {
+          consistent: false,
+          reason: `Has aprovat un escenari de nivell ${DELEG_LABELS[s.impliedLevel].label} (${DELEG_LABELS[s.impliedLevel].name}), però al mapa no has activat aquest nivell per a ${courseId}.`,
+          fix: { courseId, field: `delegation_n${s.impliedLevel}`, currentValue: false, label: `Activar ${DELEG_LABELS[s.impliedLevel].label} (${DELEG_LABELS[s.impliedLevel].name}) a ${courseId}` },
+        };
       }
       return { consistent: true, reason: `Coherent: has activat ${DELEG_LABELS[s.impliedLevel].label} per a ${courseId}.` };
     } else {
       if (courseData.student_access) {
         const delegKey = `delegation_n${s.impliedLevel}` as keyof RowData;
         if (courseData[delegKey] as boolean) {
-          return { consistent: false, reason: `Has rebutjat un escenari de nivell ${DELEG_LABELS[s.impliedLevel].label}, però al mapa SÍ que permets aquest nivell a ${courseId}. Potser vols restringir-lo?` };
+          return {
+            consistent: false,
+            reason: `Has rebutjat un escenari de nivell ${DELEG_LABELS[s.impliedLevel].label}, però al mapa SÍ que permets aquest nivell a ${courseId}. Potser vols restringir-lo?`,
+            fix: { courseId, field: `delegation_n${s.impliedLevel}`, currentValue: true, label: `Desactivar ${DELEG_LABELS[s.impliedLevel].label} (${DELEG_LABELS[s.impliedLevel].name}) a ${courseId}` },
+          };
         }
       }
       return { consistent: true, reason: "Coherent amb les teves restriccions." };
     }
+  };
+
+  // ─── Fix map directly from Valida ─────────────────────────
+  const [fixApplied, setFixApplied] = useState<Record<string, boolean>>({});
+
+  const applyFix = async (scenarioId: string, fix: NonNullable<ConsistencyResult["fix"]>) => {
+    const courseData = myMap[fix.courseId];
+    if (!courseData) return;
+
+    // Build update
+    const newValue = !fix.currentValue;
+    const update: Record<string, unknown> = { [fix.field]: newValue };
+
+    // Update local state
+    setMyMap(prev => ({
+      ...prev,
+      [fix.courseId]: { ...prev[fix.courseId], [fix.field]: newValue } as RowData,
+    }));
+
+    // Persist to Supabase
+    await supabase.from("mapa_declarations").update(update)
+      .eq("session_id", sessionId)
+      .eq("course_id", fix.courseId);
+
+    // Mark as fixed
+    setFixApplied(prev => ({ ...prev, [scenarioId]: true }));
   };
 
   const handleAnswer = (approved: boolean) => {
@@ -559,20 +616,48 @@ export default function ValidaPage() {
             <div className="space-y-4">
               {/* Consistency Check */}
               {consistency && (
-                <div className={`rounded-3xl p-5 border ${consistency.consistent ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    {consistency.consistent ? (
-                      <Check size={16} className="text-emerald-600" />
-                    ) : (
-                      <AlertTriangle size={16} className="text-amber-600" />
-                    )}
-                    <p className={`text-[11px] font-bold uppercase tracking-widest ${consistency.consistent ? "text-emerald-700" : "text-amber-700"}`}>
-                      {consistency.consistent ? "Coherent amb el teu mapa" : "Incoherència detectada"}
-                    </p>
-                  </div>
-                  <p className={`text-xs leading-relaxed ${consistency.consistent ? "text-emerald-600" : "text-amber-700"}`}>
-                    {consistency.reason}
-                  </p>
+                <div className={`rounded-3xl p-5 border ${
+                  fixApplied[scenario.id] ? "bg-emerald-50 border-emerald-200" :
+                  consistency.consistent ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                }`}>
+                  {fixApplied[scenario.id] ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Check size={16} className="text-emerald-600" />
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
+                          Mapa actualitzat!
+                        </p>
+                      </div>
+                      <p className="text-xs leading-relaxed text-emerald-600">
+                        S&apos;ha corregit la teva declaració. Ara el mapa és coherent amb la teva resposta.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        {consistency.consistent ? (
+                          <Check size={16} className="text-emerald-600" />
+                        ) : (
+                          <AlertTriangle size={16} className="text-amber-600" />
+                        )}
+                        <p className={`text-[11px] font-bold uppercase tracking-widest ${consistency.consistent ? "text-emerald-700" : "text-amber-700"}`}>
+                          {consistency.consistent ? "Coherent amb el teu mapa" : "Incoherència detectada"}
+                        </p>
+                      </div>
+                      <p className={`text-xs leading-relaxed ${consistency.consistent ? "text-emerald-600" : "text-amber-700"}`}>
+                        {consistency.reason}
+                      </p>
+                      {!consistency.consistent && consistency.fix && (
+                        <button
+                          onClick={() => applyFix(scenario.id, consistency.fix!)}
+                          className="mt-3 w-full py-3 rounded-2xl bg-amber-500 text-white text-[11px] font-bold uppercase tracking-widest shadow-md hover:shadow-lg hover:bg-amber-600 transition-all flex items-center justify-center gap-2"
+                        >
+                          <RotateCcw size={14} />
+                          {consistency.fix.label}
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
 
