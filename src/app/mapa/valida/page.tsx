@@ -181,9 +181,13 @@ export default function ValidaPage() {
         .select("*")
         .eq("id", 1)
         .single();
-      if (data && data.is_active && data.phase === "valida") {
-        setFacilitatorSync(true);
-        setCurrentIdx(data.current_idx);
+      if (data && data.is_active) {
+        if (data.phase === "valida") {
+          setFacilitatorSync(true);
+          setCurrentIdx(data.current_idx);
+        } else if (data.phase === "calibra") {
+          window.location.href = "/mapa/calibra";
+        }
       } else {
         setFacilitatorSync(false);
       }
@@ -516,7 +520,13 @@ export default function ValidaPage() {
           </div>
         </div>
 
-        <BottomNav current="valida" />
+        {facilitatorSync ? (
+          <div className="fixed bottom-0 left-0 right-0 p-3 bg-[var(--jesuites-blue)] text-center z-[90]">
+            <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest animate-pulse">Sessió guiada pel facilitador</p>
+          </div>
+        ) : (
+          <BottomNav current="valida" />
+        )}
       </main>
     );
   }
@@ -732,11 +742,6 @@ export default function ValidaPage() {
                 Següent <ChevronRight size={12} />
               </button>
             </div>
-          )}
-          {facilitatorSync && (
-            <p className="text-center text-[10px] text-[var(--jesuites-blue)] font-bold uppercase tracking-widest pt-4 animate-pulse">
-              Sessió guiada activa
-            </p>
           )}
         </div>
       </div>
