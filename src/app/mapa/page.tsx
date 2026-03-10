@@ -24,19 +24,19 @@ const COURSES = [
 const EINES = ["Copilot", "Gemini", "NotebookLM"];
 
 const MODALITIES = [
-  { id: "acompanyat", label: "Acomp.", full: "Acompanyat", desc: "Ús col·lectiu amb el docent present" },
-  { id: "guiat", label: "Guiat", full: "Guiat", desc: "Pautes i prompts predefinits" },
-  { id: "autonom", label: "Autòn.", full: "Autònom", desc: "Llibertat dins la tasca definida" },
-  { id: "lliure", label: "Lliure", full: "Lliure", desc: "Ús no prescriptiu" },
+  { id: "acompanyat", label: "Acomp.", full: "Acompanyat", desc: "El docent projecta o controla la IA. L'alumne observa o participa col·lectivament.", ex: "El mestre pregunta a la IA davant la classe i els alumnes analitzen la resposta junts." },
+  { id: "guiat", label: "Guiat", full: "Guiat", desc: "L'alumne interactua amb la IA seguint instruccions o prompts tancats del docent.", ex: "L'alumne usa un prompt predefinit per corregir el seu text o per buscar informació específica." },
+  { id: "autonom", label: "Autòn.", full: "Autònom", desc: "L'alumne decideix com usar la IA dins els límits d'una tasca concreta.", ex: "L'alumne tria si usar la IA per investigar, organitzar idees o revisar el seu treball de síntesi." },
+  { id: "lliure", label: "Lliure", full: "Lliure", desc: "L'alumne usa la IA sense restriccions específiques, amb autonomia plena.", ex: "L'alumne integra la IA en el seu flux de treball com consideri, només retre comptes del resultat." },
 ];
 
 const DELEG = [
-  { n: 0, label: "N0", name: "Preservació", tip: "Activitat humana directa", color: "bg-gray-400" },
-  { n: 1, label: "N1", name: "Exploració", tip: "Font d'idees i informació", color: "bg-emerald-500" },
-  { n: 2, label: "N2", name: "Suport", tip: "Millora del treball humà", color: "bg-blue-500" },
-  { n: 3, label: "N3", name: "Cocreació", tip: "Diàleg iteratiu persona-IA", color: "bg-violet-500" },
-  { n: 4, label: "N4", name: "Delegació", tip: "L'IA fa el gruix, l'humà valida", color: "bg-amber-500" },
-  { n: 5, label: "N5", name: "Agència", tip: "Automatització supervisada", color: "bg-rose-500" },
+  { n: 0, label: "N0", name: "Preservació", tip: "No delegació. Activitat 100% humana.", ex: "Escriure a mà, càlcul mental, debat ètic cara a cara.", color: "bg-gray-400" },
+  { n: 1, label: "N1", name: "Exploració", tip: "La IA inspira o informa. El producte és 100% humà.", ex: "\"Dona'm 5 idees per a un conte\" — l'alumne tria i escriu.", color: "bg-emerald-500" },
+  { n: 2, label: "N2", name: "Suport", tip: "L'alumne crea, la IA millora o corregeix.", ex: "\"Revisa les comes del meu text\" o \"On m'he equivocat en aquest càlcul?\"", color: "bg-blue-500" },
+  { n: 3, label: "N3", name: "Cocreació", tip: "Persona i IA alternen el lideratge.", ex: "Crear una melodia junts: la IA proposa acords, l'alumne la lletra.", color: "bg-violet-500" },
+  { n: 4, label: "N4", name: "Delegació", tip: "La IA genera el gruix; l'humà supervisa i valida.", ex: "\"Genera un resum de 200 paraules sobre la Revolució Francesa\" — l'alumne revisa.", color: "bg-amber-500" },
+  { n: 5, label: "N5", name: "Agència", tip: "La IA opera autònomament dins un marc supervisat.", ex: "Plataformes adaptatives, anàlisi automàtica de dades, qüestionaris generats.", color: "bg-rose-500" },
 ];
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -110,6 +110,7 @@ export default function MapaPage() {
   const [allData, setAllData] = useState<RowData[]>([]);
   const [viewMode, setViewMode] = useState<"proposta" | "consens">("proposta");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [helpTip, setHelpTip] = useState<{ courseId: string; type: "modality" | "deleg"; id: string } | null>(null);
 
   useEffect(() => {
     const sid = getSessionId();
@@ -317,33 +318,49 @@ export default function MapaPage() {
                   </div>
 
                   {/* Modality + Delegation (only if student access) */}
-                  <div className={`transition-all duration-500 overflow-hidden ${d.student_access ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
+                  <div className={`transition-all duration-500 overflow-hidden ${d.student_access ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
                     {/* Modality */}
                     <div className="mb-4">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Modalitat d&apos;ús</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Modalitat d&apos;ús <span className="normal-case tracking-normal font-normal">(clica per veure ajuda)</span></p>
                       <div className="grid grid-cols-4 gap-1.5">
                         {MODALITIES.map(m => (
                           <button
                             key={m.id}
-                            onClick={() => updateCourse(course.id, { student_modality: d.student_modality === m.id ? null : m.id })}
-                            title={m.desc}
+                            onClick={() => {
+                              updateCourse(course.id, { student_modality: d.student_modality === m.id ? null : m.id });
+                              setHelpTip(d.student_modality === m.id ? null : { courseId: course.id, type: "modality", id: m.id });
+                            }}
                             className={`py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all ${d.student_modality === m.id ? "bg-violet-500 text-white shadow-md" : "bg-black/[0.04] text-gray-400 hover:bg-black/[0.08]"}`}
                           >
                             {m.label}
                           </button>
                         ))}
                       </div>
+                      {/* Modality Help Tip */}
+                      {helpTip?.courseId === course.id && helpTip.type === "modality" && (() => {
+                        const m = MODALITIES.find(m => m.id === helpTip.id);
+                        if (!m) return null;
+                        return (
+                          <div className="mt-2 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2.5 animate-fade-in">
+                            <p className="text-[11px] font-bold text-violet-700 mb-1">{m.full}</p>
+                            <p className="text-[10px] text-violet-600 leading-snug">{m.desc}</p>
+                            <p className="text-[9px] text-violet-500 mt-1.5 italic leading-snug">&ldquo;{m.ex}&rdquo;</p>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Delegation Levels */}
                     <div>
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Nivells de delegació permesos</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Nivells de delegació permesos <span className="normal-case tracking-normal font-normal">(clica per veure ajuda)</span></p>
                       <div className="grid grid-cols-6 gap-1.5">
                         {DELEG.map(dl => (
                           <button
                             key={dl.n}
-                            onClick={() => toggleDelegation(course.id, dl.n)}
-                            title={`${dl.name}: ${dl.tip}`}
+                            onClick={() => {
+                              toggleDelegation(course.id, dl.n);
+                              setHelpTip({ courseId: course.id, type: "deleg", id: String(dl.n) });
+                            }}
                             className={`py-2 rounded-lg text-center transition-all ${d.delegation[dl.n] ? `${dl.color} text-white shadow-md` : "bg-black/[0.04] text-gray-400 hover:bg-black/[0.08]"}`}
                           >
                             <span className="text-[10px] font-bold block leading-none">{dl.label}</span>
@@ -351,6 +368,18 @@ export default function MapaPage() {
                           </button>
                         ))}
                       </div>
+                      {/* Delegation Help Tip */}
+                      {helpTip?.courseId === course.id && helpTip.type === "deleg" && (() => {
+                        const dl = DELEG.find(d => String(d.n) === helpTip.id);
+                        if (!dl) return null;
+                        return (
+                          <div className="mt-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 animate-fade-in">
+                            <p className="text-[11px] font-bold text-slate-700 mb-1">{dl.label}: {dl.name}</p>
+                            <p className="text-[10px] text-slate-600 leading-snug">{dl.tip}</p>
+                            <p className="text-[9px] text-slate-500 mt-1.5 italic leading-snug">&ldquo;{dl.ex}&rdquo;</p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
