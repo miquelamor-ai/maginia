@@ -509,15 +509,15 @@ export default function MapaPage() {
       )}
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-black/5 flex justify-center gap-8 z-[90]">
-        <button onClick={() => window.location.href = "/"} className="text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--jesuites-blue)] hover:underline">
-          &larr; Web
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-black/5 flex justify-center gap-6 z-[90]">
+        <button onClick={() => window.location.href = "/mapa/calibra"} className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-[var(--jesuites-blue)] transition-all">
+          1. Calibra
         </button>
-        <button onClick={() => window.location.href = "/participar"} className="text-[10px] font-bold uppercase tracking-[0.4em] text-violet-600 hover:underline">
-          Participar
+        <button className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--jesuites-blue)] underline underline-offset-4">
+          2. Mapa
         </button>
-        <button onClick={() => window.location.href = "/#results-dashboard"} className="text-[10px] font-bold uppercase tracking-[0.4em] text-amber-600 hover:underline">
-          Resultats <ChevronRight size={10} className="inline" />
+        <button onClick={() => window.location.href = "/mapa/valida"} className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-amber-600 transition-all">
+          3. Valida
         </button>
       </div>
     </main>
