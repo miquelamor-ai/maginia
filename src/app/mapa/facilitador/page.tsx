@@ -231,36 +231,7 @@ export default function FacilitadorPage() {
 
   return (
     <main className="h-screen bg-[var(--jesuites-blue)] text-white font-sans select-none overflow-hidden">
-      <div className="max-w-6xl mx-auto px-6 py-3 h-full flex flex-col">
-
-        {/* Row 1: Header bar */}
-        <div className="flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-white/60" />
-            <span className="text-sm font-bold uppercase tracking-tight">Facilitador</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleSession}
-              className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white animate-pulse" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
-            >
-              {sessionActive ? "Sessió activa" : "Iniciar sessió"}
-            </button>
-            <div className="flex items-center gap-1 bg-white/10 px-2.5 py-1.5 rounded-lg">
-              <Users size={12} />
-              <span className="text-xs font-bold">{totalParticipants}</span>
-            </div>
-            <button onClick={() => setShowQR(true)} className="p-1.5 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
-              <QrCode size={13} />
-            </button>
-            <button
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`p-1.5 rounded-lg transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/40"}`}
-            >
-              <RefreshCw size={13} className={autoRefresh ? "animate-spin" : ""} style={autoRefresh ? { animationDuration: "3s" } : {}} />
-            </button>
-          </div>
-        </div>
+      <div className="w-full mx-auto px-10 py-4 h-full flex flex-col">
 
         {/* QR Overlay */}
         {showQR && (
@@ -268,126 +239,143 @@ export default function FacilitadorPage() {
             <button onClick={() => setShowQR(false)} className="absolute top-6 right-6 p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all">
               <X size={20} />
             </button>
-            <p className="text-white/30 text-xs font-bold uppercase tracking-[0.4em] mb-8">Escaneja per participar</p>
-            <div className="bg-white rounded-3xl p-6 shadow-2xl mb-8">
+            <p className="text-white/30 text-sm font-bold uppercase tracking-[0.4em] mb-8">Escaneja per participar</p>
+            <div className="bg-white rounded-3xl p-8 shadow-2xl mb-8">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrApiUrl} alt="QR Code" width={280} height={280} className="rounded-xl" />
+              <img src={qrApiUrl} alt="QR Code" width={320} height={320} className="rounded-xl" />
             </div>
-            <p className="text-white/90 text-xl font-bold tracking-wide mb-2 font-mono">
+            <p className="text-white/90 text-2xl font-bold tracking-wide mb-2 font-mono">
               {participantUrl.replace(/^https?:\/\//, '')}
             </p>
-            <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.3em] mt-4">
+            <p className="text-white/30 text-xs font-bold uppercase tracking-[0.3em] mt-4">
               Clica qualsevol lloc per tancar
             </p>
           </div>
         )}
 
-        {/* Row 2: Phase tabs + progress dots */}
-        <div className="flex items-center justify-center gap-3 py-2 shrink-0">
-          <button
-            onClick={() => switchPhase("calibra")}
-            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
-          >
-            Calibra
-          </button>
-          <div className="flex gap-1">
-            {scenarios.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => { setCurrentIdx(i); setIsRevealed(false); }}
-                className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                  i === currentIdx ? "w-8 bg-white" :
-                  i < currentIdx ? "w-4 bg-white/40" : "w-4 bg-white/15"
-                }`}
-              />
-            ))}
+        {/* Top bar: logo + phase tabs + controls — all in one row */}
+        <div className="flex items-center justify-between shrink-0 mb-3">
+          {/* Left: phase tabs */}
+          <div className="flex items-center gap-3">
+            <Sparkles size={20} className="text-white/40" />
+            <button
+              onClick={() => switchPhase("calibra")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+            >
+              Calibra
+            </button>
+            <div className="flex gap-1.5">
+              {scenarios.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setCurrentIdx(i); setIsRevealed(false); }}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    i === currentIdx ? "w-10 bg-white" :
+                    i < currentIdx ? "w-5 bg-white/40" : "w-5 bg-white/15"
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => switchPhase("valida")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "valida" ? "bg-amber-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+            >
+              Valida
+            </button>
           </div>
-          <button
-            onClick={() => switchPhase("valida")}
-            className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${phase === "valida" ? "bg-amber-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
-          >
-            Valida
-          </button>
+          {/* Right: controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleSession}
+              className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white animate-pulse" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+            >
+              {sessionActive ? "Sessió activa" : "Iniciar sessió"}
+            </button>
+            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-2 rounded-xl">
+              <Users size={14} />
+              <span className="text-sm font-bold">{totalParticipants}</span>
+            </div>
+            <button onClick={() => setShowQR(true)} className="p-2 rounded-xl bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
+              <QrCode size={16} />
+            </button>
+            <button
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className={`p-2 rounded-xl transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/40"}`}
+            >
+              <RefreshCw size={14} className={autoRefresh ? "animate-spin" : ""} style={autoRefresh ? { animationDuration: "3s" } : {}} />
+            </button>
+          </div>
         </div>
 
-        {/* Row 3: Scenario text — takes available space but no scroll */}
-        <div className="shrink-0 py-2">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-white/30 text-[9px] font-bold uppercase tracking-[0.2em]">
+        {/* Scenario: context badge + text */}
+        <div className="shrink-0 mb-2">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-white/40 text-sm font-bold uppercase tracking-wider">
               {currentIdx + 1}/{scenarios.length}
             </span>
-            <span className="text-[10px] font-bold bg-white/10 px-2 py-0.5 rounded-full">
+            <span className="text-sm font-bold bg-white/15 px-3 py-1 rounded-full">
               {scenario.context}
             </span>
+            <div className="flex-1" />
+            {/* Reveal button inline */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-white/50">
+                {phase === "calibra" ? calibraTotal : validaTotal} vots
+              </span>
+              <button
+                onClick={() => setIsRevealed(!isRevealed)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  isRevealed
+                    ? "bg-white/20 text-white hover:bg-white/30"
+                    : "bg-white text-[var(--jesuites-blue)] shadow-lg hover:shadow-xl"
+                }`}
+              >
+                {isRevealed ? <><EyeOff size={14} /> Amagar</> : <><Eye size={14} /> Revelar</>}
+              </button>
+            </div>
           </div>
-          <p className="text-lg md:text-xl font-medium leading-snug text-white/90">
+          <p className="text-2xl md:text-[1.7rem] font-medium leading-snug text-white">
             {scenario.text}
           </p>
         </div>
 
-        {/* Row 4: Vote count + Reveal button */}
-        <div className="flex items-center justify-between py-2 shrink-0">
-          <div className="flex items-center gap-2">
-            <BarChart3 size={14} className="text-white/40" />
-            <span className="text-xs font-bold text-white/60">
-              {phase === "calibra" ? calibraTotal : validaTotal} vots
-            </span>
-            {!isRevealed && (
-              <span className="text-[9px] text-white/30 font-bold uppercase tracking-widest animate-pulse">
-                esperant...
-              </span>
-            )}
-          </div>
-          <button
-            onClick={() => setIsRevealed(!isRevealed)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
-              isRevealed
-                ? "bg-white/20 text-white hover:bg-white/30"
-                : "bg-white text-[var(--jesuites-blue)] shadow-lg hover:shadow-xl"
-            }`}
-          >
-            {isRevealed ? <><EyeOff size={12} /> Amagar</> : <><Eye size={12} /> Revelar</>}
-          </button>
-        </div>
-
-        {/* Row 5: Results — flex-1 to fill remaining space */}
+        {/* Results — flex-1 fills all remaining space */}
         <div className={`flex-1 min-h-0 transition-all duration-500 ${isRevealed ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
           {phase === "calibra" && (
-            <div className="h-full flex flex-col gap-2">
-              {/* Distribution bars + labels */}
-              <div className="flex-1 grid grid-cols-6 gap-2 min-h-0">
+            <div className="h-full flex flex-col gap-3">
+              {/* Distribution bars + labels — fill available height */}
+              <div className="flex-1 grid grid-cols-6 gap-3 min-h-0">
                 {calibraDistribution.map(dl => {
                   const isCorrect = dl.n === (scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel;
                   return (
                     <div key={dl.n} className="flex flex-col text-center min-h-0">
-                      {/* Bar area — takes remaining space */}
                       <div className="flex-1 flex flex-col justify-end min-h-0">
                         <div
-                          className={`rounded-t-lg transition-all duration-700 ${isCorrect ? "ring-2 ring-white" : ""} ${dl.color}`}
-                          style={{ height: `${calibraMaxCount > 0 ? (dl.count / calibraMaxCount) * 100 : 0}%`, minHeight: dl.count > 0 ? "8px" : "0" }}
+                          className={`rounded-t-xl transition-all duration-700 ${isCorrect ? "ring-2 ring-white" : ""} ${dl.color}`}
+                          style={{ height: `${calibraMaxCount > 0 ? (dl.count / calibraMaxCount) * 100 : 0}%`, minHeight: dl.count > 0 ? "12px" : "0" }}
                         />
                       </div>
-                      {/* Label */}
-                      <div className={`py-1.5 rounded-lg mt-1 ${isCorrect ? "bg-white/20 ring-1 ring-white/50" : "bg-white/5"}`}>
-                        <span className="text-base font-bold block">{dl.count}</span>
-                        <span className="text-[9px] font-bold block opacity-60">{dl.label} · {dl.name}</span>
+                      <div className={`py-2.5 rounded-xl mt-1.5 ${isCorrect ? "bg-white/25 ring-2 ring-white/60" : "bg-white/5"}`}>
+                        <span className="text-2xl font-bold block">{dl.count}</span>
+                        <span className="text-xs font-bold block opacity-70">{dl.label}</span>
+                        <span className="text-[10px] block opacity-40">{dl.name}</span>
                       </div>
                       {isCorrect && (
-                        <span className="text-[8px] font-bold text-emerald-300 mt-0.5 block uppercase">✓ Correcte</span>
+                        <span className="text-[10px] font-bold text-emerald-300 mt-1 block uppercase tracking-wider">✓ Correcte</span>
                       )}
                     </div>
                   );
                 })}
               </div>
-              {/* Explanation — compact */}
-              <div className="bg-white/10 rounded-xl px-4 py-2 flex items-center gap-3 shrink-0">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].color}`}>
-                  <span className="text-xs font-bold">{DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].label}</span>
+              {/* Explanation bar */}
+              <div className="bg-white/10 rounded-2xl px-5 py-3 flex items-center gap-4 shrink-0">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].color}`}>
+                  <span className="text-sm font-bold">{DELEG_LABELS[(scenario as typeof CALIBRA_SCENARIOS[number]).correctLevel].label}</span>
                 </div>
-                <p className="text-xs text-white/80 leading-snug flex-1">
+                <p className="text-sm text-white/80 leading-snug flex-1">
                   {(scenario as typeof CALIBRA_SCENARIOS[number]).explanation}
                 </p>
-                <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded shrink-0 ${
+                <span className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-lg shrink-0 ${
                   (scenario as typeof CALIBRA_SCENARIOS[number]).tag === "outsourcing" ? "bg-red-500/30 text-red-200" : "bg-blue-500/30 text-blue-200"
                 }`}>
                   {(scenario as typeof CALIBRA_SCENARIOS[number]).tag === "outsourcing" ? "⚠ Outsourcing" : "✓ Offloading"}
@@ -397,44 +385,42 @@ export default function FacilitadorPage() {
           )}
 
           {phase === "valida" && (
-            <div className="h-full flex flex-col gap-2">
-              {/* Yes / No */}
-              <div className="flex-1 grid grid-cols-2 gap-4 min-h-0">
-                <div className="bg-emerald-500/20 rounded-2xl p-4 flex flex-col items-center justify-center border border-emerald-400/20">
-                  <span className="text-4xl font-bold text-emerald-300">{validaYes}</span>
-                  <span className="text-xs font-bold text-emerald-400/80 mt-1">Sí, ho aprovo</span>
-                  {validaTotal > 0 && <span className="text-xl font-bold text-emerald-300/60 mt-1">{Math.round((validaYes / validaTotal) * 100)}%</span>}
+            <div className="h-full flex flex-col gap-3">
+              <div className="flex-1 grid grid-cols-2 gap-6 min-h-0">
+                <div className="bg-emerald-500/20 rounded-3xl p-6 flex flex-col items-center justify-center border border-emerald-400/20">
+                  <span className="text-7xl font-bold text-emerald-300">{validaYes}</span>
+                  <span className="text-lg font-bold text-emerald-400/80 mt-2">Sí, ho aprovo</span>
+                  {validaTotal > 0 && <span className="text-3xl font-bold text-emerald-300/60 mt-1">{Math.round((validaYes / validaTotal) * 100)}%</span>}
                 </div>
-                <div className="bg-rose-500/20 rounded-2xl p-4 flex flex-col items-center justify-center border border-rose-400/20">
-                  <span className="text-4xl font-bold text-rose-300">{validaNo}</span>
-                  <span className="text-xs font-bold text-rose-400/80 mt-1">No, ho rebutjo</span>
-                  {validaTotal > 0 && <span className="text-xl font-bold text-rose-300/60 mt-1">{Math.round((validaNo / validaTotal) * 100)}%</span>}
+                <div className="bg-rose-500/20 rounded-3xl p-6 flex flex-col items-center justify-center border border-rose-400/20">
+                  <span className="text-7xl font-bold text-rose-300">{validaNo}</span>
+                  <span className="text-lg font-bold text-rose-400/80 mt-2">No, ho rebutjo</span>
+                  {validaTotal > 0 && <span className="text-3xl font-bold text-rose-300/60 mt-1">{Math.round((validaNo / validaTotal) * 100)}%</span>}
                 </div>
               </div>
-              {/* Consensus */}
               {validaTotal > 0 && (() => {
                 const maxPct = Math.max(validaYes, validaNo) / validaTotal * 100;
                 const vs = scenario as typeof VALIDA_SCENARIOS[number];
                 return (
-                  <div className={`rounded-xl px-4 py-2 flex items-center justify-between shrink-0 ${
+                  <div className={`rounded-2xl px-5 py-3 flex items-center justify-between shrink-0 ${
                     maxPct >= 80 ? "bg-emerald-500/20 border border-emerald-400/20" :
                     maxPct >= 60 ? "bg-amber-500/20 border border-amber-400/20" :
                     "bg-rose-500/20 border border-rose-400/20"
                   }`}>
-                    <span className="text-sm font-bold">
+                    <span className="text-lg font-bold">
                       {maxPct >= 80 ? "Consens fort" : maxPct >= 60 ? "Tendència clara" : "Divisió — Cal debat!"}
                     </span>
                     <div className="flex gap-2">
                       {vs.impliedLevel >= 0 && (
-                        <span className="text-[9px] font-bold bg-white/10 px-2 py-1 rounded">{DELEG_LABELS[vs.impliedLevel].label} · {DELEG_LABELS[vs.impliedLevel].name}</span>
+                        <span className="text-[10px] font-bold bg-white/10 px-3 py-1.5 rounded-lg">{DELEG_LABELS[vs.impliedLevel].label} · {DELEG_LABELS[vs.impliedLevel].name}</span>
                       )}
                       {vs.impliedLevel === -1 && (
-                        <span className="text-[9px] font-bold bg-blue-500/30 text-blue-200 px-2 py-1 rounded">Ús docent</span>
+                        <span className="text-[10px] font-bold bg-blue-500/30 text-blue-200 px-3 py-1.5 rounded-lg">Ús docent</span>
                       )}
-                      <span className={`text-[9px] font-bold px-2 py-1 rounded ${vs.tag === "outsourcing" ? "bg-red-500/30 text-red-200" : "bg-blue-500/30 text-blue-200"}`}>
+                      <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg ${vs.tag === "outsourcing" ? "bg-red-500/30 text-red-200" : "bg-blue-500/30 text-blue-200"}`}>
                         {vs.tag === "outsourcing" ? "⚠ Outsourcing" : "✓ Offloading"}
                       </span>
-                      <span className={`text-[9px] font-bold px-2 py-1 rounded ${
+                      <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg ${
                         vs.friction === "alta" ? "bg-emerald-500/30 text-emerald-200" :
                         vs.friction === "nul·la" ? "bg-red-500/30 text-red-200" : "bg-amber-500/30 text-amber-200"
                       }`}>Fricció {vs.friction}</span>
@@ -446,24 +432,24 @@ export default function FacilitadorPage() {
           )}
         </div>
 
-        {/* Row 6: Bottom nav */}
-        <div className="flex items-center justify-between pt-2 shrink-0 border-t border-white/10">
+        {/* Bottom nav */}
+        <div className="flex items-center justify-between pt-3 shrink-0 border-t border-white/10 mt-2">
           <button
             onClick={goPrev}
             disabled={currentIdx === 0}
-            className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/10 text-xs font-bold uppercase tracking-widest disabled:opacity-20 hover:bg-white/20 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-white/20 transition-all"
           >
-            <ChevronLeft size={14} /> Anterior
+            <ChevronLeft size={16} /> Anterior
           </button>
-          <span className="text-white/30 text-[10px] font-bold">
-            {phase === "calibra" ? "CALIBRA" : "VALIDA"} · {currentIdx + 1}/{scenarios.length}
+          <span className="text-white/30 text-sm font-bold uppercase">
+            {phase === "calibra" ? "Calibra" : "Valida"} · {currentIdx + 1}/{scenarios.length}
           </span>
           <button
             onClick={goNext}
             disabled={currentIdx === scenarios.length - 1}
-            className="flex items-center gap-1 px-4 py-2 rounded-xl bg-white/10 text-xs font-bold uppercase tracking-widest disabled:opacity-20 hover:bg-white/20 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-white/20 transition-all"
           >
-            Següent <ChevronRight size={14} />
+            Següent <ChevronRight size={16} />
           </button>
         </div>
       </div>
