@@ -2,23 +2,26 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { Sparkles, RefreshCw, ChevronRight } from "lucide-react";
+import { Sparkles, RefreshCw, ChevronRight, AlertTriangle } from "lucide-react";
 
 // ─── Constants ──────────────────────────────────────────────────
 
 const COURSES = [
-  { id: "I3-I5", name: "Infantil", sub: "I3 – I5", age: "3-5 anys" },
-  { id: "PRI-CI", name: "Cicle Inicial", sub: "1r – 2n", age: "6-7 anys" },
-  { id: "PRI-CM", name: "Cicle Mitjà", sub: "3r – 4t", age: "8-9 anys" },
-  { id: "PRI-CS", name: "Cicle Superior", sub: "5è – 6è", age: "10-11 anys" },
-  { id: "ESO-1", name: "1r ESO", sub: "", age: "12 anys" },
-  { id: "ESO-2", name: "2n ESO", sub: "", age: "13 anys" },
-  { id: "ESO-3", name: "3r ESO", sub: "", age: "14 anys" },
-  { id: "ESO-4", name: "4t ESO", sub: "", age: "15 anys" },
-  { id: "BATX", name: "Batxillerat", sub: "1r – 2n", age: "16-17 anys" },
-  { id: "FP-CGM", name: "FP Grau Mitjà", sub: "CGM", age: "16+ anys" },
-  { id: "FP-CGS", name: "FP Grau Superior", sub: "CGS", age: "18+ anys" },
+  { id: "I3-I5", name: "Infantil", sub: "I3 – I5", age: "3-5 anys", minAge: 3 },
+  { id: "PRI-CI", name: "Cicle Inicial", sub: "1r – 2n", age: "6-7 anys", minAge: 6 },
+  { id: "PRI-CM", name: "Cicle Mitjà", sub: "3r – 4t", age: "8-9 anys", minAge: 8 },
+  { id: "PRI-CS", name: "Cicle Superior", sub: "5è – 6è", age: "10-11 anys", minAge: 10 },
+  { id: "ESO-1", name: "1r ESO", sub: "", age: "12 anys", minAge: 12 },
+  { id: "ESO-2", name: "2n ESO", sub: "", age: "13 anys", minAge: 13 },
+  { id: "ESO-3", name: "3r ESO", sub: "", age: "14 anys", minAge: 14 },
+  { id: "ESO-4", name: "4t ESO", sub: "", age: "15 anys", minAge: 15 },
+  { id: "BATX", name: "Batxillerat", sub: "1r – 2n", age: "16-17 anys", minAge: 16 },
+  { id: "FP-CGM", name: "FP Grau Mitjà", sub: "CGM", age: "16+ anys", minAge: 16 },
+  { id: "FP-CGS", name: "FP Grau Superior", sub: "CGS", age: "18+ anys", minAge: 18 },
 ];
+
+// Eines disponibles a l'ecosistema
+const EINES = ["Copilot", "Gemini", "NotebookLM"];
 
 const MODALITIES = [
   { id: "acompanyat", label: "Acomp.", full: "Acompanyat", desc: "Ús col·lectiu amb el docent present" },
@@ -296,6 +299,21 @@ export default function MapaPage() {
                     >
                       {d.student_access ? "Alumnat utilitza IA" : "Alumnat NO utilitza IA"}
                     </button>
+
+                    {/* Age Warning */}
+                    {d.student_access && course.minAge < 14 && (
+                      <div className="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-amber-700 leading-tight">
+                            Cal autorització familiar (LOPDGDD &lt;14 anys)
+                          </p>
+                          <p className="text-[9px] text-amber-600 mt-0.5 leading-tight">
+                            Eines gestionades ({EINES.join(", ")}): permès amb consentiment parental
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Modality + Delegation (only if student access) */}
