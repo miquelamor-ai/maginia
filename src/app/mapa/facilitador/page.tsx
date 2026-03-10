@@ -291,7 +291,7 @@ export default function FacilitadorPage() {
         )}
 
         {/* Phase Toggle + Progress */}
-        <div className="flex items-center justify-center gap-4 mb-4 shrink-0">
+        <div className="flex items-center justify-center gap-4 mb-4 shrink-0 relative z-10">
           <button
             onClick={() => switchPhase("calibra")}
             className={`px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
@@ -319,7 +319,7 @@ export default function FacilitadorPage() {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col justify-center min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pt-4">
 
           {/* Scenario Display */}
           <div className="mb-6">
