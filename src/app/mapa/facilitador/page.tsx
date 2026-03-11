@@ -602,7 +602,7 @@ export default function FacilitadorPage() {
 
       // Intro: advance/retreat layers
       if (phase === "intro") {
-        if (isNext) setIntroStep(s => Math.min(5, s + 1));
+        if (isNext) { if (introStep >= 5) switchPhase("repas"); else setIntroStep(s => s + 1); }
         else setIntroStep(s => Math.max(0, s - 1));
         return;
       }
@@ -856,9 +856,15 @@ export default function FacilitadorPage() {
     .sort((a, b) => b.div - a.div);
 
   // ─── Render ────────────────────────────────────────────────────
+  const isCream = ["decaleg","intro","repas","tancament"].includes(phase);
+  const inactiveTab = isCream
+    ? "bg-[var(--jesuites-blue)]/[0.07] text-[var(--jesuites-blue)]/40 hover:bg-[var(--jesuites-blue)]/[0.14]"
+    : "bg-white/10 text-white/50 hover:bg-white/20";
+  const controlBg = isCream ? "bg-[var(--jesuites-blue)]/[0.07] border-[var(--jesuites-blue)]/20" : "bg-white/10 border-white/10";
+  const controlText = isCream ? "text-[var(--jesuites-blue)]/60" : "text-white/70";
 
   return (
-    <main className={`h-screen font-sans select-none overflow-hidden transition-colors duration-300 ${["decaleg","intro","repas","tancament"].includes(phase) ? "bg-[var(--jesuites-cream)] text-[var(--jesuites-text)]" : "bg-[var(--jesuites-blue)] text-white"}`}>
+    <main className={`h-screen font-sans select-none overflow-hidden transition-colors duration-300 ${isCream ? "bg-[var(--jesuites-cream)] text-[var(--jesuites-text)]" : "bg-[var(--jesuites-blue)] text-white"}`}>
       <div className="w-full mx-auto px-10 py-4 h-full flex flex-col">
 
         {/* QR Overlay */}
@@ -889,29 +895,29 @@ export default function FacilitadorPage() {
         {/* Top bar: logo + phase tabs + controls — all in one row */}
         <div className="flex items-center justify-between shrink-0 mb-3">
           {/* Left: phase tabs */}
-          <div className="flex items-center gap-3">
-            <Sparkles size={20} className="text-white/40" />
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className={isCream ? "text-[var(--jesuites-blue)]/30" : "text-white/30"} />
             <button
               onClick={() => switchPhase("decaleg")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "decaleg" ? "bg-emerald-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "decaleg" ? "bg-[var(--jesuites-blue)] text-white shadow-lg" : inactiveTab}`}
             >
-              <ScrollText size={13} /> Decàleg
+              <ScrollText size={12} /> Decàleg
             </button>
             <button
               onClick={() => switchPhase("intro")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "intro" ? "bg-sky-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "intro" ? "bg-[var(--jesuites-blue)] text-white shadow-lg" : inactiveTab}`}
             >
-              <Compass size={13} /> Full de ruta
+              <Compass size={12} /> Ruta
             </button>
             <button
               onClick={() => switchPhase("repas")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "repas" ? "bg-violet-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "repas" ? "bg-[var(--jesuites-blue)] text-white shadow-lg" : inactiveTab}`}
             >
-              <Layers size={13} /> Nivells
+              <Layers size={12} /> Nivells
             </button>
             <button
               onClick={() => switchPhase("calibra")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : inactiveTab}`}
             >
               Calibra
             </button>
@@ -949,78 +955,74 @@ export default function FacilitadorPage() {
             )}
             <button
               onClick={() => switchPhase("mapa")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "mapa" ? "bg-violet-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "mapa" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : inactiveTab}`}
             >
               Mapa
             </button>
             <button
               onClick={() => switchPhase("valida")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "valida" ? "bg-amber-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "valida" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : inactiveTab}`}
             >
               Valida
             </button>
             <button
               onClick={() => switchPhase("debate")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "debate" ? "bg-rose-400 text-white shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "debate" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : inactiveTab}`}
             >
               Debat
             </button>
             <button
               onClick={() => switchPhase("tancament")}
-              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "tancament" ? "bg-indigo-400 text-white shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "tancament" ? "bg-[var(--jesuites-blue)] text-white shadow-lg" : inactiveTab}`}
             >
-              <MessageSquare size={13} /> Tancament
+              <MessageSquare size={12} /> Tancament
             </button>
           </div>
           {/* Right: controls */}
           <div className="flex items-center gap-2">
             <button
               onClick={toggleSession}
-              className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white animate-pulse" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+              className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white" : inactiveTab}`}
             >
               {sessionActive ? "Sessió activa" : "Iniciar sessió"}
             </button>
             {/* Active participants (heartbeat) */}
             {sessionActive && (
-              <div className="flex items-center gap-1.5 bg-emerald-500/20 px-3 py-2 rounded-xl border border-emerald-400/30">
-                <Wifi size={14} className="text-emerald-300" />
-                <span className="text-sm font-bold text-emerald-300">{activeParticipants}</span>
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${controlBg}`}>
+                <Wifi size={13} className={controlText} />
+                <span className={`text-sm font-bold ${controlText}`}>{activeParticipants}</span>
               </div>
             )}
-            {/* Vote counter for current scenario */}
-            {sessionActive && phase !== "mapa" && (() => {
+            {/* Vote counter — only for calibra/valida */}
+            {sessionActive && (phase === "calibra" || phase === "valida") && (() => {
               const expected = activeParticipants > 0 ? activeParticipants : (peakParticipants > 0 ? peakParticipants : totalParticipants);
               const allVoted = expected > 0 && currentScenarioVotes >= expected;
               const mostVoted = expected > 0 && currentScenarioVotes >= Math.ceil(expected * 0.8);
               return (
-                <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border ${
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${
                   allVoted ? "bg-emerald-500/20 border-emerald-400/30"
                   : mostVoted ? "bg-amber-500/20 border-amber-400/30"
-                  : "bg-white/10 border-white/10"
+                  : controlBg
                 }`}>
-                  <BarChart3 size={14} className={
-                    allVoted ? "text-emerald-300" :
-                    mostVoted ? "text-amber-300" : "text-white/50"
-                  } />
-                  <span className="text-sm font-bold">{currentScenarioVotes}/{expected}</span>
-                  <span className="text-[9px] text-white/40 font-bold">vots</span>
+                  <BarChart3 size={13} className={allVoted ? "text-emerald-500" : mostVoted ? "text-amber-500" : controlText} />
+                  <span className={`text-sm font-bold ${allVoted ? "text-emerald-600" : mostVoted ? "text-amber-600" : controlText}`}>{currentScenarioVotes}/{expected}</span>
                 </div>
               );
             })()}
             {sessionActive && (
-              <div className="flex items-center gap-1.5 bg-white/10 px-3 py-2 rounded-xl">
-                <Users size={14} />
-                <span className="text-sm font-bold">{totalParticipants}</span>
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${controlBg}`}>
+                <Users size={13} className={controlText} />
+                <span className={`text-sm font-bold ${controlText}`}>{totalParticipants}</span>
               </div>
             )}
-            <button onClick={() => setShowQR(true)} className="p-2 rounded-xl bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
-              <QrCode size={16} />
+            <button onClick={() => setShowQR(true)} className={`p-2 rounded-xl transition-all ${controlBg} ${controlText} hover:opacity-80`}>
+              <QrCode size={15} />
             </button>
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`p-2 rounded-xl transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/40"}`}
+              className={`p-2 rounded-xl transition-all ${autoRefresh ? "bg-emerald-500/20 text-emerald-600" : `${controlBg} ${controlText}`}`}
             >
-              <RefreshCw size={14} className={autoRefresh ? "animate-spin" : ""} style={autoRefresh ? { animationDuration: "3s" } : {}} />
+              <RefreshCw size={13} className={autoRefresh ? "animate-spin" : ""} style={autoRefresh ? { animationDuration: "3s" } : {}} />
             </button>
           </div>
         </div>
@@ -1608,11 +1610,10 @@ export default function FacilitadorPage() {
                 </button>
                 <span className="text-[var(--jesuites-blue)]/40 text-xs font-bold uppercase tracking-widest">{introStep + 1} / {LAYERS.length}</span>
                 <button
-                  onClick={() => setIntroStep(s => Math.min(LAYERS.length - 1, s + 1))}
-                  disabled={introStep === LAYERS.length - 1}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)] text-white text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:brightness-110 transition-all"
+                  onClick={() => { if (introStep === LAYERS.length - 1) switchPhase("repas"); else setIntroStep(s => s + 1); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)] text-white text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
-                  Següent <ChevronRight size={16} />
+                  {introStep === LAYERS.length - 1 ? "Repàs de nivells" : "Següent"} <ChevronRight size={16} />
                 </button>
               </div>
             </div>

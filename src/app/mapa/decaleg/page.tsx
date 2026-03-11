@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Sparkles, Send, CheckCircle2 } from "lucide-react";
 
@@ -16,6 +17,7 @@ function getGuidedSessionId(): string {
 }
 
 export default function DecalegPage() {
+  const router = useRouter();
   const [sessionId] = useState(getSessionId);
   const [guidedSessionId] = useState(getGuidedSessionId);
   const [p1, setP1] = useState("");
@@ -31,6 +33,20 @@ export default function DecalegPage() {
       .select("id").eq("session_id", sessionId).maybeSingle()
       .then(({ data }) => { if (data) setSubmitted(true); });
   }, [sessionId]);
+
+  // Listen for facilitator phase change and redirect
+  useEffect(() => {
+    const channel = supabase
+      .channel("decaleg-phase-watch")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mapa_facilitador_state" }, (payload) => {
+        const newPhase = payload.new?.phase;
+        if (newPhase && newPhase !== "decaleg") {
+          router.push("/mapa/sessio" + (guidedSessionId ? `?g=${guidedSessionId}` : ""));
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [guidedSessionId, router]);
 
   const handleSubmit = async () => {
     if (!p1.trim() || !p2.trim() || !p3.trim()) return;
