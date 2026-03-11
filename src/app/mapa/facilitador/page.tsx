@@ -585,14 +585,38 @@ export default function FacilitadorPage() {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (phase === "mapa" || phase === "debate" || phase === "decaleg" || phase === "intro" || phase === "repas" || phase === "tancament") return;
-      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") { e.preventDefault(); goNext(); }
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") { e.preventDefault(); goPrev(); }
-      if (e.key === " ") { e.preventDefault(); setIsRevealed(r => !r); }
+      // Don't intercept when user is typing
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      const isNext = e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ";
+      const isPrev = e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp";
+      if (!isNext && !isPrev) return;
+      e.preventDefault();
+
+      // Intro: advance/retreat layers
+      if (phase === "intro") {
+        if (isNext) setIntroStep(s => Math.min(5, s + 1));
+        else setIntroStep(s => Math.max(0, s - 1));
+        return;
+      }
+      // Tancament: switch between slides
+      if (phase === "tancament") {
+        if (isNext) setTancamentSlide(s => Math.min(1, s + 1) as 0 | 1);
+        else setTancamentSlide(s => Math.max(0, s - 1) as 0 | 1);
+        return;
+      }
+      // mapa / debate / decaleg / repas — no arrow nav
+      if (phase === "mapa" || phase === "debate" || phase === "decaleg" || phase === "repas") return;
+
+      // calibra / valida — scenario navigation + Space to reveal
+      if (isNext) goNext();
+      else goPrev();
+      if (e.key === " ") setIsRevealed(r => !r);
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [goNext, goPrev, phase]);
+  }, [goNext, goPrev, phase, setIntroStep, setTancamentSlide]);
 
   // ─── Mapa timer ──────────────────────────────────────────────
 
