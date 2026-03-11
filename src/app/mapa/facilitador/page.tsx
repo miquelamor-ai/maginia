@@ -189,6 +189,8 @@ export default function FacilitadorPage() {
   const [showBonusScenarios, setShowBonusScenarios] = useState(false);
   const [mapaShowHeatmap, setMapaShowHeatmap] = useState(false);
   const [mapaAllData, setMapaAllData] = useState<MapaRow[]>([]);
+  const [allValidaResults, setAllValidaResults] = useState<Record<string, { yes: number; no: number; total: number }>>({});
+  const [showValidaSummary, setShowValidaSummary] = useState(false);
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
@@ -282,6 +284,24 @@ export default function FacilitadorPage() {
     }
   }, [table, guidedSessionId, sessionActive]);
 
+  // Fetch results for ALL valida scenarios at once (for progress dots + summary)
+  const fetchAllValidaResults = useCallback(async () => {
+    if (!sessionActive) return;
+    let query = supabase.from("mapa_valida").select("scenario_id, approved, session_id");
+    if (guidedSessionId) query = query.eq("guided_session_id", guidedSessionId);
+    const { data } = await query;
+    if (data) {
+      const results: Record<string, { yes: number; no: number; total: number }> = {};
+      for (const row of data as { scenario_id: string; approved: boolean }[]) {
+        if (!results[row.scenario_id]) results[row.scenario_id] = { yes: 0, no: 0, total: 0 };
+        results[row.scenario_id].total++;
+        if (row.approved) results[row.scenario_id].yes++;
+        else results[row.scenario_id].no++;
+      }
+      setAllValidaResults(results);
+    }
+  }, [sessionActive, guidedSessionId]);
+
   useEffect(() => {
     fetchVotes();
     fetchTotalParticipants();
@@ -290,9 +310,17 @@ export default function FacilitadorPage() {
   // Auto-refresh every 2 seconds (fallback)
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(fetchVotes, 2000);
+    const interval = setInterval(() => {
+      fetchVotes();
+      if (phase === "valida") fetchAllValidaResults();
+    }, 2000);
     return () => clearInterval(interval);
-  }, [autoRefresh, fetchVotes]);
+  }, [autoRefresh, fetchVotes, phase, fetchAllValidaResults]);
+
+  // Fetch all valida results when entering valida phase
+  useEffect(() => {
+    if (phase === "valida") fetchAllValidaResults();
+  }, [phase, fetchAllValidaResults]);
 
   // Supabase Realtime: instant vote updates
   useEffect(() => {
@@ -300,12 +328,12 @@ export default function FacilitadorPage() {
     const channel = supabase
       .channel(`votes-${guidedSessionId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "mapa_calibra" }, () => fetchVotes())
-      .on("postgres_changes", { event: "*", schema: "public", table: "mapa_valida" }, () => fetchVotes())
+      .on("postgres_changes", { event: "*", schema: "public", table: "mapa_valida" }, () => { fetchVotes(); fetchAllValidaResults(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "mapa_declarations" }, () => fetchVotes())
       .on("postgres_changes", { event: "*", schema: "public", table: "mapa_sessions" }, () => fetchActiveParticipants())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [guidedSessionId, fetchVotes, fetchActiveParticipants]);
+  }, [guidedSessionId, fetchVotes, fetchActiveParticipants, fetchAllValidaResults]);
 
   // ─── Sync state to Supabase ─────────────────────────────────
 
@@ -463,16 +491,23 @@ export default function FacilitadorPage() {
             </button>
             {phase !== "mapa" && scenarios.length > 0 && (
               <div className="flex gap-1.5 items-center">
-                {scenarios.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setCurrentIdx(i); setIsRevealed(false); if (sessionActive) broadcastState(phase, i, true); }}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
-                      i === currentIdx ? "w-10 bg-white" :
-                      i < currentIdx ? "w-5 bg-white/40" : "w-5 bg-white/15"
-                    } ${phase === "calibra" && i >= CORE_CALIBRA_COUNT ? "opacity-60" : ""}`}
-                  />
-                ))}
+                {scenarios.map((s, i) => {
+                  const r = phase === "valida" ? allValidaResults[s.id] : null;
+                  const hasCons = r && r.total > 0;
+                  const consPct = hasCons ? Math.max(r.yes, r.no) / r.total * 100 : 0;
+                  const dotColor = hasCons
+                    ? consPct >= 80 ? "bg-emerald-400" : consPct >= 60 ? "bg-amber-400" : "bg-rose-400"
+                    : i < currentIdx ? "bg-white/40" : "bg-white/15";
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => { setCurrentIdx(i); setIsRevealed(false); setShowValidaSummary(false); if (sessionActive) broadcastState(phase, i, true); }}
+                      className={`h-2 rounded-full transition-all cursor-pointer ${
+                        i === currentIdx ? `w-10 ${hasCons ? dotColor : "bg-white"}` : `w-5 ${dotColor}`
+                      } ${phase === "calibra" && i >= CORE_CALIBRA_COUNT ? "opacity-60" : ""}`}
+                    />
+                  );
+                })}
                 {phase === "calibra" && (
                   <button
                     onClick={() => setShowBonusScenarios(!showBonusScenarios)}
@@ -717,8 +752,64 @@ export default function FacilitadorPage() {
           </div>
         )}
 
+        {/* ═══ VALIDA — Resum de tots els escenaris ═══ */}
+        {phase === "valida" && showValidaSummary && (
+          <div className="flex-1 min-h-0 flex flex-col gap-3 overflow-auto">
+            <div className="flex items-center justify-between shrink-0">
+              <h2 className="text-lg font-bold text-white uppercase tracking-wider">Resum de Validació</h2>
+              <button
+                onClick={() => setShowValidaSummary(false)}
+                className="px-4 py-1.5 rounded-xl bg-white/10 text-xs font-bold uppercase tracking-wider hover:bg-white/20 transition-all"
+              >
+                Tornar
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {VALIDA_SCENARIOS.map((vs, i) => {
+                const r = allValidaResults[vs.id];
+                const total = r?.total ?? 0;
+                const yes = r?.yes ?? 0;
+                const no = r?.no ?? 0;
+                const yesPct = total > 0 ? Math.round(yes / total * 100) : null;
+                const cons = total > 0 ? Math.max(yes, no) / total * 100 : 0;
+                const approved = total > 0 && yes > no;
+                const consLabel = cons >= 80 ? "Consens" : cons >= 60 ? "Tendència" : total > 0 ? "Debat" : "Sense vots";
+                const rowColor = total === 0 ? "border-white/10 bg-white/5"
+                  : cons >= 80 ? (approved ? "border-emerald-400/30 bg-emerald-500/10" : "border-rose-400/30 bg-rose-500/10")
+                  : cons >= 60 ? "border-amber-400/30 bg-amber-500/10"
+                  : "border-rose-400/30 bg-rose-500/15";
+                return (
+                  <button
+                    key={vs.id}
+                    onClick={() => { setCurrentIdx(i); setShowValidaSummary(false); }}
+                    className={`flex items-center gap-4 px-4 py-3 rounded-2xl border text-left transition-all hover:brightness-110 ${rowColor}`}
+                  >
+                    <span className="text-white/40 text-xs font-bold w-6 shrink-0">{i + 1}</span>
+                    <span className="flex-1 text-sm text-white/80 line-clamp-1">{vs.text}</span>
+                    <span className="text-[10px] text-white/40 shrink-0">{vs.context}</span>
+                    {total > 0 ? (
+                      <>
+                        <span className="text-sm font-bold text-emerald-300 shrink-0 w-10 text-right">{yes} Sí</span>
+                        <span className="text-sm font-bold text-rose-300 shrink-0 w-10 text-right">{no} No</span>
+                        <span className="text-[10px] font-bold shrink-0 w-16 text-center px-2 py-1 rounded-lg bg-white/10">{yesPct}% Sí</span>
+                        <span className={`text-[10px] font-bold shrink-0 px-2 py-1 rounded-lg ${
+                          cons >= 80 ? "bg-emerald-500/30 text-emerald-200" :
+                          cons >= 60 ? "bg-amber-500/30 text-amber-200" :
+                          "bg-rose-500/30 text-rose-200"
+                        }`}>{consLabel}</span>
+                      </>
+                    ) : (
+                      <span className="text-[10px] text-white/30 font-bold shrink-0">Sense vots</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ═══ CALIBRA / VALIDA — Scenario view ═══ */}
-        {phase !== "mapa" && scenario && (
+        {phase !== "mapa" && scenario && !showValidaSummary && (
           <>
         {/* Scenario: context badge + text */}
         <div className="shrink-0 mb-2">
@@ -892,17 +983,26 @@ export default function FacilitadorPage() {
                     {currentScenarioVotes}/{activeParticipants}
                   </span>
                 )}
-                <button
-                  onClick={goNext}
-                  disabled={currentIdx === scenarios.length - 1}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
-                    softBlocked
-                      ? "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
-                      : "bg-white/10 hover:bg-white/20"
-                  } disabled:opacity-20`}
-                >
-                  Següent <ChevronRight size={16} />
-                </button>
+                {phase === "valida" && currentIdx === scenarios.length - 1 ? (
+                  <button
+                    onClick={() => setShowValidaSummary(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all bg-violet-500/30 text-violet-200 border border-violet-400/30 hover:bg-violet-500/40"
+                  >
+                    <BarChart3 size={16} /> Resum
+                  </button>
+                ) : (
+                  <button
+                    onClick={goNext}
+                    disabled={currentIdx === scenarios.length - 1}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
+                      softBlocked
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
+                        : "bg-white/10 hover:bg-white/20"
+                    } disabled:opacity-20`}
+                  >
+                    Següent <ChevronRight size={16} />
+                  </button>
+                )}
               </div>
             );
           })()}
