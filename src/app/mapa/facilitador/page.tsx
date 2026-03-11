@@ -191,6 +191,8 @@ export default function FacilitadorPage() {
   const [mapaAllData, setMapaAllData] = useState<MapaRow[]>([]);
   const [allValidaResults, setAllValidaResults] = useState<Record<string, { yes: number; no: number; total: number }>>({});
   const [showValidaSummary, setShowValidaSummary] = useState(false);
+  const [mapaShowDebat, setMapaShowDebat] = useState(false);
+  const [mapaFixCount, setMapaFixCount] = useState(0);
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
@@ -287,18 +289,21 @@ export default function FacilitadorPage() {
   // Fetch results for ALL valida scenarios at once (for progress dots + summary)
   const fetchAllValidaResults = useCallback(async () => {
     if (!sessionActive) return;
-    let query = supabase.from("mapa_valida").select("scenario_id, approved, session_id");
+    let query = supabase.from("mapa_valida").select("scenario_id, approved, session_id, has_fixed");
     if (guidedSessionId) query = query.eq("guided_session_id", guidedSessionId);
     const { data } = await query;
     if (data) {
       const results: Record<string, { yes: number; no: number; total: number }> = {};
-      for (const row of data as { scenario_id: string; approved: boolean }[]) {
+      let fixes = 0;
+      for (const row of data as { scenario_id: string; approved: boolean; has_fixed: boolean }[]) {
         if (!results[row.scenario_id]) results[row.scenario_id] = { yes: 0, no: 0, total: 0 };
         results[row.scenario_id].total++;
         if (row.approved) results[row.scenario_id].yes++;
         else results[row.scenario_id].no++;
+        if (row.has_fixed) fixes++;
       }
       setAllValidaResults(results);
+      setMapaFixCount(fixes);
     }
   }, [sessionActive, guidedSessionId]);
 
@@ -446,6 +451,33 @@ export default function FacilitadorPage() {
   const validaYesIncon = validaVotes.filter(v => v.approved && v.has_inconsistency).length;
   const validaNoIncon = validaVotes.filter(v => !v.approved && v.has_inconsistency).length;
   const validaFixed = validaVotes.filter(v => v.has_fixed).length;
+
+  // ─── Debate analysis ──────────────────────────────────────────
+
+  const DEBATE_FIELDS: { key: keyof MapaRow; label: string; question: (c: string, pct: number) => string }[] = [
+    { key: "teacher_outside", label: "Docent fora", question: (c, p) => `Al ${c}, ${Math.round(p)}% marca que el docent usa la IA fora de classe. Compartiu en quins moments ho feu i per a quin propòsit.` },
+    { key: "teacher_inside",  label: "Docent dins",  question: (c, p) => `Al ${c}, hi ha divisió sobre l'ús docent de la IA a l'aula (${Math.round(p)}%). Com i quan la feu servir vosaltres com a docents?` },
+    { key: "student_access",  label: "Alumnat accés", question: (c, p) => `Al ${c}, ${Math.round(p)}% diu que l'alumnat té accés a IA. Quines condicions posaríeu per obrir o tancar aquest accés?` },
+    { key: "delegation_n0", label: "N0 Preservació", question: (c) => `Al ${c}, hi ha divisió sobre si cal preservar espais sense IA. Quan creieu que la decisió de no usar-la té valor pedagògic?` },
+    { key: "delegation_n1", label: "N1 Exploració",  question: (c) => `Al ${c}, no coincidiu en N1-Exploració. Quan és acceptable que la IA inspiri sense substituir l'esforç cognitiu de l'alumne?` },
+    { key: "delegation_n2", label: "N2 Suport",      question: (c) => `Al ${c}, hi ha debat sobre N2-Suport. On poseu el límit entre la IA com a eina de millora i una substitució del treball de l'alumne?` },
+    { key: "delegation_n3", label: "N3 Cocreació",   question: (c) => `Al ${c}, esteu dividits sobre N3-Cocreació. Quan és una col·laboració genuïna i quan creieu que l'alumne delega massa?` },
+    { key: "delegation_n4", label: "N4 Delegació",   question: (c) => `Al ${c}, teniu opinions diverses sobre N4-Delegació. En quins contextos és pedagògicament acceptable que la IA generi el gruix del producte?` },
+    { key: "delegation_n5", label: "N5 Agència",     question: (c) => `Al ${c}, no coincidiu en si N5-Agència és admissible. En quins contextos creieu que la IA pot operar autònomament al vostre centre?` },
+  ];
+
+  const debatePoints = COURSES.flatMap(course => {
+    const rows = mapaAllData.filter(r => r.course_id === course.id);
+    const n = rows.length;
+    if (n < 2) return [];
+    return DEBATE_FIELDS.flatMap(f => {
+      const yes = rows.filter(r => r[f.key] as boolean).length;
+      const pct = yes / n * 100;
+      const div = 1 - Math.abs((pct - 50) / 50); // 1 = perfect split, 0 = consensus
+      if (div < 0.35) return []; // only surface real debate
+      return [{ course, field: f, pct, div, n, question: f.question(course.name, pct) }];
+    });
+  }).sort((a, b) => b.div - a.div).slice(0, 6);
 
   // ─── Render ────────────────────────────────────────────────────
 
@@ -601,14 +633,29 @@ export default function FacilitadorPage() {
                   <span className="text-sm text-white/50 font-mono"><span className="text-2xl font-bold text-white">{Math.floor(mapaTimer / 60)}:{String(mapaTimer % 60).padStart(2, "0")}</span></span>
                 </div>
               </div>
-              <button
-                onClick={() => setMapaShowHeatmap(!mapaShowHeatmap)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                  mapaShowHeatmap ? "bg-violet-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"
-                }`}
-              >
-                <Grid3X3 size={14} /> {mapaShowHeatmap ? "Resultats" : "Resultats"}
-              </button>
+              <div className="flex items-center gap-2">
+                {mapaFixCount > 0 && (
+                  <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/20 px-3 py-1.5 rounded-lg">
+                    ✓ {mapaFixCount} correccions aplicades
+                  </span>
+                )}
+                <button
+                  onClick={() => { setMapaShowHeatmap(true); setMapaShowDebat(false); }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    mapaShowHeatmap && !mapaShowDebat ? "bg-violet-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"
+                  }`}
+                >
+                  <Grid3X3 size={14} /> Resultats
+                </button>
+                <button
+                  onClick={() => { setMapaShowDebat(true); setMapaShowHeatmap(false); }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    mapaShowDebat ? "bg-rose-400 text-white shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"
+                  }`}
+                >
+                  <BarChart3 size={14} /> Debat
+                </button>
+              </div>
             </div>
 
             {/* Default: waiting view */}
@@ -747,6 +794,76 @@ export default function FacilitadorPage() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Debat view */}
+            {mapaShowDebat && (
+              <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-auto">
+                {/* Divergence table */}
+                <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden shrink-0">
+                  <div className="grid grid-cols-[120px_1px_repeat(9,1fr)] gap-px bg-white/10">
+                    <div className="bg-[var(--jesuites-blue)] px-2 py-2 text-[8px] font-bold text-white/40 uppercase tracking-widest">Curs</div>
+                    <div className="bg-white/20" />
+                    {DEBATE_FIELDS.map(f => (
+                      <div key={String(f.key)} className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                        <span className="text-[7px] font-bold text-white/60 leading-tight block">{f.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {COURSES.map(course => {
+                    const rows = mapaAllData.filter(r => r.course_id === course.id);
+                    const n = rows.length;
+                    return (
+                      <div key={course.id} className="grid grid-cols-[120px_1px_repeat(9,1fr)] gap-px bg-white/5">
+                        <div className="bg-[var(--jesuites-blue)] px-2 py-2 flex items-center gap-1">
+                          <span className="text-[11px] font-bold text-white">{course.name}</span>
+                          {n > 0 && <span className="text-[8px] text-white/30">({n})</span>}
+                        </div>
+                        <div className="bg-white/20" />
+                        {DEBATE_FIELDS.map(f => {
+                          if (n === 0) return <div key={String(f.key)} className="bg-[var(--jesuites-blue)] flex items-center justify-center"><span className="text-white/10 text-[10px]">—</span></div>;
+                          const yes = rows.filter(r => r[f.key] as boolean).length;
+                          const pct = yes / n * 100;
+                          const div = 1 - Math.abs((pct - 50) / 50);
+                          // Green=consensus, amber=tendency, red=debate
+                          const bg = div >= 0.7 ? "bg-rose-500" : div >= 0.4 ? "bg-amber-500" : "bg-emerald-500";
+                          const opacity = Math.max(0.1, div * 0.7);
+                          return (
+                            <div key={String(f.key)} className="bg-[var(--jesuites-blue)] px-1 py-2 text-center relative">
+                              <div className={`absolute inset-0 ${bg} transition-all duration-500`} style={{ opacity }} />
+                              <span className="relative text-[10px] font-bold text-white">{Math.round(pct)}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Debate points + questions */}
+                {debatePoints.length > 0 && (
+                  <div className="shrink-0">
+                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Punts de debat prioritaris</p>
+                    <div className="flex flex-col gap-2">
+                      {debatePoints.map((dp, i) => (
+                        <div key={i} className="flex items-start gap-4 bg-rose-500/10 border border-rose-400/20 rounded-2xl px-4 py-3">
+                          <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
+                            <span className="text-[10px] font-bold text-rose-300 bg-rose-500/20 rounded-lg px-2 py-0.5">{dp.course.name}</span>
+                            <span className="text-[9px] text-white/40">{dp.field.label}</span>
+                            <span className="text-[10px] font-bold text-rose-200">{Math.round(dp.pct)}%</span>
+                          </div>
+                          <p className="text-sm text-white/80 leading-snug flex-1 italic">&ldquo;{dp.question}&rdquo;</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {debatePoints.length === 0 && mapaAllData.length > 0 && (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-white/30 text-sm font-bold uppercase tracking-widest">No hi ha divergències significatives</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
