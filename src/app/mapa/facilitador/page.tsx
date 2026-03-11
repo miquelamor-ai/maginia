@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { Sparkles, ChevronRight, ChevronLeft, Eye, EyeOff, Users, BarChart3, RefreshCw, QrCode, X, Map, Clock, Wifi, Plus, Grid3X3, ScrollText, Compass, Layers, Target, GraduationCap, Building2, Scale, CheckCircle, ArrowDown, ArrowUp } from "lucide-react";
+import { DELEGATION_LEVELS } from "@/lib/data";
+import { Sparkles, ChevronRight, ChevronLeft, Eye, EyeOff, Users, BarChart3, RefreshCw, QrCode, X, Map, Clock, Wifi, Plus, Grid3X3, ScrollText, Compass, Layers, Target, GraduationCap, Building2, Scale, CheckCircle, ArrowDown, ArrowUp, MessageSquare, Heart, HelpCircle, AlertCircle, Lightbulb, Minus } from "lucide-react";
 
 // ─── Shared delegation labels ────────────────────────────────────
 
@@ -166,7 +167,7 @@ interface MapaRow {
   student_modality: string | null;
 }
 
-type Phase = "decaleg" | "intro" | "repas" | "calibra" | "mapa" | "valida" | "debate";
+type Phase = "decaleg" | "intro" | "repas" | "calibra" | "mapa" | "valida" | "debate" | "tancament";
 
 interface CalibraVote {
   scenario_id: string;
@@ -333,6 +334,11 @@ export default function FacilitadorPage() {
   const [debateRevisionOpen, setDebateRevisionOpen] = useState(false);
   const [debateMapView, setDebateMapView] = useState<1 | 2 | 3>(2);
   const [introStep, setIntroStep] = useState(0);
+  const [decalegSubmissions, setDecalegSubmissions] = useState<{session_id: string; principle_1: string; principle_2: string; principle_3: string}[]>([]);
+  const [decalegGenerated, setDecalegGenerated] = useState<{orientations: {n: number; title: string; text: string}[]; summary: string} | null>(null);
+  const [decalegGenerating, setDecalegGenerating] = useState(false);
+  const [tancamentSlide, setTancamentSlide] = useState<0 | 1>(0);
+  const [tancamentVotes, setTancamentVotes] = useState<{worry: number; doubt: number; agree: number; inspired: number}>({worry:0,doubt:0,agree:0,inspired:0});
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
@@ -409,6 +415,31 @@ export default function FacilitadorPage() {
         const revisedKeys = new Set(d3.map((r: { session_id: string; course_id: string }) => `${r.session_id}|${r.course_id}`));
         const nonRevised = (d2 ?? []).filter((r: { session_id: string; course_id: string }) => !revisedKeys.has(`${r.session_id}|${r.course_id}`));
         setMapaDebateData([...(d3 as MapaRow[]), ...(nonRevised as MapaRow[])]);
+      }
+      return;
+    }
+    if (phase === "decaleg") {
+      let q = supabase.from("mapa_decaleg_submissions").select("session_id, principle_1, principle_2, principle_3");
+      if (guidedSessionId) q = q.eq("guided_session_id", guidedSessionId);
+      const { data } = await q;
+      if (data) setDecalegSubmissions(data as typeof decalegSubmissions);
+      return;
+    }
+    if (phase === "tancament") {
+      let q = supabase.from("mapa_tancament_votes").select("vote_type");
+      if (guidedSessionId) q = q.eq("guided_session_id", guidedSessionId);
+      const { data } = await q;
+      if (data) {
+        const counts = { worry: 0, doubt: 0, agree: 0, inspired: 0 };
+        for (const v of data as {vote_type: string}[]) {
+          if (v.vote_type in counts) counts[v.vote_type as keyof typeof counts]++;
+        }
+        setTancamentVotes(counts);
+      }
+      // Also load saved decaleg if available
+      const { data: fsData } = await supabase.from("mapa_facilitador_state").select("decaleg_json").eq("id", 1).single();
+      if (fsData?.decaleg_json) {
+        try { setDecalegGenerated(JSON.parse(fsData.decaleg_json)); } catch {}
       }
       return;
     }
@@ -554,7 +585,7 @@ export default function FacilitadorPage() {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (phase === "mapa" || phase === "debate" || phase === "decaleg" || phase === "intro" || phase === "repas") return;
+      if (phase === "mapa" || phase === "debate" || phase === "decaleg" || phase === "intro" || phase === "repas" || phase === "tancament") return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") { e.preventDefault(); goNext(); }
       if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") { e.preventDefault(); goPrev(); }
       if (e.key === " ") { e.preventDefault(); setIsRevealed(r => !r); }
@@ -790,7 +821,7 @@ export default function FacilitadorPage() {
   // ─── Render ────────────────────────────────────────────────────
 
   return (
-    <main className="h-screen bg-[var(--jesuites-blue)] text-white font-sans select-none overflow-hidden">
+    <main className={`h-screen font-sans select-none overflow-hidden transition-colors duration-300 ${["decaleg","intro","repas","tancament"].includes(phase) ? "bg-[var(--jesuites-cream)] text-[var(--jesuites-text)]" : "bg-[var(--jesuites-blue)] text-white"}`}>
       <div className="w-full mx-auto px-10 py-4 h-full flex flex-col">
 
         {/* QR Overlay */}
@@ -896,6 +927,12 @@ export default function FacilitadorPage() {
               className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "debate" ? "bg-rose-400 text-white shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
             >
               Debat
+            </button>
+            <button
+              onClick={() => switchPhase("tancament")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "tancament" ? "bg-indigo-400 text-white shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+            >
+              <MessageSquare size={13} /> Tancament
             </button>
           </div>
           {/* Right: controls */}
@@ -1307,33 +1344,92 @@ export default function FacilitadorPage() {
 
         {/* ═══ DECÀLEG PHASE ═══ */}
         {phase === "decaleg" && (
-          <div className="flex-1 min-h-0 overflow-auto pb-4">
-            <div className="mb-4 shrink-0">
-              <p className="text-white/40 text-xs font-bold uppercase tracking-[0.25em]">10 orientacions clau · Derivades del Marc General d&apos;Integració de la IA</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { n: 1, title: "La persona, sempre al centre", text: "La IA és una eina al servei de la persona. La responsabilitat de cada decisió i el resultat final recauen sempre en l'ésser humà, mai en la màquina.", color: "border-blue-400/30 bg-blue-500/5" },
-                { n: 2, title: "Augmentar, no substituir", text: "Usem la IA per ampliar i aprofundir l'aprenentatge, no per eludir-lo. L'alumne ha de produir pensament propi; la IA n'és el copilot, no el pilot.", color: "border-emerald-400/30 bg-emerald-500/5" },
-                { n: 3, title: "Delegar amb criteri, no per inèrcia", text: "Decidim conscientment quin treball fem nosaltres, quin fa la IA i quin fem junts. Delegar és un acte de judici estratègic, no de comoditat.", color: "border-violet-400/30 bg-violet-500/5" },
-                { n: 4, title: "Declarar l'ús de la IA", text: "Identifiquem sempre quan hem usat IA en el nostre treball. La transparència és un compromís ètic i un model a transmetre a l'alumnat.", color: "border-amber-400/30 bg-amber-500/5" },
-                { n: 5, title: "Verificar sempre", text: "Cap resultat d'una IA s'accepta sense contrast. Detectem al·lucinacions, contrastem fonts i assumim la responsabilitat del que compartim.", color: "border-rose-400/30 bg-rose-500/5" },
-                { n: 6, title: "Formular bé és pensar bé", text: "La qualitat del que demanem a la IA reflecteix la nostra claredat de pensament. Aprendre a descriure és aprendre a pensar amb rigor.", color: "border-sky-400/30 bg-sky-500/5" },
-                { n: 7, title: "Fricció productiva, no facilitat buida", text: "L'aprenentatge profund requereix esforç i dubte. La IA ha de plantejar reptes més complexos, no eliminar la dificultat necessària per créixer.", color: "border-orange-400/30 bg-orange-500/5" },
-                { n: 8, title: "Equitat i accés universal", text: "Garantim que la IA no ampliï les desigualtats. Tothom ha de tenir accés a les mateixes oportunitats, independentment dels seus recursos.", color: "border-teal-400/30 bg-teal-500/5" },
-                { n: 9, title: "Protegir la privacitat i el benestar", text: "La dignitat i la intimitat de cada persona és innegociable. No introduïm mai dades sensibles —d'alumnes, famílies o equip— en sistemes oberts.", color: "border-pink-400/30 bg-pink-500/5" },
-                { n: 10, title: "Ser referent humà i ètic", text: "La nostra manera d'integrar la IA ha d'il·luminar el camí d'altres. Actuem amb la mateixa integritat i cura que voldríem veure en la tecnologia que usem.", color: "border-indigo-400/30 bg-indigo-500/5" },
-              ].map(item => (
-                <div key={item.n} className={`rounded-2xl border p-4 flex gap-3 ${item.color}`}>
-                  <div className="shrink-0 w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
-                    <span className="text-xs font-black text-white/60">{item.n}</span>
+          <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+            {/* Left: submissions */}
+            <div className="w-80 shrink-0 flex flex-col gap-3">
+              <div className="flex items-center justify-between shrink-0">
+                <h3 className="text-sm font-bold text-[var(--jesuites-blue)] uppercase tracking-wider">Aportacions rebudes</h3>
+                <span className="text-xs font-bold bg-[var(--jesuites-blue)] text-white px-2 py-1 rounded-lg">{decalegSubmissions.length}</span>
+              </div>
+              <div className="flex-1 min-h-0 overflow-auto flex flex-col gap-2">
+                {decalegSubmissions.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center mt-8 animate-pulse">Esperant aportacions dels participants…</p>
+                )}
+                {decalegSubmissions.map((s, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-black/[0.06] p-3 shadow-sm">
+                    <p className="text-[10px] font-bold text-[var(--jesuites-blue)]/40 uppercase tracking-wider mb-1">Participant {i + 1}</p>
+                    {[s.principle_1, s.principle_2, s.principle_3].map((p, pi) => (
+                      <p key={pi} className="text-xs text-gray-700 leading-snug mb-1 pl-2 border-l-2 border-[var(--jesuites-blue)]/20">{p}</p>
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-white mb-1">{item.title}</p>
-                    <p className="text-xs text-white/60 leading-relaxed">{item.text}</p>
+                ))}
+              </div>
+              {decalegSubmissions.length > 0 && (
+                <button
+                  onClick={async () => {
+                    setDecalegGenerating(true);
+                    try {
+                      const marcRes = await fetch("/marc_general_ia.md").catch(() => null);
+                      const marcText = marcRes ? await marcRes.text() : "";
+                      const res = await fetch("/api/decaleg/synthesize", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ submissions: decalegSubmissions, marcContext: marcText }),
+                      });
+                      const data = await res.json();
+                      if (data.orientations) {
+                        setDecalegGenerated(data);
+                        await supabase.from("mapa_facilitador_state")
+                          .update({ decaleg_json: JSON.stringify(data) }).eq("id", 1);
+                      }
+                    } catch (e) { console.error(e); }
+                    setDecalegGenerating(false);
+                  }}
+                  disabled={decalegGenerating}
+                  className="shrink-0 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[var(--jesuites-blue)] text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:brightness-110 transition-all"
+                >
+                  {decalegGenerating ? "Generant…" : `Generar decàleg (${decalegSubmissions.length} × 3)`}
+                </button>
+              )}
+            </div>
+
+            {/* Right: generated decaleg */}
+            <div className="flex-1 min-h-0 overflow-auto">
+              {!decalegGenerated && (
+                <div className="h-full flex flex-col items-center justify-center gap-4 text-center">
+                  <div className="grid grid-cols-2 gap-3 w-full max-w-2xl opacity-40">
+                    {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <div key={n} className="h-16 rounded-2xl bg-[var(--jesuites-blue)]/10 border border-[var(--jesuites-blue)]/10 flex items-center justify-center">
+                        <span className="text-xs font-bold text-[var(--jesuites-blue)]/40">{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">El decàleg apareixerà aquí</p>
+                </div>
+              )}
+              {decalegGenerated && (
+                <div>
+                  {decalegGenerated.summary && (
+                    <div className="mb-4 bg-[var(--jesuites-blue)]/5 border border-[var(--jesuites-blue)]/10 rounded-2xl px-4 py-3">
+                      <p className="text-xs font-bold text-[var(--jesuites-blue)] uppercase tracking-wider mb-1">Consens dels docents</p>
+                      <p className="text-sm text-[var(--jesuites-text)]/70 italic">{decalegGenerated.summary}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    {decalegGenerated.orientations.map(item => (
+                      <div key={item.n} className="bg-white rounded-2xl border border-black/[0.06] p-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <span className="shrink-0 w-7 h-7 rounded-lg bg-[var(--jesuites-blue)] text-white text-xs font-black flex items-center justify-center">{item.n}</span>
+                          <div>
+                            <p className="text-sm font-bold text-[var(--jesuites-blue)] mb-1">{item.title}</p>
+                            <p className="text-xs text-gray-600 leading-relaxed">{item.text}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
@@ -1343,115 +1439,100 @@ export default function FacilitadorPage() {
           const LAYERS = [
             {
               id: "visio",
-              label: "HORITZÓ / VISIÓ",
-              sublabel: "On volem arribar com a institució",
-              icon: <Target size={20} className="text-white" />,
-              color: "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border-emerald-400/40",
-              titleColor: "text-emerald-300",
-              content: "IA integrada a la gestió, la docència i l'aprenentatge",
-              detail: "Augmenta l'aprenentatge · Marc ètic · La persona al centre · No substitueix",
+              icon: <Target size={28} className="text-[var(--jesuites-blue)]" />,
+              tag: "HORITZÓ",
+              title: "La IA augmenta l'aprenentatge",
+              subtitle: "Integrada a la gestió, la docència i l'aprenentatge — de manera ètica, segura i humanista",
+              accent: "bg-emerald-100 border-emerald-300",
+              tagColor: "text-emerald-700 bg-emerald-100",
             },
             {
               id: "alumnat",
-              label: "ALUMNAT",
-              sublabel: "Qui aprèn",
-              icon: <GraduationCap size={20} className="text-white" />,
-              color: "bg-gradient-to-r from-violet-500/20 to-purple-500/20 border-violet-400/40",
-              titleColor: "text-violet-300",
-              content: "Fluïdeses en IA (4D): Delegació · Descripció · Discerniment · Diligència",
-              detail: "L'alumne aprèn a col·laborar amb la IA de manera crítica, ètica i responsable",
+              icon: <GraduationCap size={28} className="text-[var(--jesuites-blue)]" />,
+              tag: "ALUMNAT",
+              title: "Fluïdeses en IA — les 4D",
+              subtitle: "Delegació · Descripció · Discerniment · Diligència",
+              accent: "bg-violet-50 border-violet-200",
+              tagColor: "text-violet-700 bg-violet-100",
             },
             {
               id: "activitats",
-              label: "ACTIVITATS I MATERIALS",
-              sublabel: "Com s'aprèn",
-              icon: <ScrollText size={20} className="text-white" />,
-              color: "bg-gradient-to-r from-blue-500/20 to-sky-500/20 border-blue-400/40",
-              titleColor: "text-blue-300",
-              content: "Propostes pedagògiques on la IA augmenta l'aprenentatge real",
-              detail: "Tasques dissenyades perquè l'alumne pensi, creï i discerneixi — la IA com a eina, no com a substitut",
+              icon: <ScrollText size={28} className="text-[var(--jesuites-blue)]" />,
+              tag: "A L'AULA",
+              title: "Activitats on la IA té un rol",
+              subtitle: "Tasques dissenyades perquè l'alumne pensi, creï i discerneixi amb la IA com a eina",
+              accent: "bg-blue-50 border-blue-200",
+              tagColor: "text-blue-700 bg-blue-100",
             },
             {
               id: "docents",
-              label: "DOCENTS",
-              sublabel: "Qui dissenya",
-              icon: <Users size={20} className="text-white" />,
-              color: "bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-400/40",
-              titleColor: "text-amber-300",
-              content: "Dissenyar activitats · Produir materials · Temps · Formació · Acompanyament",
-              detail: "Els docents necessiten eines, criteris clars i espai per a l'experimentació pedagògica",
+              icon: <Users size={28} className="text-[var(--jesuites-blue)]" />,
+              tag: "DOCENTS",
+              title: "Disseny · Materials · Formació",
+              subtitle: "Per dissenyar bé cal temps, criteris clars i acompanyament",
+              accent: "bg-amber-50 border-amber-200",
+              tagColor: "text-amber-700 bg-amber-100",
             },
             {
               id: "criteris",
-              label: "CRITERIS I ORIENTACIONS",
-              sublabel: "El pont — avui treballem aquí",
-              icon: <Scale size={20} className="text-white" />,
-              color: "bg-gradient-to-r from-rose-500/20 to-pink-500/20 border-rose-400/50",
-              titleColor: "text-rose-300",
-              content: null,
-              detail: null,
+              icon: <Scale size={28} className="text-[var(--jesuites-blue)]" />,
+              tag: "PONT",
+              title: "Criteris i orientacions",
+              subtitle: null,
+              accent: "bg-rose-50 border-rose-300",
+              tagColor: "text-rose-700 bg-rose-100",
+              special: true,
             },
             {
               id: "avui",
-              label: "AVUI: DELEGACIÓ (1a D)",
-              sublabel: "El nostre focus d'aquesta jornada",
-              icon: <Map size={20} className="text-white" />,
-              color: "bg-gradient-to-r from-white/10 to-white/5 border-white/30",
-              titleColor: "text-white",
-              content: "Criteris pedagògics per a la primera D del model 4D",
-              detail: "Fins on deleguem a la IA? Quins nivells d'autonomia són adequats per a cada etapa educativa?",
+              icon: <Map size={28} className="text-white" />,
+              tag: "AVUI",
+              title: "Criteris pedagògics · Delegació",
+              subtitle: "Com decidim fins on deleguem a la IA? Quins nivells d'autonomia per cada etapa?",
+              accent: "bg-[var(--jesuites-blue)] border-[var(--jesuites-blue)]",
+              tagColor: "text-white/80 bg-white/20",
+              isAvui: true,
             },
           ];
-
           const visibleCount = introStep + 1;
-
           return (
-            <div className="flex-1 min-h-0 flex flex-col gap-3">
-              <div className="flex-1 min-h-0 flex flex-col justify-center gap-2 overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 flex flex-col justify-center gap-1.5 overflow-hidden px-4">
                 {LAYERS.slice(0, visibleCount).map((layer, i) => {
                   const isLast = i === visibleCount - 1;
+                  const isAvui = layer.isAvui;
                   return (
-                    <div key={layer.id} className={`transition-all duration-500 ${isLast ? "opacity-100 scale-100" : "opacity-60 scale-[0.99]"}`}>
-                      <div className={`rounded-2xl border px-4 py-3 flex items-start gap-3 ${layer.color}`}>
-                        <div className="shrink-0 w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mt-0.5">
+                    <div key={layer.id} className={`transition-all duration-500 ${isLast ? "opacity-100" : "opacity-50"}`}>
+                      <div className={`rounded-2xl border-2 px-5 py-3 flex items-center gap-4 ${layer.accent}`}>
+                        <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${isAvui ? "bg-white/20" : "bg-white"} shadow-sm`}>
                           {layer.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2 mb-0.5">
-                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${layer.titleColor}`}>{layer.label}</span>
-                            <span className="text-[9px] text-white/30 font-bold">{layer.sublabel}</span>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full ${layer.tagColor}`}>{layer.tag}</span>
                           </div>
-                          {layer.id === "criteris" ? (
+                          <p className={`text-xl font-black leading-tight ${isAvui ? "text-white" : "text-[var(--jesuites-blue)]"}`}>{layer.title}</p>
+                          {layer.special ? (
                             <div className="flex gap-2 mt-1">
                               {[
-                                { label: "Pedagògics", highlight: true },
-                                { label: "Tecnològics", highlight: false },
-                                { label: "Legals / Ètics", highlight: false },
+                                { l: "★ Pedagògics", hi: true },
+                                { l: "Tecnològics", hi: false },
+                                { l: "Legals / Ètics", hi: false },
                               ].map(c => (
-                                <span key={c.label} className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${
-                                  c.highlight
-                                    ? "bg-rose-400/20 border-rose-400/40 text-rose-200"
-                                    : "bg-white/5 border-white/10 text-white/40"
-                                }`}>
-                                  {c.highlight ? "★ " : ""}{c.label}
-                                </span>
+                                <span key={c.l} className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${c.hi ? "bg-rose-100 border-rose-300 text-rose-700" : "bg-white/60 border-rose-200 text-rose-400"}`}>{c.l}</span>
                               ))}
-                              <span className="text-[9px] text-white/30 self-center ml-1">Pont entre la visió i la pràctica a l&apos;aula</span>
                             </div>
-                          ) : (
-                            <>
-                              <p className="text-sm font-semibold text-white/90">{layer.content}</p>
-                              {layer.detail && <p className="text-[11px] text-white/40 mt-0.5">{layer.detail}</p>}
-                            </>
+                          ) : layer.subtitle && (
+                            <p className={`text-xs mt-0.5 ${isAvui ? "text-white/70" : "text-[var(--jesuites-text)]/50"}`}>{layer.subtitle}</p>
                           )}
                         </div>
                         {isLast && introStep < LAYERS.length - 1 && (
-                          <div className="shrink-0 w-2 h-2 rounded-full bg-white/40 animate-pulse self-center" />
+                          <div className="shrink-0 w-2 h-2 rounded-full bg-[var(--jesuites-blue)]/30 animate-pulse" />
                         )}
                       </div>
                       {i < visibleCount - 1 && (
                         <div className="flex justify-center py-0.5">
-                          <ArrowDown size={14} className="text-white/20" />
+                          <ArrowDown size={12} className="text-[var(--jesuites-blue)]/20" />
                         </div>
                       )}
                     </div>
@@ -1459,21 +1540,19 @@ export default function FacilitadorPage() {
                 })}
               </div>
               {/* Navigation */}
-              <div className="flex items-center justify-between shrink-0 border-t border-white/10 pt-3">
+              <div className="flex items-center justify-between shrink-0 border-t border-[var(--jesuites-blue)]/10 pt-3 mt-3">
                 <button
                   onClick={() => setIntroStep(s => Math.max(0, s - 1))}
                   disabled={introStep === 0}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-white/20 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)]/10 text-[var(--jesuites-blue)] text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-[var(--jesuites-blue)]/20 transition-all"
                 >
                   <ChevronLeft size={16} /> Anterior
                 </button>
-                <span className="text-white/30 text-xs font-bold uppercase tracking-widest">
-                  {introStep + 1} / {LAYERS.length}
-                </span>
+                <span className="text-[var(--jesuites-blue)]/40 text-xs font-bold uppercase tracking-widest">{introStep + 1} / {LAYERS.length}</span>
                 <button
                   onClick={() => setIntroStep(s => Math.min(LAYERS.length - 1, s + 1))}
                   disabled={introStep === LAYERS.length - 1}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500/20 text-sky-200 border border-sky-400/30 text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-sky-500/30 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)] text-white text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:brightness-110 transition-all"
                 >
                   Següent <ChevronRight size={16} />
                 </button>
@@ -1484,65 +1563,168 @@ export default function FacilitadorPage() {
 
         {/* ═══ REPÀS PHASE — Nivells de delegació ═══ */}
         {phase === "repas" && (
+          <div className="flex-1 min-h-0 flex flex-col gap-3">
+            <p className="text-[var(--jesuites-blue)]/40 text-xs font-bold uppercase tracking-[0.25em] shrink-0">6 Graus de col·laboració Persona–IA</p>
+            <div className="flex-1 min-h-0 grid grid-cols-3 gap-3 overflow-auto">
+              {DELEGATION_LEVELS.map(level => {
+                const colors = ["bg-gray-400","bg-emerald-500","bg-blue-500","bg-violet-500","bg-amber-500","bg-rose-500"];
+                const textColors = ["text-gray-600","text-emerald-700","text-blue-700","text-violet-700","text-amber-700","text-rose-700"];
+                const borderColors = ["border-gray-200","border-emerald-200","border-blue-200","border-violet-200","border-amber-200","border-rose-200"];
+                const bgColors = ["bg-gray-50","bg-emerald-50","bg-blue-50","bg-violet-50","bg-amber-50","bg-rose-50"];
+                return (
+                  <div key={level.lv} className={`rounded-2xl border-2 p-4 flex flex-col gap-2 ${borderColors[level.lv]} ${bgColors[level.lv]}`}>
+                    {/* Header */}
+                    <div className="flex items-center gap-2">
+                      <div className={`w-10 h-10 rounded-xl ${colors[level.lv]} flex items-center justify-center shrink-0 shadow-sm`}>
+                        <span className="text-sm font-black text-white">N{level.lv}</span>
+                      </div>
+                      <div>
+                        <p className={`text-sm font-black ${textColors[level.lv]}`}>{level.name}</p>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">{level.sub}</p>
+                      </div>
+                    </div>
+                    {/* Persona/IA bar */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[8px] font-bold text-gray-400 w-10 shrink-0">Persona</span>
+                      <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                        <div className={`h-full ${colors[level.lv]} opacity-70 transition-all`} style={{ width: `${level.human}%` }} />
+                      </div>
+                      <span className={`text-[10px] font-bold ${textColors[level.lv]} w-8 text-right`}>{level.human}%</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[8px] font-bold text-gray-400 w-10 shrink-0">IA</span>
+                      <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+                        <div className="h-full bg-gray-400 opacity-50 transition-all" style={{ width: `${level.ia}%` }} />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 w-8 text-right">{level.ia}%</span>
+                    </div>
+                    {/* Description */}
+                    <p className="text-[11px] text-gray-600 leading-relaxed">{level.desc}</p>
+                    {/* One example */}
+                    {level.examples?.[0] && (
+                      <div className="mt-auto pt-2 border-t border-black/[0.06]">
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">{level.examples[0].subject}</p>
+                        <p className="text-[10px] text-gray-500 italic leading-snug">{level.examples[0].activity}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ TANCAMENT PHASE ═══ */}
+        {phase === "tancament" && (
           <div className="flex-1 min-h-0 flex flex-col gap-4">
-            <p className="text-white/40 text-xs font-bold uppercase tracking-[0.25em] shrink-0">6 Graus de col·laboració Persona–IA · Model 4D Delegació</p>
-            <div className="flex-1 min-h-0 grid grid-cols-3 gap-3">
+            {/* Sub-slide selector */}
+            <div className="flex gap-2 shrink-0">
               {[
-                {
-                  n: 0, label: "N0", name: "Preservació", color: "bg-gray-400", border: "border-gray-400/30", bg: "bg-gray-500/10",
-                  who: "100% persona", ia: "No participa",
-                  desc: "No hi ha intervenció de la IA. Es prioritza l'activitat humana pura, el pensament autònom i les habilitats fonamentals.",
-                  ex: "Examen oral, tutoria emocional, creació artística lliure, avaluació de judici moral.",
-                },
-                {
-                  n: 1, label: "N1", name: "Exploració", color: "bg-emerald-500", border: "border-emerald-400/30", bg: "bg-emerald-500/10",
-                  who: "Persona lidera", ia: "Informa, inspira",
-                  desc: "La IA actua com a font d'informació o mirall d'idees. No genera el producte final ni substitueix el raonament.",
-                  ex: "L'alumne demana exemples, contra-arguments o preguntes de reflexió. Cap artefacte final de la IA.",
-                },
-                {
-                  n: 2, label: "N2", name: "Suport", color: "bg-blue-500", border: "border-blue-400/30", bg: "bg-blue-500/10",
-                  who: "Persona crea", ia: "Revisa, millora",
-                  desc: "La persona crea el contingut original i delega a la IA la revisió, correcció o proposta de millora. L'autoria és humana.",
-                  ex: "L'alumne escriu un text i demana a la IA que en corregeixi l'ortografia i la coherència.",
-                },
-                {
-                  n: 3, label: "N3", name: "Cocreació", color: "bg-violet-500", border: "border-violet-400/30", bg: "bg-violet-500/10",
-                  who: "Persona + IA alterns", ia: "Elabora conjuntament",
-                  desc: "Treball iteratiu i bidireccional: persona i IA elaboren junts, alternant tasques i fusionant aportacions. Lideratge compartit.",
-                  ex: "L'alumne defineix l'estructura, la IA desenvolupa seccions, l'alumne integra i reelabora.",
-                },
-                {
-                  n: 4, label: "N4", name: "Delegació", color: "bg-amber-500", border: "border-amber-400/30", bg: "bg-amber-500/10",
-                  who: "Persona valida", ia: "Genera el producte",
-                  desc: "La persona defineix instruccions detallades i la IA genera un producte complet. La persona valida críticament i n'assumeix la responsabilitat.",
-                  ex: "L'alumne fa un prompt sofisticat, la IA genera l'informe, l'alumne verifica i corregeix.",
-                },
-                {
-                  n: 5, label: "N5", name: "Agència", color: "bg-rose-500", border: "border-rose-400/30", bg: "bg-rose-500/10",
-                  who: "Persona supervisa", ia: "Opera autònomament",
-                  desc: "La IA opera de forma autònoma dins d'un marc i paràmetres definits per la persona, que actua com a dissenyadora i auditora del sistema.",
-                  ex: "Una plataforma adaptativa ajusta automàticament la dificultat dels exercicis sense intervenció docent en cada pas.",
-                },
-              ].map(level => (
-                <div key={level.n} className={`rounded-2xl border p-4 flex flex-col gap-2 ${level.border} ${level.bg}`}>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-9 h-9 rounded-xl ${level.color} flex items-center justify-center shrink-0`}>
-                      <span className="text-sm font-black text-white">{level.label}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-white">{level.name}</p>
-                      <p className="text-[9px] text-white/30 font-bold uppercase tracking-wider">{level.who} · IA: {level.ia}</p>
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-white/70 leading-relaxed">{level.desc}</p>
-                  <div className="mt-auto pt-2 border-t border-white/10">
-                    <p className="text-[9px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Exemple</p>
-                    <p className="text-[10px] text-white/50 italic leading-snug">{level.ex}</p>
-                  </div>
-                </div>
+                { n: 0, label: "Decàleg final" },
+                { n: 1, label: "Reflexió col·lectiva" },
+              ].map(s => (
+                <button key={s.n} onClick={() => setTancamentSlide(s.n as 0 | 1)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    tancamentSlide === s.n
+                      ? "bg-[var(--jesuites-blue)] text-white shadow"
+                      : "bg-[var(--jesuites-blue)]/10 text-[var(--jesuites-blue)]/50 hover:bg-[var(--jesuites-blue)]/20"
+                  }`}
+                >
+                  {s.label}
+                </button>
               ))}
             </div>
+
+            {/* Slide 0: Decaleg final */}
+            {tancamentSlide === 0 && (
+              <div className="flex-1 min-h-0 overflow-auto">
+                {!decalegGenerated && (
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">El decàleg no s&apos;ha generat encara</p>
+                  </div>
+                )}
+                {decalegGenerated && (
+                  <div>
+                    {decalegGenerated.summary && (
+                      <div className="mb-4 bg-[var(--jesuites-blue)]/5 border border-[var(--jesuites-blue)]/10 rounded-2xl px-4 py-3">
+                        <p className="text-xs font-bold text-[var(--jesuites-blue)] uppercase tracking-wider mb-1">Consens dels docents</p>
+                        <p className="text-sm text-[var(--jesuites-text)]/70 italic">{decalegGenerated.summary}</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      {decalegGenerated.orientations.map(item => (
+                        <div key={item.n} className="bg-white rounded-2xl border border-black/[0.06] p-4 shadow-sm">
+                          <div className="flex items-start gap-3">
+                            <span className="shrink-0 w-7 h-7 rounded-lg bg-[var(--jesuites-blue)] text-white text-xs font-black flex items-center justify-center">{item.n}</span>
+                            <div>
+                              <p className="text-sm font-bold text-[var(--jesuites-blue)] mb-1">{item.title}</p>
+                              <p className="text-xs text-gray-600 leading-relaxed">{item.text}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Slide 1: Reflexió */}
+            {tancamentSlide === 1 && (
+              <div className="flex-1 min-h-0 flex flex-col gap-6">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
+                  <p className="text-xs font-bold text-[var(--jesuites-blue)]/40 uppercase tracking-[0.3em]">Reflexió final</p>
+                  <h2 className="text-3xl font-black text-[var(--jesuites-blue)] leading-tight max-w-2xl">
+                    Com hauríem de procedir<br />amb els homòlegs i el professorat?
+                  </h2>
+                  <p className="text-sm text-[var(--jesuites-text)]/50 max-w-lg">
+                    Pren un moment per reflexionar. Com et sents davant el que hem treballat avui?
+                  </p>
+                </div>
+                {/* Vote results */}
+                <div className="shrink-0">
+                  <p className="text-xs font-bold text-[var(--jesuites-blue)]/40 uppercase tracking-widest text-center mb-3">
+                    {Object.values(tancamentVotes).reduce((a,b) => a+b, 0)} respostes
+                  </p>
+                  <div className="grid grid-cols-4 gap-3">
+                    {[
+                      { id: "worry", label: "M'inquieta", icon: <AlertCircle size={20} />, color: "border-orange-300 bg-orange-50", textColor: "text-orange-700", barColor: "bg-orange-400" },
+                      { id: "doubt", label: "Em genera dubtes", icon: <HelpCircle size={20} />, color: "border-blue-300 bg-blue-50", textColor: "text-blue-700", barColor: "bg-blue-400" },
+                      { id: "agree", label: "Em dóna confort", icon: <Heart size={20} />, color: "border-emerald-300 bg-emerald-50", textColor: "text-emerald-700", barColor: "bg-emerald-400" },
+                      { id: "inspired", label: "M'inspira", icon: <Lightbulb size={20} />, color: "border-violet-300 bg-violet-50", textColor: "text-violet-700", barColor: "bg-violet-400" },
+                    ].map(opt => {
+                      const count = tancamentVotes[opt.id as keyof typeof tancamentVotes];
+                      const total = Object.values(tancamentVotes).reduce((a,b) => a+b, 0);
+                      const pct = total > 0 ? Math.round(count / total * 100) : 0;
+                      return (
+                        <div key={opt.id} className={`rounded-2xl border-2 p-4 text-center ${opt.color}`}>
+                          <div className={`${opt.textColor} flex justify-center mb-2`}>{opt.icon}</div>
+                          <p className={`text-2xl font-black ${opt.textColor}`}>{count}</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">{opt.label}</p>
+                          <div className="w-full h-1.5 rounded-full bg-black/[0.05] overflow-hidden">
+                            <div className={`h-full ${opt.barColor} transition-all duration-700`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className={`text-[10px] font-bold ${opt.textColor} mt-1`}>{pct}%</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Open/close voting */}
+                  <div className="flex justify-center mt-3">
+                    <button
+                      onClick={async () => {
+                        await supabase.from("mapa_facilitador_state")
+                          .update({ phase: "tancament", is_active: true })
+                          .eq("id", 1);
+                      }}
+                      className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-[var(--jesuites-blue)]/10 text-[var(--jesuites-blue)]/60 hover:bg-[var(--jesuites-blue)]/20 transition-all"
+                    >
+                      Obrir votació als participants
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

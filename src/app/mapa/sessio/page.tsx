@@ -107,7 +107,10 @@ export default function SessioPage() {
   // Auto-redirect when facilitator starts
   useEffect(() => {
     if (facilitator?.is_active) {
-      const target = facilitator.phase === "valida" ? "/mapa/valida" : facilitator.phase === "mapa" ? "/mapa" : "/mapa/calibra";
+      const target = facilitator.phase === "valida" ? "/mapa/valida"
+        : facilitator.phase === "mapa" ? "/mapa"
+        : facilitator.phase === "decaleg" ? "/mapa/decaleg"
+        : "/mapa/calibra";
       window.location.href = target;
     }
   }, [facilitator]);
