@@ -353,8 +353,8 @@ export default function FacilitadorPage() {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (phase === "mapa") return; // No scenario nav in mapa phase
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); goNext(); }
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); goPrev(); }
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") { e.preventDefault(); goNext(); }
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") { e.preventDefault(); goPrev(); }
       if (e.key === " ") { e.preventDefault(); setIsRevealed(r => !r); }
     };
     window.addEventListener("keydown", handleKey);
