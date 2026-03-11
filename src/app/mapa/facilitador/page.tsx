@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { Sparkles, ChevronRight, ChevronLeft, Eye, EyeOff, Users, BarChart3, RefreshCw, QrCode, X, Map, Clock, Wifi, Plus, Grid3X3 } from "lucide-react";
+import { Sparkles, ChevronRight, ChevronLeft, Eye, EyeOff, Users, BarChart3, RefreshCw, QrCode, X, Map, Clock, Wifi, Plus, Grid3X3, ScrollText, Compass, Layers, Target, GraduationCap, Building2, Scale, CheckCircle, ArrowDown, ArrowUp } from "lucide-react";
 
 // ─── Shared delegation labels ────────────────────────────────────
 
@@ -166,7 +166,7 @@ interface MapaRow {
   student_modality: string | null;
 }
 
-type Phase = "calibra" | "mapa" | "valida" | "debate";
+type Phase = "decaleg" | "intro" | "repas" | "calibra" | "mapa" | "valida" | "debate";
 
 interface CalibraVote {
   scenario_id: string;
@@ -332,6 +332,7 @@ export default function FacilitadorPage() {
   const [mapaFixCount, setMapaFixCount] = useState(0);
   const [debateRevisionOpen, setDebateRevisionOpen] = useState(false);
   const [debateMapView, setDebateMapView] = useState<1 | 2 | 3>(2);
+  const [introStep, setIntroStep] = useState(0);
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
@@ -553,7 +554,7 @@ export default function FacilitadorPage() {
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (phase === "mapa") return; // No scenario nav in mapa phase
+      if (phase === "mapa" || phase === "debate" || phase === "decaleg" || phase === "intro" || phase === "repas") return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown") { e.preventDefault(); goNext(); }
       if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp") { e.preventDefault(); goPrev(); }
       if (e.key === " ") { e.preventDefault(); setIsRevealed(r => !r); }
@@ -584,7 +585,11 @@ export default function FacilitadorPage() {
     setPhase(p);
     setCurrentIdx(0);
     setIsRevealed(false);
-    if (sessionActive) broadcastState(p, 0, true);
+    if (p !== "intro") setIntroStep(0);
+    // Only broadcast phases that participants react to
+    if (sessionActive && (p === "calibra" || p === "mapa" || p === "valida" || p === "debate")) {
+      broadcastState(p, 0, true);
+    }
   };
 
   const toggleSession = () => {
@@ -818,6 +823,24 @@ export default function FacilitadorPage() {
           {/* Left: phase tabs */}
           <div className="flex items-center gap-3">
             <Sparkles size={20} className="text-white/40" />
+            <button
+              onClick={() => switchPhase("decaleg")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "decaleg" ? "bg-emerald-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+            >
+              <ScrollText size={13} /> Decàleg
+            </button>
+            <button
+              onClick={() => switchPhase("intro")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "intro" ? "bg-sky-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+            >
+              <Compass size={13} /> Full de ruta
+            </button>
+            <button
+              onClick={() => switchPhase("repas")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${phase === "repas" ? "bg-violet-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+            >
+              <Layers size={13} /> Nivells
+            </button>
             <button
               onClick={() => switchPhase("calibra")}
               className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${phase === "calibra" ? "bg-white text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
@@ -1279,6 +1302,247 @@ export default function FacilitadorPage() {
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* ═══ DECÀLEG PHASE ═══ */}
+        {phase === "decaleg" && (
+          <div className="flex-1 min-h-0 overflow-auto pb-4">
+            <div className="mb-4 shrink-0">
+              <p className="text-white/40 text-xs font-bold uppercase tracking-[0.25em]">10 orientacions clau · Derivades del Marc General d&apos;Integració de la IA</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { n: 1, title: "La persona, sempre al centre", text: "La IA és una eina al servei de la persona. La responsabilitat de cada decisió i el resultat final recauen sempre en l'ésser humà, mai en la màquina.", color: "border-blue-400/30 bg-blue-500/5" },
+                { n: 2, title: "Augmentar, no substituir", text: "Usem la IA per ampliar i aprofundir l'aprenentatge, no per eludir-lo. L'alumne ha de produir pensament propi; la IA n'és el copilot, no el pilot.", color: "border-emerald-400/30 bg-emerald-500/5" },
+                { n: 3, title: "Delegar amb criteri, no per inèrcia", text: "Decidim conscientment quin treball fem nosaltres, quin fa la IA i quin fem junts. Delegar és un acte de judici estratègic, no de comoditat.", color: "border-violet-400/30 bg-violet-500/5" },
+                { n: 4, title: "Declarar l'ús de la IA", text: "Identifiquem sempre quan hem usat IA en el nostre treball. La transparència és un compromís ètic i un model a transmetre a l'alumnat.", color: "border-amber-400/30 bg-amber-500/5" },
+                { n: 5, title: "Verificar sempre", text: "Cap resultat d'una IA s'accepta sense contrast. Detectem al·lucinacions, contrastem fonts i assumim la responsabilitat del que compartim.", color: "border-rose-400/30 bg-rose-500/5" },
+                { n: 6, title: "Formular bé és pensar bé", text: "La qualitat del que demanem a la IA reflecteix la nostra claredat de pensament. Aprendre a descriure és aprendre a pensar amb rigor.", color: "border-sky-400/30 bg-sky-500/5" },
+                { n: 7, title: "Fricció productiva, no facilitat buida", text: "L'aprenentatge profund requereix esforç i dubte. La IA ha de plantejar reptes més complexos, no eliminar la dificultat necessària per créixer.", color: "border-orange-400/30 bg-orange-500/5" },
+                { n: 8, title: "Equitat i accés universal", text: "Garantim que la IA no ampliï les desigualtats. Tothom ha de tenir accés a les mateixes oportunitats, independentment dels seus recursos.", color: "border-teal-400/30 bg-teal-500/5" },
+                { n: 9, title: "Protegir la privacitat i el benestar", text: "La dignitat i la intimitat de cada persona és innegociable. No introduïm mai dades sensibles —d'alumnes, famílies o equip— en sistemes oberts.", color: "border-pink-400/30 bg-pink-500/5" },
+                { n: 10, title: "Ser referent humà i ètic", text: "La nostra manera d'integrar la IA ha d'il·luminar el camí d'altres. Actuem amb la mateixa integritat i cura que voldríem veure en la tecnologia que usem.", color: "border-indigo-400/30 bg-indigo-500/5" },
+              ].map(item => (
+                <div key={item.n} className={`rounded-2xl border p-4 flex gap-3 ${item.color}`}>
+                  <div className="shrink-0 w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
+                    <span className="text-xs font-black text-white/60">{item.n}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white mb-1">{item.title}</p>
+                    <p className="text-xs text-white/60 leading-relaxed">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ INTRO PHASE — Full de ruta ═══ */}
+        {phase === "intro" && (() => {
+          const LAYERS = [
+            {
+              id: "visio",
+              label: "HORITZÓ / VISIÓ",
+              sublabel: "On volem arribar com a institució",
+              icon: <Target size={20} className="text-white" />,
+              color: "bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border-emerald-400/40",
+              titleColor: "text-emerald-300",
+              content: "IA integrada a la gestió, la docència i l'aprenentatge",
+              detail: "Augmenta l'aprenentatge · Marc ètic · La persona al centre · No substitueix",
+            },
+            {
+              id: "alumnat",
+              label: "ALUMNAT",
+              sublabel: "Qui aprèn",
+              icon: <GraduationCap size={20} className="text-white" />,
+              color: "bg-gradient-to-r from-violet-500/20 to-purple-500/20 border-violet-400/40",
+              titleColor: "text-violet-300",
+              content: "Fluïdeses en IA (4D): Delegació · Descripció · Discerniment · Diligència",
+              detail: "L'alumne aprèn a col·laborar amb la IA de manera crítica, ètica i responsable",
+            },
+            {
+              id: "activitats",
+              label: "ACTIVITATS I MATERIALS",
+              sublabel: "Com s'aprèn",
+              icon: <ScrollText size={20} className="text-white" />,
+              color: "bg-gradient-to-r from-blue-500/20 to-sky-500/20 border-blue-400/40",
+              titleColor: "text-blue-300",
+              content: "Propostes pedagògiques on la IA augmenta l'aprenentatge real",
+              detail: "Tasques dissenyades perquè l'alumne pensi, creï i discerneixi — la IA com a eina, no com a substitut",
+            },
+            {
+              id: "docents",
+              label: "DOCENTS",
+              sublabel: "Qui dissenya",
+              icon: <Users size={20} className="text-white" />,
+              color: "bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-400/40",
+              titleColor: "text-amber-300",
+              content: "Dissenyar activitats · Produir materials · Temps · Formació · Acompanyament",
+              detail: "Els docents necessiten eines, criteris clars i espai per a l'experimentació pedagògica",
+            },
+            {
+              id: "criteris",
+              label: "CRITERIS I ORIENTACIONS",
+              sublabel: "El pont — avui treballem aquí",
+              icon: <Scale size={20} className="text-white" />,
+              color: "bg-gradient-to-r from-rose-500/20 to-pink-500/20 border-rose-400/50",
+              titleColor: "text-rose-300",
+              content: null,
+              detail: null,
+            },
+            {
+              id: "avui",
+              label: "AVUI: DELEGACIÓ (1a D)",
+              sublabel: "El nostre focus d'aquesta jornada",
+              icon: <Map size={20} className="text-white" />,
+              color: "bg-gradient-to-r from-white/10 to-white/5 border-white/30",
+              titleColor: "text-white",
+              content: "Criteris pedagògics per a la primera D del model 4D",
+              detail: "Fins on deleguem a la IA? Quins nivells d'autonomia són adequats per a cada etapa educativa?",
+            },
+          ];
+
+          const visibleCount = introStep + 1;
+
+          return (
+            <div className="flex-1 min-h-0 flex flex-col gap-3">
+              <div className="flex-1 min-h-0 flex flex-col justify-center gap-2 overflow-hidden">
+                {LAYERS.slice(0, visibleCount).map((layer, i) => {
+                  const isLast = i === visibleCount - 1;
+                  return (
+                    <div key={layer.id} className={`transition-all duration-500 ${isLast ? "opacity-100 scale-100" : "opacity-60 scale-[0.99]"}`}>
+                      <div className={`rounded-2xl border px-4 py-3 flex items-start gap-3 ${layer.color}`}>
+                        <div className="shrink-0 w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mt-0.5">
+                          {layer.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2 mb-0.5">
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${layer.titleColor}`}>{layer.label}</span>
+                            <span className="text-[9px] text-white/30 font-bold">{layer.sublabel}</span>
+                          </div>
+                          {layer.id === "criteris" ? (
+                            <div className="flex gap-2 mt-1">
+                              {[
+                                { label: "Pedagògics", highlight: true },
+                                { label: "Tecnològics", highlight: false },
+                                { label: "Legals / Ètics", highlight: false },
+                              ].map(c => (
+                                <span key={c.label} className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${
+                                  c.highlight
+                                    ? "bg-rose-400/20 border-rose-400/40 text-rose-200"
+                                    : "bg-white/5 border-white/10 text-white/40"
+                                }`}>
+                                  {c.highlight ? "★ " : ""}{c.label}
+                                </span>
+                              ))}
+                              <span className="text-[9px] text-white/30 self-center ml-1">Pont entre la visió i la pràctica a l&apos;aula</span>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-sm font-semibold text-white/90">{layer.content}</p>
+                              {layer.detail && <p className="text-[11px] text-white/40 mt-0.5">{layer.detail}</p>}
+                            </>
+                          )}
+                        </div>
+                        {isLast && introStep < LAYERS.length - 1 && (
+                          <div className="shrink-0 w-2 h-2 rounded-full bg-white/40 animate-pulse self-center" />
+                        )}
+                      </div>
+                      {i < visibleCount - 1 && (
+                        <div className="flex justify-center py-0.5">
+                          <ArrowDown size={14} className="text-white/20" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Navigation */}
+              <div className="flex items-center justify-between shrink-0 border-t border-white/10 pt-3">
+                <button
+                  onClick={() => setIntroStep(s => Math.max(0, s - 1))}
+                  disabled={introStep === 0}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-white/20 transition-all"
+                >
+                  <ChevronLeft size={16} /> Anterior
+                </button>
+                <span className="text-white/30 text-xs font-bold uppercase tracking-widest">
+                  {introStep + 1} / {LAYERS.length}
+                </span>
+                <button
+                  onClick={() => setIntroStep(s => Math.min(LAYERS.length - 1, s + 1))}
+                  disabled={introStep === LAYERS.length - 1}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500/20 text-sky-200 border border-sky-400/30 text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-sky-500/30 transition-all"
+                >
+                  Següent <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ═══ REPÀS PHASE — Nivells de delegació ═══ */}
+        {phase === "repas" && (
+          <div className="flex-1 min-h-0 flex flex-col gap-4">
+            <p className="text-white/40 text-xs font-bold uppercase tracking-[0.25em] shrink-0">6 Graus de col·laboració Persona–IA · Model 4D Delegació</p>
+            <div className="flex-1 min-h-0 grid grid-cols-3 gap-3">
+              {[
+                {
+                  n: 0, label: "N0", name: "Preservació", color: "bg-gray-400", border: "border-gray-400/30", bg: "bg-gray-500/10",
+                  who: "100% persona", ia: "No participa",
+                  desc: "No hi ha intervenció de la IA. Es prioritza l'activitat humana pura, el pensament autònom i les habilitats fonamentals.",
+                  ex: "Examen oral, tutoria emocional, creació artística lliure, avaluació de judici moral.",
+                },
+                {
+                  n: 1, label: "N1", name: "Exploració", color: "bg-emerald-500", border: "border-emerald-400/30", bg: "bg-emerald-500/10",
+                  who: "Persona lidera", ia: "Informa, inspira",
+                  desc: "La IA actua com a font d'informació o mirall d'idees. No genera el producte final ni substitueix el raonament.",
+                  ex: "L'alumne demana exemples, contra-arguments o preguntes de reflexió. Cap artefacte final de la IA.",
+                },
+                {
+                  n: 2, label: "N2", name: "Suport", color: "bg-blue-500", border: "border-blue-400/30", bg: "bg-blue-500/10",
+                  who: "Persona crea", ia: "Revisa, millora",
+                  desc: "La persona crea el contingut original i delega a la IA la revisió, correcció o proposta de millora. L'autoria és humana.",
+                  ex: "L'alumne escriu un text i demana a la IA que en corregeixi l'ortografia i la coherència.",
+                },
+                {
+                  n: 3, label: "N3", name: "Cocreació", color: "bg-violet-500", border: "border-violet-400/30", bg: "bg-violet-500/10",
+                  who: "Persona + IA alterns", ia: "Elabora conjuntament",
+                  desc: "Treball iteratiu i bidireccional: persona i IA elaboren junts, alternant tasques i fusionant aportacions. Lideratge compartit.",
+                  ex: "L'alumne defineix l'estructura, la IA desenvolupa seccions, l'alumne integra i reelabora.",
+                },
+                {
+                  n: 4, label: "N4", name: "Delegació", color: "bg-amber-500", border: "border-amber-400/30", bg: "bg-amber-500/10",
+                  who: "Persona valida", ia: "Genera el producte",
+                  desc: "La persona defineix instruccions detallades i la IA genera un producte complet. La persona valida críticament i n'assumeix la responsabilitat.",
+                  ex: "L'alumne fa un prompt sofisticat, la IA genera l'informe, l'alumne verifica i corregeix.",
+                },
+                {
+                  n: 5, label: "N5", name: "Agència", color: "bg-rose-500", border: "border-rose-400/30", bg: "bg-rose-500/10",
+                  who: "Persona supervisa", ia: "Opera autònomament",
+                  desc: "La IA opera de forma autònoma dins d'un marc i paràmetres definits per la persona, que actua com a dissenyadora i auditora del sistema.",
+                  ex: "Una plataforma adaptativa ajusta automàticament la dificultat dels exercicis sense intervenció docent en cada pas.",
+                },
+              ].map(level => (
+                <div key={level.n} className={`rounded-2xl border p-4 flex flex-col gap-2 ${level.border} ${level.bg}`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-9 h-9 rounded-xl ${level.color} flex items-center justify-center shrink-0`}>
+                      <span className="text-sm font-black text-white">{level.label}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-white">{level.name}</p>
+                      <p className="text-[9px] text-white/30 font-bold uppercase tracking-wider">{level.who} · IA: {level.ia}</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-white/70 leading-relaxed">{level.desc}</p>
+                  <div className="mt-auto pt-2 border-t border-white/10">
+                    <p className="text-[9px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Exemple</p>
+                    <p className="text-[10px] text-white/50 italic leading-snug">{level.ex}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
