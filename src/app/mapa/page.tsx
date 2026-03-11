@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { Sparkles, RefreshCw, ChevronRight, AlertTriangle } from "lucide-react";
+import { Sparkles, RefreshCw, ChevronRight, ChevronLeft, AlertTriangle, Grid3X3, List, Trash2 } from "lucide-react";
 
 // ─── Constants ──────────────────────────────────────────────────
 
@@ -24,9 +24,8 @@ const COURSES = [
 const EINES = ["Copilot", "Gemini", "NotebookLM"];
 
 const MODALITIES = [
-  { id: "acompanyat", label: "Acomp.", full: "Acompanyat", desc: "El docent projecta o controla la IA. L'alumne observa o participa col·lectivament.", ex: "El mestre pregunta a la IA davant la classe i els alumnes analitzen la resposta junts." },
-  { id: "guiat", label: "Guiat", full: "Guiat", desc: "L'alumne interactua amb la IA seguint instruccions o prompts tancats del docent.", ex: "L'alumne usa un prompt predefinit per corregir el seu text o per buscar informació específica." },
-  { id: "autonom", label: "Autòn.", full: "Autònom", desc: "L'alumne decideix com usar la IA dins els límits d'una tasca concreta.", ex: "L'alumne tria si usar la IA per investigar, organitzar idees o revisar el seu treball de síntesi." },
+  { id: "guiat", label: "Guiat", full: "Guiat", desc: "L'alumne interactua amb la IA seguint instruccions o prompts tancats del docent, del sistema o d'un assistent d'IA configurat per la institució.", ex: "L'alumne usa un prompt predefinit o un assistent especialitzat per corregir el seu text o buscar informació específica." },
+  { id: "autonom", label: "Autònom", full: "Autònom", desc: "L'alumne decideix com usar la IA dins els límits d'una tasca concreta.", ex: "L'alumne tria si usar la IA per investigar, organitzar idees o revisar el seu treball de síntesi." },
   { id: "lliure", label: "Lliure", full: "Lliure", desc: "L'alumne usa la IA sense restriccions específiques, amb autonomia plena.", ex: "L'alumne integra la IA en el seu flux de treball com consideri, només retre comptes del resultat." },
 ];
 
@@ -69,6 +68,11 @@ function getSessionId(): string {
   return id;
 }
 
+function getGuidedSessionId(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("maginia_guided_session_id") || "";
+}
+
 // ─── Helpers ────────────────────────────────────────────────────
 
 function consensColor(pct: number): string {
@@ -106,18 +110,73 @@ interface RowData {
 
 export default function MapaPage() {
   const [sessionId, setSessionId] = useState("");
+  const [guidedSessionId, setGuidedSessionId] = useState("");
   const [declarations, setDeclarations] = useState<Record<string, CourseData>>({});
   const [allData, setAllData] = useState<RowData[]>([]);
   const [viewMode, setViewMode] = useState<"proposta" | "consens">("proposta");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [helpTip, setHelpTip] = useState<{ courseId: string; type: "modality" | "deleg"; id: string } | null>(null);
+  const [facilitatorSync, setFacilitatorSync] = useState(false);
+  const [guidedMode, setGuidedMode] = useState(true);
+  const [currentCourseIdx, setCurrentCourseIdx] = useState(0);
 
   useEffect(() => {
     const sid = getSessionId();
+    const gsid = getGuidedSessionId();
     setSessionId(sid);
+    setGuidedSessionId(gsid);
     loadMyData(sid);
     loadAllData();
+    // Auto-open consens tab if URL has ?view=consens
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("view") === "consens") {
+      setViewMode("consens");
+    }
   }, []);
+
+  // ─── Facilitator sync ──────────────────────────────────────
+  useEffect(() => {
+    const poll = async () => {
+      const { data } = await supabase
+        .from("mapa_facilitador_state")
+        .select("*")
+        .eq("id", 1)
+        .single();
+      if (data && data.is_active) {
+        // Adopt guided_session_id from facilitator if not set
+        if (data.guided_session_id && !guidedSessionId) {
+          localStorage.setItem("maginia_guided_session_id", data.guided_session_id);
+          setGuidedSessionId(data.guided_session_id);
+        }
+        if (data.phase === "mapa") {
+          setFacilitatorSync(true);
+        } else if (data.phase === "calibra") {
+          window.location.href = "/mapa/calibra";
+        } else if (data.phase === "valida") {
+          window.location.href = "/mapa/valida";
+        }
+      } else {
+        setFacilitatorSync(false);
+      }
+    };
+    poll();
+    const interval = setInterval(poll, 2000);
+    return () => clearInterval(interval);
+  }, [guidedSessionId]);
+
+  // Heartbeat during guided session
+  useEffect(() => {
+    if (!sessionId || !guidedSessionId) return;
+    const heartbeat = () => {
+      supabase.from("mapa_sessions").upsert({
+        session_id: sessionId,
+        guided_session_id: guidedSessionId,
+        last_heartbeat: new Date().toISOString(),
+      }, { onConflict: "session_id,guided_session_id" });
+    };
+    heartbeat();
+    const interval = setInterval(heartbeat, 10000);
+    return () => clearInterval(interval);
+  }, [sessionId, guidedSessionId]);
 
   const loadMyData = async (sid: string) => {
     const { data } = await supabase
@@ -167,7 +226,17 @@ export default function MapaPage() {
       delegation_n3: updated.delegation[3],
       delegation_n4: updated.delegation[4],
       delegation_n5: updated.delegation[5],
+      guided_session_id: guidedSessionId || null,
     }, { onConflict: "session_id,course_id" });
+
+    // Also send heartbeat on save to keep presence alive
+    if (guidedSessionId) {
+      supabase.from("mapa_sessions").upsert({
+        session_id: sessionId,
+        guided_session_id: guidedSessionId,
+        last_heartbeat: new Date().toISOString(),
+      }, { onConflict: "session_id,guided_session_id" });
+    }
 
     setFeedback("Guardat");
     setTimeout(() => setFeedback(null), 1200);
@@ -175,8 +244,18 @@ export default function MapaPage() {
 
   const toggleDelegation = useCallback((courseId: string, n: number) => {
     const current = declarations[courseId] || emptyDeclaration();
-    const newDeleg = [...current.delegation];
-    newDeleg[n] = !newDeleg[n];
+    const currentMax = current.delegation.lastIndexOf(true);
+
+    // Cumulative: clicking N sets all 0..N active, N+1..5 inactive
+    // Clicking the current max deactivates it (lowers to N-1)
+    let newMax: number;
+    if (n === currentMax) {
+      newMax = n - 1; // lower by one
+    } else {
+      newMax = n; // set this as max
+    }
+
+    const newDeleg = DELEG.map((_, i) => i <= newMax);
     updateCourse(courseId, { delegation: newDeleg });
   }, [declarations, updateCourse]);
 
@@ -225,6 +304,15 @@ export default function MapaPage() {
     setViewMode("consens");
   };
 
+  const handleResetMyData = async () => {
+    if (!sessionId) return;
+    await supabase.from("mapa_declarations").delete().eq("session_id", sessionId);
+    setDeclarations({});
+    setCurrentCourseIdx(0);
+    setFeedback("Dades esborrades");
+    setTimeout(() => setFeedback(null), 1500);
+  };
+
   // ─── Render ─────────────────────────────────────────────────
 
   return (
@@ -258,134 +346,123 @@ export default function MapaPage() {
 
         {/* ═══ INDIVIDUAL VIEW ═══ */}
         {viewMode === "proposta" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-8">
-            {COURSES.map(course => {
+          <>
+            {/* Mode toggle: guided vs grid + reset */}
+            <div className="flex justify-between items-center mt-6">
+              <button
+                onClick={() => { if (confirm("Esborrar totes les meves declaracions?")) handleResetMyData(); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-50 hover:bg-red-100 transition-all border border-red-200"
+              >
+                <Trash2 size={12} /> Esborrar
+              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setGuidedMode(true)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${guidedMode ? "bg-[var(--jesuites-blue)] text-white shadow-sm" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                >
+                  <List size={12} /> Guiat
+                </button>
+                <button
+                  onClick={() => setGuidedMode(false)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${!guidedMode ? "bg-[var(--jesuites-blue)] text-white shadow-sm" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                >
+                  <Grid3X3 size={12} /> Tots
+                </button>
+              </div>
+            </div>
+
+            {/* ── Guided mode: one course at a time ── */}
+            {guidedMode && (() => {
+              const course = COURSES[currentCourseIdx];
               const d = declarations[course.id] || emptyDeclaration();
+              const hasVoted = declarations[course.id] !== undefined;
               return (
-                <div key={course.id} className="bg-white rounded-3xl p-6 shadow-sm border border-black/[0.04] transition-all hover:shadow-md">
-                  {/* Course Header */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <h3 className="text-lg font-bold text-[var(--jesuites-blue)] uppercase tracking-tight leading-none">{course.name}</h3>
-                      {course.sub && <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{course.sub}</span>}
-                    </div>
-                    <span className="text-[10px] font-bold text-gray-300 bg-black/5 px-3 py-1 rounded-full uppercase tracking-wider">{course.age}</span>
+                <div className="mt-6 max-w-xl mx-auto">
+                  {/* Progress bar */}
+                  <div className="flex gap-1 mb-4">
+                    {COURSES.map((c, i) => {
+                      const voted = declarations[c.id] !== undefined;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setCurrentCourseIdx(i)}
+                          className={`flex-1 h-2 rounded-full transition-all ${
+                            i === currentCourseIdx ? "bg-[var(--jesuites-blue)] scale-y-150" :
+                            voted ? "bg-emerald-400" : "bg-gray-200"
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
+                  <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">
+                    Curs {currentCourseIdx + 1} de {COURSES.length}
+                  </p>
 
-                  {/* Docent Row */}
-                  <div className="mb-4">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Docent</p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => updateCourse(course.id, { teacher_outside: !d.teacher_outside })}
-                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${d.teacher_outside ? "bg-[var(--jesuites-blue)] text-white shadow-md" : "bg-black/[0.04] text-gray-400 hover:bg-black/[0.08]"}`}
-                      >
-                        Fora de l&apos;aula
-                      </button>
-                      <button
-                        onClick={() => updateCourse(course.id, { teacher_inside: !d.teacher_inside })}
-                        className={`flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${d.teacher_inside ? "bg-[var(--jesuites-blue)] text-white shadow-md" : "bg-black/[0.04] text-gray-400 hover:bg-black/[0.08]"}`}
-                      >
-                        Dins l&apos;aula
-                      </button>
-                    </div>
-                  </div>
+                  {/* Course card */}
+                  <CourseCard
+                    course={course}
+                    d={d}
+                    updateCourse={updateCourse}
+                    toggleDelegation={toggleDelegation}
+                    helpTip={helpTip}
+                    setHelpTip={setHelpTip}
+                  />
 
-                  {/* Alumnat Toggle */}
-                  <div className="mb-4">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Alumnat</p>
+                  {/* Navigation */}
+                  <div className="flex items-center justify-between mt-6 gap-3">
                     <button
-                      onClick={() => updateCourse(course.id, { student_access: !d.student_access, student_modality: d.student_access ? null : d.student_modality })}
-                      className={`w-full py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${d.student_access ? "bg-emerald-500 text-white shadow-md" : "bg-black/[0.04] text-gray-400 hover:bg-black/[0.08]"}`}
+                      onClick={() => setCurrentCourseIdx(i => Math.max(0, i - 1))}
+                      disabled={currentCourseIdx === 0}
+                      className="flex items-center gap-1 px-4 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-widest text-gray-500 bg-black/5 hover:bg-black/10 transition-all disabled:opacity-20"
                     >
-                      {d.student_access ? "Alumnat utilitza IA" : "Alumnat NO utilitza IA"}
+                      <ChevronLeft size={14} /> Anterior
                     </button>
-
-                    {/* Age Warning */}
-                    {d.student_access && course.minAge < 14 && (
-                      <div className="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                        <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-[10px] font-bold text-amber-700 leading-tight">
-                            Cal autorització familiar (LOPDGDD &lt;14 anys)
-                          </p>
-                          <p className="text-[9px] text-amber-600 mt-0.5 leading-tight">
-                            Eines gestionades ({EINES.join(", ")}): permès amb consentiment parental
-                          </p>
-                        </div>
-                      </div>
+                    {currentCourseIdx < COURSES.length - 1 ? (
+                      <button
+                        onClick={() => {
+                          updateCourse(course.id, declarations[course.id] || emptyDeclaration());
+                          setCurrentCourseIdx(i => i + 1);
+                        }}
+                        className="flex items-center gap-1 px-4 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-widest text-white bg-[var(--jesuites-blue)] shadow-lg hover:shadow-xl transition-all"
+                      >
+                        Següent <ChevronRight size={14} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          updateCourse(course.id, declarations[course.id] || emptyDeclaration());
+                          handleSwitchToConsens();
+                        }}
+                        className="flex items-center gap-1 px-5 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-widest text-white bg-emerald-500 shadow-lg hover:shadow-xl transition-all"
+                      >
+                        Veure resultats <ChevronRight size={14} />
+                      </button>
                     )}
-                  </div>
-
-                  {/* Modality + Delegation (only if student access) */}
-                  <div className={`transition-all duration-500 overflow-hidden ${d.student_access ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
-                    {/* Modality */}
-                    <div className="mb-4">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Modalitat d&apos;ús <span className="normal-case tracking-normal font-normal">(clica per veure ajuda)</span></p>
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {MODALITIES.map(m => (
-                          <button
-                            key={m.id}
-                            onClick={() => {
-                              updateCourse(course.id, { student_modality: d.student_modality === m.id ? null : m.id });
-                              setHelpTip(d.student_modality === m.id ? null : { courseId: course.id, type: "modality", id: m.id });
-                            }}
-                            className={`py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all ${d.student_modality === m.id ? "bg-violet-500 text-white shadow-md" : "bg-black/[0.04] text-gray-400 hover:bg-black/[0.08]"}`}
-                          >
-                            {m.label}
-                          </button>
-                        ))}
-                      </div>
-                      {/* Modality Help Tip */}
-                      {helpTip?.courseId === course.id && helpTip.type === "modality" && (() => {
-                        const m = MODALITIES.find(m => m.id === helpTip.id);
-                        if (!m) return null;
-                        return (
-                          <div className="mt-2 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2.5 animate-fade-in">
-                            <p className="text-[11px] font-bold text-violet-700 mb-1">{m.full}</p>
-                            <p className="text-[10px] text-violet-600 leading-snug">{m.desc}</p>
-                            <p className="text-[9px] text-violet-500 mt-1.5 italic leading-snug">&ldquo;{m.ex}&rdquo;</p>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Delegation Levels */}
-                    <div>
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Nivells de delegació permesos <span className="normal-case tracking-normal font-normal">(clica per veure ajuda)</span></p>
-                      <div className="grid grid-cols-6 gap-1.5">
-                        {DELEG.map(dl => (
-                          <button
-                            key={dl.n}
-                            onClick={() => {
-                              toggleDelegation(course.id, dl.n);
-                              setHelpTip({ courseId: course.id, type: "deleg", id: String(dl.n) });
-                            }}
-                            className={`py-2 rounded-lg text-center transition-all ${d.delegation[dl.n] ? `${dl.color} text-white shadow-md` : "bg-black/[0.04] text-gray-400 hover:bg-black/[0.08]"}`}
-                          >
-                            <span className="text-[10px] font-bold block leading-none">{dl.label}</span>
-                            <span className="text-[7px] font-medium block mt-0.5 leading-none opacity-80">{dl.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                      {/* Delegation Help Tip */}
-                      {helpTip?.courseId === course.id && helpTip.type === "deleg" && (() => {
-                        const dl = DELEG.find(d => String(d.n) === helpTip.id);
-                        if (!dl) return null;
-                        return (
-                          <div className="mt-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 animate-fade-in">
-                            <p className="text-[11px] font-bold text-slate-700 mb-1">{dl.label}: {dl.name}</p>
-                            <p className="text-[10px] text-slate-600 leading-snug">{dl.tip}</p>
-                            <p className="text-[9px] text-slate-500 mt-1.5 italic leading-snug">&ldquo;{dl.ex}&rdquo;</p>
-                          </div>
-                        );
-                      })()}
-                    </div>
                   </div>
                 </div>
               );
-            })}
-          </div>
+            })()}
+
+            {/* ── Grid mode: all courses ── */}
+            {!guidedMode && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                {COURSES.map(course => {
+                  const d = declarations[course.id] || emptyDeclaration();
+                  return (
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      d={d}
+                      updateCourse={updateCourse}
+                      toggleDelegation={toggleDelegation}
+                      helpTip={helpTip}
+                      setHelpTip={setHelpTip}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
 
         {/* ═══ CONSENSUS VIEW ═══ */}
@@ -459,7 +536,7 @@ export default function MapaPage() {
                         {c.student_access > 0 && (
                           <div className="mb-4">
                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Modalitat</p>
-                            <div className="grid grid-cols-4 gap-1.5">
+                            <div className="grid grid-cols-3 gap-1.5">
                               {c.modalities.map((m, i) => (
                                 <div key={m.id} className="text-center">
                                   <div className={`h-2 rounded-full ${m.percent > 0 ? "bg-violet-500" : "bg-black/[0.06]"}`} style={{ opacity: m.percent > 0 ? Math.max(0.3, m.percent / 100) : 1 }} />
@@ -509,18 +586,185 @@ export default function MapaPage() {
       )}
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-black/5 flex justify-center gap-6 z-[90]">
-        <button onClick={() => window.location.href = "/mapa/calibra"} className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-[var(--jesuites-blue)] transition-all">
-          1. Calibra
-        </button>
-        <button className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--jesuites-blue)] underline underline-offset-4">
-          2. Mapa
-        </button>
-        <button onClick={() => window.location.href = "/mapa/valida"} className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-amber-600 transition-all">
-          3. Valida
-        </button>
-      </div>
+      {facilitatorSync ? (
+        <div className="fixed bottom-0 left-0 right-0 p-3 bg-[var(--jesuites-blue)] text-center z-[90]">
+          <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest animate-pulse">Sessió guiada pel facilitador</p>
+        </div>
+      ) : (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-black/5 flex justify-center gap-6 z-[90]">
+          <button onClick={() => window.location.href = "/mapa/calibra"} className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-[var(--jesuites-blue)] transition-all">
+            1. Calibra
+          </button>
+          <button className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--jesuites-blue)] underline underline-offset-4">
+            2. Mapa
+          </button>
+          <button onClick={() => window.location.href = "/mapa/valida"} className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 hover:text-amber-600 transition-all">
+            3. Valida
+          </button>
+        </div>
+      )}
     </main>
+  );
+}
+
+// ─── Course Card ────────────────────────────────────────────────
+
+function CourseCard({
+  course, d, updateCourse, toggleDelegation, helpTip, setHelpTip,
+}: {
+  course: typeof COURSES[number];
+  d: CourseData;
+  updateCourse: (courseId: string, updates: Partial<CourseData>) => void;
+  toggleDelegation: (courseId: string, n: number) => void;
+  helpTip: { courseId: string; type: "modality" | "deleg"; id: string } | null;
+  setHelpTip: (tip: { courseId: string; type: "modality" | "deleg"; id: string } | null) => void;
+}) {
+  return (
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-black/[0.04] transition-all hover:shadow-md">
+      {/* Course Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-lg font-bold text-[var(--jesuites-blue)] uppercase tracking-tight leading-none">{course.name}</h3>
+          {course.sub && <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{course.sub}</span>}
+        </div>
+        <span className="text-[11px] font-bold text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200">{course.age}</span>
+      </div>
+
+      {/* Docent Row */}
+      <div className="mb-4">
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Docent</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => updateCourse(course.id, { teacher_outside: !d.teacher_outside })}
+            className={`flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${d.teacher_outside ? "bg-[var(--jesuites-blue)] text-white shadow-md" : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"}`}
+          >
+            Fora de l&apos;aula
+          </button>
+          <button
+            onClick={() => updateCourse(course.id, { teacher_inside: !d.teacher_inside })}
+            className={`flex-1 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${d.teacher_inside ? "bg-[var(--jesuites-blue)] text-white shadow-md" : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"}`}
+          >
+            Dins l&apos;aula
+          </button>
+        </div>
+      </div>
+
+      {/* Alumnat */}
+      <div className="mb-4">
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Alumnat utilitza IA?</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => updateCourse(course.id, { student_access: false, student_modality: null })}
+            className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${!d.student_access ? "bg-gray-600 text-white shadow-md" : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"}`}
+          >
+            No
+          </button>
+          <button
+            onClick={() => {
+              // When enabling student access, auto-clear N0 and set minimum N1
+              const newDeleg = [...d.delegation];
+              if (!d.student_access) {
+                newDeleg[0] = false;
+                if (!newDeleg.some((v, i) => i > 0 && v)) newDeleg[1] = true; // ensure at least N1
+              }
+              updateCourse(course.id, { student_access: true, delegation: newDeleg });
+            }}
+            className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${d.student_access ? "bg-emerald-500 text-white shadow-md" : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"}`}
+          >
+            Sí
+          </button>
+        </div>
+
+        {/* Age Warning */}
+        {d.student_access && course.minAge < 14 && (
+          <div className="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+            <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] font-bold text-amber-700 leading-tight">
+                Cal autorització familiar (LOPDGDD &lt;14 anys)
+              </p>
+              <p className="text-[9px] text-amber-600 mt-0.5 leading-tight">
+                Eines gestionades ({EINES.join(", ")}): permès amb consentiment parental
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modality + Delegation (only if student access) */}
+      <div className={`transition-all duration-500 overflow-hidden ${d.student_access ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
+        {/* Modality */}
+        <div className="mb-4">
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Modalitat d&apos;ús <span className="normal-case tracking-normal font-normal">(clica per veure ajuda)</span></p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {MODALITIES.map(m => (
+              <button
+                key={m.id}
+                onClick={() => {
+                  updateCourse(course.id, { student_modality: d.student_modality === m.id ? null : m.id });
+                  setHelpTip(d.student_modality === m.id ? null : { courseId: course.id, type: "modality", id: m.id });
+                }}
+                className={`py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all ${d.student_modality === m.id ? "bg-violet-500 text-white shadow-md" : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"}`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          {/* Modality Help Tip */}
+          {helpTip?.courseId === course.id && helpTip.type === "modality" && (() => {
+            const mod = MODALITIES.find(m => m.id === helpTip.id);
+            if (!mod) return null;
+            return (
+              <div className="mt-2 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2.5 animate-fade-in">
+                <p className="text-[11px] font-bold text-violet-700 mb-1">{mod.full}</p>
+                <p className="text-[10px] text-violet-600 leading-snug">{mod.desc}</p>
+                <p className="text-[9px] text-violet-500 mt-1.5 italic leading-snug">&ldquo;{mod.ex}&rdquo;</p>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Delegation Levels */}
+        <div>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Nivells de delegació permesos <span className="normal-case tracking-normal font-normal">(clica per veure ajuda)</span></p>
+          <div className="grid grid-cols-6 gap-1.5">
+            {DELEG.map(dl => {
+              const isN0Blocked = dl.n === 0 && d.student_access;
+              return (
+                <button
+                  key={dl.n}
+                  disabled={isN0Blocked}
+                  onClick={() => {
+                    if (isN0Blocked) return;
+                    toggleDelegation(course.id, dl.n);
+                    setHelpTip({ courseId: course.id, type: "deleg", id: String(dl.n) });
+                  }}
+                  className={`py-2.5 rounded-xl text-center transition-all ${
+                    isN0Blocked ? "bg-gray-50 text-gray-300 border border-gray-100 cursor-not-allowed opacity-40" :
+                    d.delegation[dl.n] ? `${dl.color} text-white shadow-md ring-1 ring-black/10` : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"
+                  }`}
+                >
+                  <span className="text-[11px] font-bold block leading-none">{dl.label}</span>
+                  <span className="text-[8px] font-semibold block mt-0.5 leading-none opacity-80">{dl.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Delegation Help Tip */}
+          {helpTip?.courseId === course.id && helpTip.type === "deleg" && (() => {
+            const dl = DELEG.find(d => String(d.n) === helpTip.id);
+            if (!dl) return null;
+            return (
+              <div className="mt-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 animate-fade-in">
+                <p className="text-[11px] font-bold text-slate-700 mb-1">{dl.label}: {dl.name}</p>
+                <p className="text-[10px] text-slate-600 leading-snug">{dl.tip}</p>
+                <p className="text-[9px] text-slate-500 mt-1.5 italic leading-snug">&ldquo;{dl.ex}&rdquo;</p>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+    </div>
   );
 }
 

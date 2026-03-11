@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { Sparkles, ChevronRight, Users, Wifi, WifiOff, CheckCircle2, Circle, AlertTriangle, BarChart3 } from "lucide-react";
 
@@ -16,37 +16,71 @@ function getSessionId(): string {
   return id;
 }
 
+function getGuidedSessionId(): string {
+  if (typeof window === "undefined") return "";
+  // Check URL param first
+  const params = new URLSearchParams(window.location.search);
+  const gParam = params.get("g");
+  if (gParam) {
+    localStorage.setItem("maginia_guided_session_id", gParam);
+    return gParam;
+  }
+  // Fallback to stored value
+  return localStorage.getItem("maginia_guided_session_id") || "";
+}
+
 // ─── Types ───────────────────────────────────────────────────────
 
 interface FacilitatorState {
   phase: string;
   current_idx: number;
   is_active: boolean;
+  guided_session_id: string | null;
 }
 
 interface Progress {
   calibra: { done: number; total: 5; correct: number };
   mapa: { courses: number; total: 11 };
-  valida: { done: number; total: 10; inconsistencies: number };
+  valida: { done: number; total: 13; inconsistencies: number };
 }
 
 // ─── Component ───────────────────────────────────────────────────
 
 export default function SessioPage() {
   const [sessionId, setSessionId] = useState("");
+  const [guidedSessionId, setGuidedSessionId] = useState("");
   const [facilitator, setFacilitator] = useState<FacilitatorState | null>(null);
   const [progress, setProgress] = useState<Progress>({
     calibra: { done: 0, total: 5, correct: 0 },
     mapa: { courses: 0, total: 11 },
-    valida: { done: 0, total: 10, inconsistencies: 0 },
+    valida: { done: 0, total: 13, inconsistencies: 0 },
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const sid = getSessionId();
+    const gsid = getGuidedSessionId();
     setSessionId(sid);
+    setGuidedSessionId(gsid);
     loadAll(sid);
   }, []);
+
+  // Register presence & heartbeat
+  const sendHeartbeat = useCallback(async () => {
+    if (!sessionId || !guidedSessionId) return;
+    await supabase.from("mapa_sessions").upsert({
+      session_id: sessionId,
+      guided_session_id: guidedSessionId,
+      last_heartbeat: new Date().toISOString(),
+    }, { onConflict: "session_id,guided_session_id" });
+  }, [sessionId, guidedSessionId]);
+
+  useEffect(() => {
+    if (!sessionId || !guidedSessionId) return;
+    sendHeartbeat(); // initial
+    const interval = setInterval(sendHeartbeat, 10000); // every 10s
+    return () => clearInterval(interval);
+  }, [sessionId, guidedSessionId, sendHeartbeat]);
 
   // Poll facilitator state
   useEffect(() => {
@@ -56,17 +90,24 @@ export default function SessioPage() {
         .select("*")
         .eq("id", 1)
         .single();
-      if (data) setFacilitator(data as FacilitatorState);
+      if (data) {
+        setFacilitator(data as FacilitatorState);
+        // If facilitator broadcasts a guided_session_id, adopt it
+        if (data.is_active && data.guided_session_id && !guidedSessionId) {
+          localStorage.setItem("maginia_guided_session_id", data.guided_session_id);
+          setGuidedSessionId(data.guided_session_id);
+        }
+      }
     };
     poll();
     const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [guidedSessionId]);
 
   // Auto-redirect when facilitator starts
   useEffect(() => {
     if (facilitator?.is_active) {
-      const target = facilitator.phase === "valida" ? "/mapa/valida" : "/mapa/calibra";
+      const target = facilitator.phase === "valida" ? "/mapa/valida" : facilitator.phase === "mapa" ? "/mapa" : "/mapa/calibra";
       window.location.href = target;
     }
   }, [facilitator]);
@@ -94,7 +135,7 @@ export default function SessioPage() {
       },
       valida: {
         done: validaData.length,
-        total: 10,
+        total: 13,
         inconsistencies: 0, // calculated client-side in valida page
       },
     });
@@ -198,10 +239,10 @@ export default function SessioPage() {
                 title="Valida"
                 subtitle="Stress test del teu mapa"
                 href="/mapa/valida"
-                status={progress.valida.done === 0 ? "pending" : progress.valida.done >= 10 ? "done" : "in-progress"}
+                status={progress.valida.done === 0 ? "pending" : progress.valida.done >= 13 ? "done" : "in-progress"}
                 detail={
                   progress.valida.done === 0
-                    ? "10 escenaris de validació"
+                    ? "13 escenaris de validació"
                     : `${progress.valida.done}/${progress.valida.total} respostos`
                 }
                 color="bg-amber-500"
@@ -243,8 +284,8 @@ export default function SessioPage() {
 
                   {/* Valida result */}
                   <div className="text-center">
-                    <div className={`text-2xl font-bold ${progress.valida.done >= 10 ? "text-amber-600" : "text-gray-300"}`}>
-                      {progress.valida.done >= 10 ? `${progress.valida.done}/10` : progress.valida.done > 0 ? `${progress.valida.done}/10` : "—"}
+                    <div className={`text-2xl font-bold ${progress.valida.done >= 13 ? "text-amber-600" : "text-gray-300"}`}>
+                      {progress.valida.done >= 13 ? `${progress.valida.done}/13` : progress.valida.done > 0 ? `${progress.valida.done}/13` : "—"}
                     </div>
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-1">Valida</p>
                     {progress.valida.done > 0 && (
@@ -254,7 +295,7 @@ export default function SessioPage() {
                 </div>
 
                 {/* All done message */}
-                {progress.calibra.done >= 5 && progress.mapa.courses >= 6 && progress.valida.done >= 10 && (
+                {progress.calibra.done >= 5 && progress.mapa.courses >= 6 && progress.valida.done >= 13 && (
                   <div className="mt-4 bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
                     <CheckCircle2 size={20} className="text-emerald-500 mx-auto mb-1" />
                     <p className="text-xs font-bold text-emerald-700">Procés completat!</p>

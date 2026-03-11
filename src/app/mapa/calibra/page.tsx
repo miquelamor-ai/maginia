@@ -71,7 +71,55 @@ const SCENARIOS: Scenario[] = [
     tagExplain: "La IA opera dins un marc pedagògic dissenyat i supervisat. L'alumne continua fent l'esforç cognitiu (resoldre exercicis); la IA només ajusta el nivell.",
     explanation: "N5 — Agència: La IA opera autònomament dins un marc supervisat. L'alumne encara treballa; la IA gestiona la personalització.",
   },
+  // ─── Bonus scenarios (mixed difficulty) ──────────────────────
+  {
+    id: "cal-6",
+    text: "Una alumna de 3r ESO escriu un poema en anglès. Després demana a la IA: «Check my grammar and spelling.» Corregeix els errors marcats i entrega la versió final.",
+    context: "3r ESO · Anglès",
+    correctLevel: 2,
+    tag: "offloading" as const,
+    tagExplain: "L'alumna ha creat el contingut original. La IA només revisa aspectes formals, com un corrector ortogràfic avançat.",
+    explanation: "N2 — Suport: L'alumna crea, la IA millora o corregeix. El producte creatiu és de l'alumna.",
+  },
+  {
+    id: "cal-7",
+    text: "El departament de filosofia decideix que l'examen d'ètica de 1r Batxillerat es farà a mà, sense cap dispositiu digital, per avaluar el raonament moral autònom de l'alumnat.",
+    context: "1r Batxillerat · Filosofia",
+    correctLevel: 0,
+    tag: "offloading" as const,
+    tagExplain: "No hi ha ús de IA. La decisió pedagògica és que el pensament crític i moral ha de ser enterament de l'alumne.",
+    explanation: "N0 — Preservació: Decisió deliberada de no usar IA. L'objectiu pedagògic requereix pensament 100% humà.",
+  },
+  {
+    id: "cal-8",
+    text: "Un alumne de 4t ESO demana a la IA: «Crea'm una presentació de 10 diapositives sobre la Revolució Francesa amb imatges i text.» Revisa les diapositives per sobre i la presenta tal qual.",
+    context: "4t ESO · Ciències Socials",
+    correctLevel: 4,
+    tag: "outsourcing" as const,
+    tagExplain: "La IA ha generat tot el producte. La revisió superficial no implica aprenentatge ni aportació cognitiva real.",
+    explanation: "N4 — Delegació: La IA genera tot el producte. La revisió superficial és insuficient; és outsourcing del treball cognitiu.",
+  },
+  {
+    id: "cal-9",
+    text: "Una alumna de Batxillerat investiga el canvi climàtic: ella busca dades al web, la IA li organitza les dades en taules comparatives, ella interpreta els resultats i escriu les conclusions. Cada pas requereix decisions de l'alumna.",
+    context: "Batxillerat · Ciències de la Terra",
+    correctLevel: 3,
+    tag: "offloading" as const,
+    tagExplain: "Hi ha alternança genuïna: l'alumna investiga i interpreta, la IA organitza. Cada un aporta el que fa millor.",
+    explanation: "N3 — Cocreació: Alternança de lideratge. L'alumna aporta investigació i interpretació; la IA aporta organització.",
+  },
+  {
+    id: "cal-10",
+    text: "Alumnes de 2n ESO pregunten a Gemini: «Quins temes d'actualitat podrien generar un bon debat a classe?» La IA suggereix 8 temes. La classe en tria 2 i prepara arguments a favor i en contra sense IA.",
+    context: "2n ESO · Tutoria",
+    correctLevel: 1,
+    tag: "offloading" as const,
+    tagExplain: "La IA ha generat inspiració inicial. Tot el treball cognitiu posterior (argumentar, debatre) és dels alumnes.",
+    explanation: "N1 — Exploració: La IA inspira la tria de tema. Tot el treball cognitiu posterior és dels alumnes.",
+  },
 ];
+
+const CORE_SCENARIO_COUNT = 5;
 
 // ─── Session ─────────────────────────────────────────────────────
 
@@ -85,6 +133,11 @@ function getSessionId(): string {
   return id;
 }
 
+function getGuidedSessionId(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("maginia_guided_session_id") || "";
+}
+
 // ─── Component ───────────────────────────────────────────────────
 
 export default function CalibraPage() {
@@ -93,10 +146,15 @@ export default function CalibraPage() {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [completed, setCompleted] = useState(false);
   const [sessionId, setSessionId] = useState("");
+  const [guidedSessionId, setGuidedSessionId] = useState("");
   const [facilitatorSync, setFacilitatorSync] = useState(false);
+  const [showBonus, setShowBonus] = useState(false);
+
+  const activeScenarios = showBonus ? SCENARIOS : SCENARIOS.slice(0, CORE_SCENARIO_COUNT);
 
   useEffect(() => {
     setSessionId(getSessionId());
+    setGuidedSessionId(getGuidedSessionId());
   }, []);
 
   // ─── Facilitator sync ──────────────────────────────────────
@@ -108,11 +166,19 @@ export default function CalibraPage() {
         .eq("id", 1)
         .single();
       if (data && data.is_active) {
+        // Adopt guided_session_id from facilitator if not set
+        if (data.guided_session_id && !guidedSessionId) {
+          localStorage.setItem("maginia_guided_session_id", data.guided_session_id);
+          setGuidedSessionId(data.guided_session_id);
+        }
         if (data.phase === "calibra") {
           setFacilitatorSync(true);
+          // Enable bonus scenarios if facilitator navigates beyond core
+          if (data.current_idx >= CORE_SCENARIO_COUNT) setShowBonus(true);
           setCurrentIdx(data.current_idx);
+        } else if (data.phase === "mapa") {
+          window.location.href = "/mapa";
         } else if (data.phase === "valida") {
-          // Facilitator moved to valida → redirect participant
           window.location.href = "/mapa/valida";
         }
       } else {
@@ -122,20 +188,35 @@ export default function CalibraPage() {
     poll();
     const interval = setInterval(poll, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [guidedSessionId]);
 
-  const scenario = SCENARIOS[currentIdx];
+  const scenario = activeScenarios[currentIdx] || activeScenarios[0];
   const myAnswer = answers[scenario.id] ?? null;
   const isRevealed = revealed[scenario.id] ?? false;
   const isCorrect = myAnswer === scenario.correctLevel;
 
   const totalAnswered = Object.keys(revealed).length;
-  const totalCorrect = SCENARIOS.filter(s => answers[s.id] === s.correctLevel).length;
+  const totalCorrect = activeScenarios.filter(s => answers[s.id] === s.correctLevel).length;
 
   const handleSelect = (level: number) => {
     if (isRevealed) return;
     setAnswers(prev => ({ ...prev, [scenario.id]: level }));
   };
+
+  // Heartbeat during guided session
+  useEffect(() => {
+    if (!sessionId || !guidedSessionId) return;
+    const heartbeat = () => {
+      supabase.from("mapa_sessions").upsert({
+        session_id: sessionId,
+        guided_session_id: guidedSessionId,
+        last_heartbeat: new Date().toISOString(),
+      }, { onConflict: "session_id,guided_session_id" });
+    };
+    heartbeat();
+    const interval = setInterval(heartbeat, 10000);
+    return () => clearInterval(interval);
+  }, [sessionId, guidedSessionId]);
 
   const handleReveal = async () => {
     setRevealed(prev => ({ ...prev, [scenario.id]: true }));
@@ -147,11 +228,21 @@ export default function CalibraPage() {
       selected_level: myAnswer,
       correct_level: scenario.correctLevel,
       is_correct: myAnswer === scenario.correctLevel,
-    }, { onConflict: "session_id,scenario_id" }).then(() => {});
+      guided_session_id: guidedSessionId || null,
+    }, { onConflict: "session_id,scenario_id" });
+
+    // Also send heartbeat on vote to keep presence alive
+    if (guidedSessionId) {
+      supabase.from("mapa_sessions").upsert({
+        session_id: sessionId,
+        guided_session_id: guidedSessionId,
+        last_heartbeat: new Date().toISOString(),
+      }, { onConflict: "session_id,guided_session_id" });
+    }
   };
 
   const handleNext = () => {
-    if (currentIdx < SCENARIOS.length - 1) {
+    if (currentIdx < activeScenarios.length - 1) {
       setCurrentIdx(currentIdx + 1);
     } else {
       setCompleted(true);
@@ -185,7 +276,7 @@ export default function CalibraPage() {
 
           {/* Score */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-black/[0.04] text-center mb-8">
-            <div className="text-6xl font-bold text-[var(--jesuites-blue)] mb-2">{totalCorrect}/{SCENARIOS.length}</div>
+            <div className="text-6xl font-bold text-[var(--jesuites-blue)] mb-2">{totalCorrect}/{activeScenarios.length}</div>
             <p className="text-sm text-gray-500 mb-6">escenaris classificats correctament</p>
 
             {totalCorrect >= 4 ? (
@@ -205,7 +296,7 @@ export default function CalibraPage() {
 
           {/* Summary */}
           <div className="space-y-3 mb-8">
-            {SCENARIOS.map((s, i) => {
+            {activeScenarios.map((s, i) => {
               const ans = answers[s.id];
               const ok = ans === s.correctLevel;
               return (
@@ -281,12 +372,12 @@ export default function CalibraPage() {
 
           {/* Progress */}
           <div className="flex justify-center gap-2 mt-5">
-            {SCENARIOS.map((_, i) => (
+            {activeScenarios.map((_, i) => (
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === currentIdx ? "w-8 bg-[var(--jesuites-blue)]" :
-                  revealed[SCENARIOS[i].id] ? "w-4 bg-emerald-400" : "w-4 bg-black/10"
+                  revealed[activeScenarios[i].id] ? "w-4 bg-emerald-400" : "w-4 bg-black/10"
                 }`}
               />
             ))}
@@ -299,7 +390,7 @@ export default function CalibraPage() {
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-black/[0.04]">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em]">
-                Escenari {currentIdx + 1} de {SCENARIOS.length}
+                Escenari {currentIdx + 1} de {activeScenarios.length}
               </span>
               <span className="text-[10px] font-bold text-violet-500 bg-violet-50 px-3 py-1 rounded-full">
                 {scenario.context}
@@ -389,7 +480,7 @@ export default function CalibraPage() {
                   onClick={handleNext}
                   className="w-full mt-5 py-4 rounded-2xl bg-[var(--jesuites-blue)] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
                 >
-                  {currentIdx < SCENARIOS.length - 1 ? (
+                  {currentIdx < activeScenarios.length - 1 ? (
                     <>Següent escenari <ChevronRight size={14} /></>
                   ) : (
                     <>Veure resultats <ChevronRight size={14} /></>
@@ -409,10 +500,10 @@ export default function CalibraPage() {
               >
                 <ChevronLeft size={12} /> Anterior
               </button>
-              <span className="text-[10px] font-bold text-gray-300">{totalAnswered}/{SCENARIOS.length} respostos</span>
+              <span className="text-[10px] font-bold text-gray-300">{totalAnswered}/{activeScenarios.length} respostos</span>
               <button
                 onClick={handleNext}
-                disabled={currentIdx === SCENARIOS.length - 1 || !isRevealed}
+                disabled={currentIdx === activeScenarios.length - 1 || !isRevealed}
                 className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest disabled:opacity-20 hover:text-[var(--jesuites-blue)] transition-all"
               >
                 Següent <ChevronRight size={12} />

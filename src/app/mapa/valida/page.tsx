@@ -42,6 +42,7 @@ const DELEG_LABELS = [
 ];
 
 const SCENARIOS: ValidationScenario[] = [
+  // ── CLAR: Outsourcing evident ──
   {
     id: "val-01",
     text: "Un alumne de 3r ESO demana a la IA que li resolgui un problema de matemàtiques pas a pas. Copia la solució al quadern sense intentar-ho ell primer.",
@@ -50,18 +51,20 @@ const SCENARIOS: ValidationScenario[] = [
     tag: "outsourcing",
     friction: "nul·la",
     frictionNote: "L'alumne no experimenta cap dificultat desitjable. No hi ha esforç cognitiu previ ni posterior.",
-    discussion: "Nivell N4 sense supervisió real. L'alumne externalitza la tasca cognitiva completament. Si has declarat que N4 no és permès a 3r ESO, la teva resposta hauria de ser coherent.",
+    discussion: "Nivell N4 sense supervisió real. L'alumne externalitza la tasca cognitiva completament.",
   },
+  // ── CONTROVERTIT: On és el límit entre suport i delegació? ──
   {
     id: "val-02",
-    text: "Una alumna escriu un text creatiu sobre el futur de la seva ciutat. Després, demana a la IA suggeriments per millorar l'estructura i el vocabulari. Decideix què incorporar.",
+    text: "Una alumna de 4t ESO escriu un assaig. Després demana a la IA: «Reescriu-lo perquè soni més acadèmic.» Li agrada el resultat i el lliura amb petits retocs.",
     context: "4t ESO · Llengua Catalana",
-    impliedLevel: 2,
-    tag: "offloading",
-    friction: "alta",
-    frictionNote: "L'alumna ha fet l'esforç creatiu primer. La IA actua com a feedback, i l'alumna manté la decisió final.",
-    discussion: "Nivell N2 — Suport clàssic. L'alumna crea, la IA ajuda a millorar. L'aprenentatge ve d'escriure primer i de decidir què acceptar.",
+    impliedLevel: 3,
+    tag: "outsourcing",
+    friction: "baixa",
+    frictionNote: "L'alumna va fer el treball inicial, però el producte final és majoritàriament de la IA. La reescriptura ha substituït la seva veu. Hi ha debat legítim: va començar ella, però el resultat ja no és seu.",
+    discussion: "Frontera N2/N4. L'alumna va crear, però va delegar la versió final. Uns diran que és suport (va escriure primer), altres que és outsourcing (el text lliurat és de la IA). On poses el límit?",
   },
+  // ── CLAR: Ús docent legítim ──
   {
     id: "val-03",
     text: "El docent utilitza NotebookLM per generar un qüestionari de 20 preguntes adaptat al nivell del grup de 2n ESO, a partir dels apunts del tema.",
@@ -72,16 +75,18 @@ const SCENARIOS: ValidationScenario[] = [
     frictionNote: "No aplica — és ús docent fora de l'aula. La fricció cognitiva de l'alumnat no es veu afectada.",
     discussion: "Ús docent fora de l'aula. Si has declarat que el docent pot usar IA fora de l'aula, hauries d'aprovar-ho.",
   },
+  // ── CONTROVERTIT: Cocreació o delegació amb supervisió cosmètica? ──
   {
     id: "val-04",
-    text: "Un alumne de Batxillerat utilitza Copilot per generar tot el codi d'un projecte de tecnologia. Presenta el resultat sense entendre el codi.",
+    text: "Un alumne de Batxillerat programa un projecte de tecnologia amb Copilot: ell escriu l'estructura i els comentaris, la IA genera el codi, l'alumne el revisa línia per línia i corregeix errors. Entén el 70% del codi final.",
     context: "Batxillerat · Tecnologia",
-    impliedLevel: 4,
-    tag: "outsourcing",
-    friction: "nul·la",
-    frictionNote: "Zero fricció cognitiva. L'alumne no ha après a programar — ha après a demanar. Outsourcing total de la competència.",
-    discussion: "Nivell N4 sense supervisió real. Si permets N4 a Batxillerat, aquest escenari el fa coherent — però és un outsourcing que no genera aprenentatge.",
+    impliedLevel: 3,
+    tag: "offloading",
+    friction: "alta",
+    frictionNote: "Hi ha esforç cognitiu real: l'alumne dissenya, revisa, corregeix i comprèn. Però el codi funcional el genera la IA. El 30% que no entén és un risc o una oportunitat?",
+    discussion: "Frontera N3/N4. Si l'alumne entén i supervisa, és cocreació legítima? O si el gruix del codi el fa la IA, és delegació maquillada? Depèn de si valorem el procés o el producte.",
   },
+  // ── CLAR: Offloading exemplar ──
   {
     id: "val-05",
     text: "Una alumna de 6è demana a Gemini: «Explica'm què és la fotosíntesi amb paraules senzilles.» Després ho explica amb les seves pròpies paraules al company de taula.",
@@ -90,31 +95,34 @@ const SCENARIOS: ValidationScenario[] = [
     tag: "offloading",
     friction: "alta",
     frictionNote: "L'alumna utilitza la IA per entendre, no per substituir. Reformular i explicar a un altre és una prova de comprensió genuïna.",
-    discussion: "Nivell N1 — Exploració. La IA informa, l'alumna processa i transforma el coneixement. Atenció: l'alumna té 10-11 anys (< 14), cal autorització LOPDGDD.",
+    discussion: "Nivell N1 — Exploració. La IA informa, l'alumna transforma el coneixement. Atenció: té 10-11 anys (< 14), cal autorització LOPDGDD.",
   },
+  // ── CONTROVERTIT: El context canvia el judici? ──
   {
     id: "val-06",
-    text: "Un alumne de 1r ESO utilitza la IA per traduir un text sencer de l'anglès al català, sense haver-ho intentat primer. Lliura la traducció.",
-    context: "1r ESO · Anglès",
-    impliedLevel: 4,
-    tag: "outsourcing",
-    friction: "nul·la",
-    frictionNote: "La traducció és exactament la competència que es vol desenvolupar. Delegar-la completament és outsourcing de l'aprenentatge.",
-    discussion: "Nivell N4 — Delegació total de la competència objectiu. Diferent de demanar ajuda amb un paràgraf concret (que seria N2).",
+    text: "Un alumne de 1r ESO utilitza la IA per traduir un article científic de l'anglès al català que necessita per a un treball de ciències naturals. L'objectiu del treball és investigar, no traduir.",
+    context: "1r ESO · Ciències Naturals",
+    impliedLevel: 2,
+    tag: "offloading",
+    friction: "baixa",
+    frictionNote: "La traducció no és l'objectiu d'aprenentatge — la investigació científica sí. Però delegar la traducció impedeix l'exposició a la llengua. Hi ha arguments legítims per ambdós bàndols.",
+    discussion: "Frontera N2/N4. Si fos classe d'anglès, seria outsourcing clar. Però aquí la llengua no és la competència objectiu. És com usar una calculadora a ciències? O estem normalitzant la no-lectura en anglès?",
   },
+  // ── CONTROVERTIT: El resum com a drecera o com a eina? ──
   {
     id: "val-07",
-    text: "El docent projecta la IA a la pissarra digital i els alumnes de 2n ESO analitzen conjuntament si la IA s'equivoca en respondre preguntes sobre els volcans.",
-    context: "2n ESO · Ciències Naturals",
-    impliedLevel: 1,
+    text: "Una alumna de 2n ESO demana a la IA un resum d'un capítol de 30 pàgines del llibre de text. Llegeix el resum, pren notes i escriu la seva pròpia anàlisi sense consultar el capítol original.",
+    context: "2n ESO · Ciències Socials",
+    impliedLevel: 2,
     tag: "offloading",
-    friction: "alta",
-    frictionNote: "L'alumnat fa pensament crític actiu: avaluar, verificar, argumentar. La IA és l'objecte d'anàlisi, no l'eina de producció.",
-    discussion: "Nivell N1 — Exploració amb esperit crític. El docent controla la IA dins l'aula. Si permets docent dins l'aula a 2n ESO, coherent.",
+    friction: "baixa",
+    frictionNote: "L'alumna fa un esforç cognitiu real (analitzar, escriure), però ha substituït la lectura per un resum de la IA. La comprensió profunda requereix la lectura original? O el resum és una eina legítima d'estudi?",
+    discussion: "Frontera N1/N4. L'alumna treballa genuïnament, però s'ha saltat la lectura — que és on molts docents situen l'aprenentatge. Depèn de si la competència és «llegir» o «comprendre i analitzar».",
   },
+  // ── CLAR: Offloading amb criteri ──
   {
     id: "val-08",
-    text: "Un alumne de 4t ESO fa servir la IA per generar 5 idees per a un projecte d'emprenedoria. Després en tria una, la desenvolupa ell sol i justifica la seva tria.",
+    text: "Un alumne de 4t ESO fa servir la IA per generar 5 idees per a un projecte d'emprenedoria. Després en tria una, la desenvolupa ell sol i justifica la seva tria davant la classe.",
     context: "4t ESO · Emprenedoria",
     impliedLevel: 1,
     tag: "offloading",
@@ -122,6 +130,7 @@ const SCENARIOS: ValidationScenario[] = [
     frictionNote: "Generar idees inicials és una fase divergent. L'alumne fa la feina convergent (triar, justificar, desenvolupar), que és la més valuosa.",
     discussion: "Nivell N1 — La IA inspira, l'alumne crea. El producte final és 100% de l'alumne.",
   },
+  // ── CLAR: Outsourcing sistèmic ──
   {
     id: "val-09",
     text: "Una eina d'IA corregeix automàticament tots els exercicis de gramàtica d'un alumne de 1r ESO i li dona la nota sense que ell revisi els errors.",
@@ -130,8 +139,9 @@ const SCENARIOS: ValidationScenario[] = [
     tag: "outsourcing",
     friction: "nul·la",
     frictionNote: "L'alumne no revisa els seus errors. La IA ha substituït el feedback pedagògic. Sense revisió, no hi ha aprenentatge del procés.",
-    discussion: "Nivell N5 — Agència sense valor pedagògic. Si la IA corregeix però l'alumne no revisa, s'ha externalitzat l'aprenentatge. Diferent d'una plataforma adaptativa on l'alumne treballa.",
+    discussion: "Nivell N5 — Agència sense valor pedagògic. Diferent d'una plataforma adaptativa on l'alumne treballa.",
   },
+  // ── CLAR: Cocreació equilibrada ──
   {
     id: "val-10",
     text: "Una alumna de Batxillerat crea un podcast: ella investiga el tema, escriu el guió, la IA genera la música de fons, i ella fa l'edició i la locució final.",
@@ -140,7 +150,40 @@ const SCENARIOS: ValidationScenario[] = [
     tag: "offloading",
     friction: "alta",
     frictionNote: "L'alumna lidera tot el procés intel·lectual. La IA contribueix en un aspecte no-central (música). L'esforç cognitiu és complet.",
-    discussion: "Nivell N3 — Cocreació. L'alumna fa la investigació, escriptura i producció; la IA aporta un element complementari. Bon equilibri.",
+    discussion: "Nivell N3 — Cocreació. L'alumna fa la investigació, escriptura i producció; la IA aporta un element complementari.",
+  },
+  // ── CONTROVERTIT: Seqüència llarga — l'efecte acumulatiu ──
+  {
+    id: "val-11",
+    text: "Un alumne de 3r ESO escriu un text argumentatiu seguint un procés guiat: (1) demana a la IA 5 arguments a favor i 5 en contra, (2) en tria 3 i escriu un primer esborrany, (3) la IA li suggereix millores d'estructura, (4) l'alumne reescriu, (5) la IA revisa ortografia i coherència. L'alumne ha interactuat 4 vegades amb la IA però ha pres totes les decisions.",
+    context: "3r ESO · Llengua",
+    impliedLevel: 2,
+    tag: "offloading",
+    friction: "alta",
+    frictionNote: "Cada interacció aïllada sembla legítima (N1 o N2). Però l'acumulació de 4 suports genera un text que difícilment hauria existit sense la IA. L'alumne ha decidit, però... ha pensat?",
+    discussion: "Frontera N2/N3. Individulament cada pas és suport. Però és el procés en conjunt el que cal jutjar? Si treiem qualsevol dels 4 passos, el text seria molt diferent. On és el llindar d'autoria? Alguns docents ho veuran com un procés d'escriptura exemplar; altres, com una dependència excessiva.",
+  },
+  // ── CONTROVERTIT: Projecte multifase — delegació selectiva ──
+  {
+    id: "val-12",
+    text: "Una alumna de 4t ESO fa un projecte de recerca social: (1) usa la IA per trobar fonts i fer-ne resums, (2) formula la seva pròpia hipòtesi, (3) dissenya l'enquesta ella sola, (4) usa la IA per analitzar les dades estadístiques, (5) escriu les conclusions ella sola contrastant amb les fonts. Ha delegat la cerca i l'anàlisi, però la hipòtesi i les conclusions són seves.",
+    context: "4t ESO · Projecte de Recerca",
+    impliedLevel: 3,
+    tag: "offloading",
+    friction: "alta",
+    frictionNote: "L'alumna ha delegat les parts mecàniques (cerca, estadística) i ha fet les parts intel·lectuals (hipòtesi, conclusions). Però cercar fonts i analitzar dades també són competències d'aprenentatge. Ha après a investigar o a gestionar una IA que investiga per ella?",
+    discussion: "Frontera N2/N3/N4. La delegació és selectiva i intel·ligent — l'alumna ha triat què delegar. Però si l'objectiu és aprendre a investigar, ha saltat passos clau. Depèn de l'objectiu d'aprenentatge: si és el contingut, és brillant; si és el mètode, és problemàtic.",
+  },
+  // ── CONTROVERTIT: IA com a tutor personal — autonomia o dependència? ──
+  {
+    id: "val-13",
+    text: "Un alumne de 2n ESO utilitza la IA com a tutor de matemàtiques durant 40 minuts: (1) demana que li expliqui equacions de primer grau, (2) fa exercicis sol, (3) els comprova amb la IA, (4) quan falla, demana pistes (no solucions), (5) corregeix i torna a intentar. Al final resol 15 exercicis correctament sense ajuda.",
+    context: "2n ESO · Matemàtiques",
+    impliedLevel: 2,
+    tag: "offloading",
+    friction: "alta",
+    frictionNote: "L'alumne fa l'esforç cognitiu real: resol, comprova, corregeix. La IA actua com un professor particular que dóna pistes. El resultat (15 exercicis resolts) és genuí. Però la IA ha substituït el docent? I si tots els alumnes fan això, quin és el rol del professor?",
+    discussion: "Frontera N1/N2/N5. L'ús és exemplar des del punt de vista de l'aprenentatge. Però obre preguntes sistèmiques: si la IA tutoritza millor que la classe, canvia el model? Alguns ho veuran com el futur de l'educació personalitzada; altres com una erosió del rol docent.",
   },
 ];
 
@@ -156,6 +199,11 @@ function getSessionId(): string {
   return id;
 }
 
+function getGuidedSessionId(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("maginia_guided_session_id") || "";
+}
+
 // ─── Component ───────────────────────────────────────────────────
 
 export default function ValidaPage() {
@@ -164,12 +212,15 @@ export default function ValidaPage() {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [completed, setCompleted] = useState(false);
   const [sessionId, setSessionId] = useState("");
+  const [guidedSessionId, setGuidedSessionId] = useState("");
   const [myMap, setMyMap] = useState<Record<string, RowData>>({});
   const [facilitatorSync, setFacilitatorSync] = useState(false);
 
   useEffect(() => {
     const sid = getSessionId();
+    const gsid = getGuidedSessionId();
     setSessionId(sid);
+    setGuidedSessionId(gsid);
     loadMyMap(sid);
   }, []);
 
@@ -182,11 +233,18 @@ export default function ValidaPage() {
         .eq("id", 1)
         .single();
       if (data && data.is_active) {
+        // Adopt guided_session_id from facilitator if not set
+        if (data.guided_session_id && !guidedSessionId) {
+          localStorage.setItem("maginia_guided_session_id", data.guided_session_id);
+          setGuidedSessionId(data.guided_session_id);
+        }
         if (data.phase === "valida") {
           setFacilitatorSync(true);
           setCurrentIdx(data.current_idx);
         } else if (data.phase === "calibra") {
           window.location.href = "/mapa/calibra";
+        } else if (data.phase === "mapa") {
+          window.location.href = "/mapa";
         }
       } else {
         setFacilitatorSync(false);
@@ -195,7 +253,22 @@ export default function ValidaPage() {
     poll();
     const interval = setInterval(poll, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [guidedSessionId]);
+
+  // Heartbeat during guided session
+  useEffect(() => {
+    if (!sessionId || !guidedSessionId) return;
+    const heartbeat = () => {
+      supabase.from("mapa_sessions").upsert({
+        session_id: sessionId,
+        guided_session_id: guidedSessionId,
+        last_heartbeat: new Date().toISOString(),
+      }, { onConflict: "session_id,guided_session_id" });
+    };
+    heartbeat();
+    const interval = setInterval(heartbeat, 10000);
+    return () => clearInterval(interval);
+  }, [sessionId, guidedSessionId]);
 
   const loadMyMap = async (sid: string) => {
     const { data } = await supabase
@@ -230,6 +303,9 @@ export default function ValidaPage() {
     "val-08": "ESO-4",
     "val-09": "ESO-1",
     "val-10": "BATX",
+    "val-11": "ESO-3",
+    "val-12": "ESO-4",
+    "val-13": "ESO-2",
   };
 
   interface ConsistencyResult {
@@ -325,25 +401,59 @@ export default function ValidaPage() {
       .eq("session_id", sessionId)
       .eq("course_id", fix.courseId);
 
-    // Mark as fixed
+    // Mark as fixed locally and persist to mapa_valida
     setFixApplied(prev => ({ ...prev, [scenarioId]: true }));
+    await supabase.from("mapa_valida").update({ has_fixed: true })
+      .eq("session_id", sessionId)
+      .eq("scenario_id", scenarioId);
   };
 
-  const handleAnswer = (approved: boolean) => {
-    if (isRevealed) return;
+  const handleAnswer = async (approved: boolean) => {
     setAnswers(prev => ({ ...prev, [scenario.id]: approved }));
+
+    // If already revealed, re-save the changed vote to Supabase
+    if (isRevealed) {
+      const consistency = checkConsistency(scenario, approved);
+      const hasIncon = consistency ? !consistency.consistent : false;
+      await supabase.from("mapa_valida").upsert({
+        session_id: sessionId,
+        scenario_id: scenario.id,
+        approved,
+        implied_level: scenario.impliedLevel,
+        tag: scenario.tag,
+        guided_session_id: guidedSessionId || null,
+        has_inconsistency: hasIncon,
+        has_fixed: false,
+      }, { onConflict: "session_id,scenario_id" });
+      // Reset fix state since the vote changed
+      setFixApplied(prev => ({ ...prev, [scenario.id]: false }));
+    }
   };
 
   const handleReveal = async () => {
     setRevealed(prev => ({ ...prev, [scenario.id]: true }));
 
+    const consistency = checkConsistency(scenario, myAnswer!);
+    const hasIncon = consistency ? !consistency.consistent : false;
     await supabase.from("mapa_valida").upsert({
       session_id: sessionId,
       scenario_id: scenario.id,
       approved: myAnswer,
       implied_level: scenario.impliedLevel,
       tag: scenario.tag,
-    }, { onConflict: "session_id,scenario_id" }).then(() => {});
+      guided_session_id: guidedSessionId || null,
+      has_inconsistency: hasIncon,
+      has_fixed: false,
+    }, { onConflict: "session_id,scenario_id" });
+
+    // Also send heartbeat on vote to keep presence alive
+    if (guidedSessionId) {
+      supabase.from("mapa_sessions").upsert({
+        session_id: sessionId,
+        guided_session_id: guidedSessionId,
+        last_heartbeat: new Date().toISOString(),
+      }, { onConflict: "session_id,guided_session_id" });
+    }
   };
 
   const handleNext = () => {
@@ -504,18 +614,26 @@ export default function ValidaPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 mb-8">
+          <div className="space-y-2 mb-8">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => window.location.href = "/mapa"}
+                className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-[var(--jesuites-blue)] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg hover:shadow-xl transition-all"
+              >
+                El meu mapa <ChevronRight size={14} />
+              </button>
+              <button
+                onClick={() => window.location.href = "/mapa?view=consens"}
+                className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-violet-500 text-white text-[11px] font-bold uppercase tracking-widest shadow-lg hover:shadow-xl transition-all"
+              >
+                Resultats grup <ChevronRight size={14} />
+              </button>
+            </div>
             <button
               onClick={() => { setAnswers({}); setRevealed({}); setCurrentIdx(0); setCompleted(false); }}
-              className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-black/5 text-gray-500 text-[11px] font-bold uppercase tracking-widest hover:bg-black/10 transition-all"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-black/5 text-gray-400 text-[10px] font-bold uppercase tracking-widest hover:bg-black/10 transition-all"
             >
-              <RotateCcw size={14} /> Repetir
-            </button>
-            <button
-              onClick={() => window.location.href = "/mapa"}
-              className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl bg-[var(--jesuites-blue)] text-white text-[11px] font-bold uppercase tracking-widest shadow-lg hover:shadow-xl transition-all"
-            >
-              Revisar mapa <ChevronRight size={14} />
+              <RotateCcw size={12} /> Repetir la validació
             </button>
           </div>
         </div>
@@ -586,24 +704,22 @@ export default function ValidaPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleAnswer(true)}
-                disabled={isRevealed}
                 className={`py-4 rounded-2xl text-center transition-all flex flex-col items-center gap-2 ${
                   myAnswer === true
                     ? "bg-emerald-500 text-white shadow-lg scale-105"
                     : "bg-black/[0.04] text-gray-500 hover:bg-emerald-50"
-                } ${isRevealed ? "cursor-default" : ""}`}
+                }`}
               >
                 <ThumbsUp size={22} />
                 <span className="text-[10px] font-bold uppercase tracking-widest">Sí, ho aprovo</span>
               </button>
               <button
                 onClick={() => handleAnswer(false)}
-                disabled={isRevealed}
                 className={`py-4 rounded-2xl text-center transition-all flex flex-col items-center gap-2 ${
                   myAnswer === false
                     ? "bg-rose-400 text-white shadow-lg scale-105"
                     : "bg-black/[0.04] text-gray-500 hover:bg-rose-50"
-                } ${isRevealed ? "cursor-default" : ""}`}
+                }`}
               >
                 <ThumbsDown size={22} />
                 <span className="text-[10px] font-bold uppercase tracking-widest">No, ho rebutjo</span>
@@ -670,6 +786,72 @@ export default function ValidaPage() {
                   )}
                 </div>
               )}
+
+              {/* Inline Delegation Levels */}
+              {(() => {
+                const courseId = courseMapping[scenario.id];
+                const courseData = myMap[courseId];
+                if (!courseData || scenario.impliedLevel === -1) return null;
+                return (
+                  <div className="bg-white rounded-3xl p-5 border border-black/[0.04]">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                      El teu mapa per a {courseId}
+                    </p>
+                    <div className="flex gap-1.5">
+                      {DELEG_LABELS.map(({ n, label, name }) => {
+                        const key = `delegation_n${n}` as keyof RowData;
+                        const isActive = courseData[key] as boolean;
+                        const isImplied = n === scenario.impliedLevel;
+                        return (
+                          <button
+                            key={n}
+                            onClick={async () => {
+                              // Cumulative: clicking N sets 0..N true, N+1..5 false
+                              const currentMax = DELEG_LABELS.reduce((max, d) => {
+                                const k = `delegation_n${d.n}` as keyof RowData;
+                                return (courseData[k] as boolean) ? d.n : max;
+                              }, -1);
+                              const newMax = n === currentMax ? n - 1 : n;
+                              const update: Record<string, boolean> = {};
+                              const localUpdate: Record<string, boolean> = {};
+                              for (let i = 0; i <= 5; i++) {
+                                const field = `delegation_n${i}`;
+                                const val = i <= newMax;
+                                update[field] = val;
+                                localUpdate[field] = val;
+                              }
+                              setMyMap(prev => ({
+                                ...prev,
+                                [courseId]: { ...prev[courseId], ...localUpdate } as RowData,
+                              }));
+                              await supabase.from("mapa_declarations").update(update)
+                                .eq("session_id", sessionId)
+                                .eq("course_id", courseId);
+                              // Reset fix state since map changed
+                              setFixApplied(prev => ({ ...prev, [scenario.id]: false }));
+                            }}
+                            className={`flex-1 py-2 rounded-xl text-center transition-all border ${
+                              isActive
+                                ? isImplied
+                                  ? "bg-amber-500 text-white border-amber-600 ring-2 ring-amber-300 shadow-md"
+                                  : "bg-[var(--jesuites-blue)] text-white border-[var(--jesuites-blue)] shadow-sm"
+                                : isImplied
+                                  ? "bg-amber-50 text-amber-600 border-amber-200"
+                                  : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"
+                            }`}
+                          >
+                            <span className="text-[10px] font-bold block">{label}</span>
+                            <span className="text-[7px] font-medium block leading-tight">{name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[9px] text-gray-400 mt-2 text-center">
+                      Toca per canviar els nivells de delegació · El nivell de l&apos;escenari es marca en taronja
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* Level + Tags */}
               <div className="bg-white rounded-3xl p-5 border border-black/[0.04]">
