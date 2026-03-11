@@ -463,15 +463,48 @@ export default function FacilitadorPage() {
   // ─── Debate analysis ──────────────────────────────────────────
 
   const DEBATE_FIELDS: { key: keyof MapaRow; label: string; question: (c: string, pct: number) => string }[] = [
-    { key: "teacher_outside", label: "Docent fora", question: (c, p) => `Al ${c}, ${Math.round(p)}% marca que el docent usa la IA fora de classe. Compartiu en quins moments ho feu i per a quin propòsit.` },
-    { key: "teacher_inside",  label: "Docent dins",  question: (c, p) => `Al ${c}, hi ha divisió sobre l'ús docent de la IA a l'aula (${Math.round(p)}%). Com i quan la feu servir vosaltres com a docents?` },
-    { key: "student_access",  label: "Alumnat accés", question: (c, p) => `Al ${c}, ${Math.round(p)}% diu que l'alumnat té accés a IA. Quines condicions posaríeu per obrir o tancar aquest accés?` },
-    { key: "delegation_n0", label: "N0 Preservació", question: (c) => `Al ${c}, hi ha divisió sobre si cal preservar espais sense IA. Quan creieu que la decisió de no usar-la té valor pedagògic?` },
-    { key: "delegation_n1", label: "N1 Exploració",  question: (c) => `Al ${c}, no coincidiu en N1-Exploració. Quan és acceptable que la IA inspiri sense substituir l'esforç cognitiu de l'alumne?` },
-    { key: "delegation_n2", label: "N2 Suport",      question: (c) => `Al ${c}, hi ha debat sobre N2-Suport. On poseu el límit entre la IA com a eina de millora i una substitució del treball de l'alumne?` },
-    { key: "delegation_n3", label: "N3 Cocreació",   question: (c) => `Al ${c}, esteu dividits sobre N3-Cocreació. Quan és una col·laboració genuïna i quan creieu que l'alumne delega massa?` },
-    { key: "delegation_n4", label: "N4 Delegació",   question: (c) => `Al ${c}, teniu opinions diverses sobre N4-Delegació. En quins contextos és pedagògicament acceptable que la IA generi el gruix del producte?` },
-    { key: "delegation_n5", label: "N5 Agència",     question: (c) => `Al ${c}, no coincidiu en si N5-Agència és admissible. En quins contextos creieu que la IA pot operar autònomament al vostre centre?` },
+    {
+      key: "teacher_outside", label: "Docent fora",
+      question: (c, p) => p >= 50
+        ? `Al ${c}, la majoria prepareu o corregiu amb IA, però alguns docents no. Quan la preparació assistida millora realment la classe — i quan pot fer que el docent s'allunyi de la realitat de l'aula?`
+        : `Al ${c}, la majoria no usa la IA fora de classe. Quins obstacles —de temps, de confiança o ètics— ho expliquen? Quins beneficis concrets podria aportar a la vostra pràctica diària?`,
+    },
+    {
+      key: "teacher_inside", label: "Docent dins",
+      question: (c, p) => p >= 50
+        ? `Al ${c}, molts feu servir la IA dins l'aula, però no tots. Quan mostrar o fer servir la IA davant l'alumnat és un model pedagògic vàlid — i quan podria normalitzar la dependència sense sentit crític?`
+        : `Al ${c}, pocs docents usen la IA directament a l'aula. Quin valor afegeix mostrar-la en directe? Quins riscos didàctics veieu en introduir-la sense un protocol clar?`,
+    },
+    {
+      key: "student_access", label: "Alumnat accés",
+      question: (c, p) => p >= 50
+        ? `Al ${c}, la majoria creieu que l'alumnat hauria de tenir accés a la IA, però no tots. Quines competències prèvies hauria de demostrar un alumne per usar-la autònomament — i qui hauria de verificar-ho?`
+        : `Al ${c}, la majoria no dóna accés a la IA a l'alumnat. Quin aprenentatge específic creieu que es perdria si s'obrís l'accés? En quin context o edat canviaria la vostra resposta?`,
+    },
+    {
+      key: "delegation_n0", label: "N0 Preservació",
+      question: (c) => `Al ${c}, no coincidiu sobre si cal preservar espais totalment lliures de IA. Quines activitats del curs perden valor pedagògic si s'hi permet la IA — i qui ha de prendre aquesta decisió: el docent, el departament o el centre?`,
+    },
+    {
+      key: "delegation_n1", label: "N1 Exploració",
+      question: (c) => `Al ${c}, hi ha divisió sobre N1-Exploració, on la IA suggereix però l'alumne decideix i treballa. Com distingiu a la pràctica quan la IA ha inspirat l'alumne i quan li ha estalviat l'esforç de generar les seves pròpies preguntes?`,
+    },
+    {
+      key: "delegation_n2", label: "N2 Suport",
+      question: (c) => `Al ${c}, no acordeu fins on arriba N2-Suport. Poseu un exemple concret d'una tasca del vostre curs on usar la IA per corregir o millorar és legítim — i un altre on ja seria una substitució del treball real de l'alumne.`,
+    },
+    {
+      key: "delegation_n3", label: "N3 Cocreació",
+      question: (c) => `Al ${c}, esteu dividits sobre N3-Cocreació, on alumne i IA alternen el lideratge. Com podeu saber, en avaluar un treball cocreat, quina part és genuïnament de l'alumne? Quin domini del contingut hauria de demostrar prèviament?`,
+    },
+    {
+      key: "delegation_n4", label: "N4 Delegació",
+      question: (c) => `Al ${c}, hi ha divisió sobre N4-Delegació, on la IA genera el gruix del producte. En quin tipus de tasca té sentit pedagògic que la IA produeixi i l'alumne avaluï i seleccioni — i com avalueu l'aprenentatge si l'alumne no ha generat el contingut?`,
+    },
+    {
+      key: "delegation_n5", label: "N5 Agència",
+      question: (c) => `Al ${c}, no coincidiu sobre N5-Agència, on la IA opera autònomament dins un marc supervisat. Si l'alumne no intervé en el procés, què s'avalua exactament — la capacitat de dissenyar el marc, d'interpretar resultats, o tots dos? On poseu el límit perquè no sigui pur outsourcing?`,
+    },
   ];
 
   const debatePoints = COURSES.flatMap(course => {
