@@ -305,7 +305,7 @@ function DebateHeatmap({ data, mapNum }: { data: MapaRow[]; mapNum: 1 | 2 | 3 })
 // ─── Component ───────────────────────────────────────────────────
 
 export default function FacilitadorPage() {
-  const [phase, setPhase] = useState<Phase>("calibra");
+  const [phase, setPhase] = useState<Phase>("decaleg");
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [calibraVotes, setCalibraVotes] = useState<CalibraVote[]>([]);
@@ -334,6 +334,7 @@ export default function FacilitadorPage() {
   const [debateRevisionOpen, setDebateRevisionOpen] = useState(false);
   const [debateMapView, setDebateMapView] = useState<1 | 2 | 3>(2);
   const [introStep, setIntroStep] = useState(0);
+  const [decalegStep, setDecalegStep] = useState(0);
   const [decalegSubmissions, setDecalegSubmissions] = useState<{session_id: string; principle_1: string; principle_2: string; principle_3: string}[]>([]);
   const [decalegGenerated, setDecalegGenerated] = useState<{orientations: {n: number; title: string; text: string}[]; summary: string} | null>(null);
   const [decalegGenerating, setDecalegGenerating] = useState(false);
@@ -606,8 +607,14 @@ export default function FacilitadorPage() {
         else setTancamentSlide(s => Math.max(0, s - 1) as 0 | 1);
         return;
       }
-      // mapa / debate / decaleg / repas — no arrow nav
-      if (phase === "mapa" || phase === "debate" || phase === "decaleg" || phase === "repas") return;
+      // decaleg: step 0 (QR/lobby) ↔ step 1 (collecting)
+      if (phase === "decaleg") {
+        if (isNext) setDecalegStep(s => Math.min(1, s + 1));
+        else setDecalegStep(s => Math.max(0, s - 1));
+        return;
+      }
+      // mapa / debate / repas — no arrow nav
+      if (phase === "mapa" || phase === "debate" || phase === "repas") return;
 
       // calibra / valida — scenario navigation + Space to reveal
       if (isNext) goNext();
@@ -616,7 +623,7 @@ export default function FacilitadorPage() {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [goNext, goPrev, phase, setIntroStep, setTancamentSlide]);
+  }, [goNext, goPrev, phase, setIntroStep, setDecalegStep, setTancamentSlide]);
 
   // ─── Mapa timer ──────────────────────────────────────────────
 
@@ -639,6 +646,7 @@ export default function FacilitadorPage() {
   const switchPhase = (p: Phase) => {
     setPhase(p);
     setCurrentIdx(0);
+    if (p === "decaleg") setDecalegStep(0);
     setIsRevealed(false);
     if (p !== "intro") setIntroStep(0);
     // Only broadcast phases that participants react to
@@ -1367,7 +1375,28 @@ export default function FacilitadorPage() {
         )}
 
         {/* ═══ DECÀLEG PHASE ═══ */}
-        {phase === "decaleg" && (
+        {phase === "decaleg" && decalegStep === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-8">
+            <div className="bg-[var(--jesuites-blue)] rounded-3xl p-8 shadow-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qrApiUrl} alt="QR Code" width={280} height={280} className="rounded-xl" />
+            </div>
+            <div className="text-center">
+              <p className="text-[var(--jesuites-blue)] text-2xl font-bold font-mono tracking-wide mb-2">
+                {participantUrl.replace(/^https?:\/\//, '')}
+              </p>
+              {guidedSessionId && (
+                <p className="text-[var(--jesuites-blue)]/50 text-sm font-bold uppercase tracking-[0.2em]">
+                  Sessió: {guidedSessionId}
+                </p>
+              )}
+            </div>
+            <p className="text-[var(--jesuites-blue)]/30 text-xs font-bold uppercase tracking-[0.3em]">
+              Premeu → per obrir la recollida de principis
+            </p>
+          </div>
+        )}
+        {phase === "decaleg" && decalegStep === 1 && (
           <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
             {/* Left: submissions */}
             <div className="w-80 shrink-0 flex flex-col gap-3">
