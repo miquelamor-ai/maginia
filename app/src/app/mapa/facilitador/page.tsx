@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import { Sparkles, ChevronRight, ChevronLeft, Eye, EyeOff, Users, BarChart3, RefreshCw, QrCode, X, Map, Clock } from "lucide-react";
+import { Sparkles, ChevronRight, ChevronLeft, Eye, EyeOff, Users, BarChart3, RefreshCw, QrCode, X, Map, Clock, Wifi, Plus, Grid3X3 } from "lucide-react";
 
 // ─── Shared delegation labels ────────────────────────────────────
 
@@ -58,7 +58,50 @@ const CALIBRA_SCENARIOS = [
     tag: "offloading" as const,
     explanation: "N5 — Agència: La IA opera autònomament dins un marc supervisat. L'alumne encara treballa; la IA gestiona la personalització.",
   },
+  // ─── Bonus scenarios (mixed difficulty) ──────────────────────
+  {
+    id: "cal-6",
+    text: "Una alumna de 3r ESO escriu un poema en anglès. Després demana a la IA: «Check my grammar and spelling.» Corregeix els errors marcats i entrega la versió final.",
+    context: "3r ESO · Anglès",
+    correctLevel: 2,
+    tag: "offloading" as const,
+    explanation: "N2 — Suport: L'alumna ha creat el contingut original. La IA actua com a corrector, similar a un Spell-check. El producte creatiu és de l'alumna.",
+  },
+  {
+    id: "cal-7",
+    text: "El departament de filosofia decideix que l'examen d'ètica de 1r Batxillerat es farà a mà, sense cap dispositiu digital, per avaluar el raonament moral autònom de l'alumnat.",
+    context: "1r Batxillerat · Filosofia",
+    correctLevel: 0,
+    tag: "offloading" as const,
+    explanation: "N0 — Preservació: Decisió deliberada de no usar IA. L'objectiu pedagògic requereix que el pensament sigui 100% humà i no assistit.",
+  },
+  {
+    id: "cal-8",
+    text: "Un alumne de 4t ESO demana a la IA: «Crea'm una presentació de 10 diapositives sobre la Revolució Francesa amb imatges i text.» Revisa les diapositives per sobre i la presenta tal qual.",
+    context: "4t ESO · Ciències Socials",
+    correctLevel: 4,
+    tag: "outsourcing" as const,
+    explanation: "N4 — Delegació: La IA ha generat tot el producte. La revisió superficial no constitueix una aportació significativa. És outsourcing del treball cognitiu.",
+  },
+  {
+    id: "cal-9",
+    text: "Una alumna de Batxillerat investiga el canvi climàtic: ella busca dades al web, la IA li organitza les dades en taules comparatives, ella interpreta els resultats i escriu les conclusions. Cada pas requereix decisions de l'alumna.",
+    context: "Batxillerat · Ciències de la Terra",
+    correctLevel: 3,
+    tag: "offloading" as const,
+    explanation: "N3 — Cocreació: Hi ha alternança genuïna de lideratge. L'alumna aporta la investigació i la interpretació; la IA aporta l'organització de dades.",
+  },
+  {
+    id: "cal-10",
+    text: "Alumnes de 2n ESO pregunten a Gemini: «Quins temes d'actualitat podrien generar un bon debat a classe?» La IA suggereix 8 temes. La classe en tria 2 i prepara arguments a favor i en contra sense IA.",
+    context: "2n ESO · Tutoria",
+    correctLevel: 1,
+    tag: "offloading" as const,
+    explanation: "N1 — Exploració: La IA només ha inspirat la tria de tema. Tot el treball cognitiu (argumentació, debat) és dels alumnes.",
+  },
 ];
+
+const CORE_CALIBRA_COUNT = 5;
 
 // ─── Valida Scenarios ────────────────────────────────────────────
 
@@ -80,6 +123,34 @@ const VALIDA_SCENARIOS = [
 
 // ─── Types ───────────────────────────────────────────────────────
 
+const COURSES = [
+  { id: "I3-I5", name: "Infantil", sub: "I3–I5" },
+  { id: "PRI-CI", name: "C. Inicial", sub: "1r–2n" },
+  { id: "PRI-CM", name: "C. Mitjà", sub: "3r–4t" },
+  { id: "PRI-CS", name: "C. Superior", sub: "5è–6è" },
+  { id: "ESO-1", name: "1r ESO", sub: "" },
+  { id: "ESO-2", name: "2n ESO", sub: "" },
+  { id: "ESO-3", name: "3r ESO", sub: "" },
+  { id: "ESO-4", name: "4t ESO", sub: "" },
+  { id: "BATX", name: "Batxillerat", sub: "" },
+  { id: "FP-CGM", name: "FP GM", sub: "" },
+  { id: "FP-CGS", name: "FP GS", sub: "" },
+];
+
+interface MapaRow {
+  course_id: string;
+  delegation_n0: boolean;
+  delegation_n1: boolean;
+  delegation_n2: boolean;
+  delegation_n3: boolean;
+  delegation_n4: boolean;
+  delegation_n5: boolean;
+  teacher_outside: boolean;
+  teacher_inside: boolean;
+  student_access: boolean;
+  student_modality: string | null;
+}
+
 type Phase = "calibra" | "mapa" | "valida";
 
 interface CalibraVote {
@@ -90,6 +161,9 @@ interface CalibraVote {
 interface ValidaVote {
   scenario_id: string;
   approved: boolean;
+  session_id: string;
+  has_inconsistency: boolean;
+  has_fixed: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────
@@ -101,94 +175,149 @@ export default function FacilitadorPage() {
   const [calibraVotes, setCalibraVotes] = useState<CalibraVote[]>([]);
   const [validaVotes, setValidaVotes] = useState<ValidaVote[]>([]);
   const [totalParticipants, setTotalParticipants] = useState(0);
+  const [activeParticipants, setActiveParticipants] = useState(0);
+  const [peakParticipants, setPeakParticipants] = useState(0);
+  const [currentScenarioVotes, setCurrentScenarioVotes] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [showQR, setShowQR] = useState(false);
   const [baseUrl, setBaseUrl] = useState("");
   const [sessionActive, setSessionActive] = useState(false);
+  const [guidedSessionId, setGuidedSessionId] = useState("");
   const [mapaProgress, setMapaProgress] = useState({ participants: 0, declarations: 0 });
   const [mapaTimer, setMapaTimer] = useState(0);
   const [mapaTimerActive, setMapaTimerActive] = useState(false);
+  const [showBonusScenarios, setShowBonusScenarios] = useState(false);
+  const [mapaShowHeatmap, setMapaShowHeatmap] = useState(false);
+  const [mapaAllData, setMapaAllData] = useState<MapaRow[]>([]);
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
 
-  const participantUrl = `${baseUrl}/mapa/sessio`;
+  // Fetch active participants (heartbeat within last 60s)
+  const fetchActiveParticipants = useCallback(async () => {
+    if (!guidedSessionId) return;
+    const cutoff = new Date(Date.now() - 60000).toISOString();
+    const { data } = await supabase
+      .from("mapa_sessions")
+      .select("session_id")
+      .eq("guided_session_id", guidedSessionId)
+      .gte("last_heartbeat", cutoff);
+    if (data) {
+      setActiveParticipants(data.length);
+      if (data.length > 0) setPeakParticipants(prev => Math.max(prev, data.length));
+    }
+  }, [guidedSessionId]);
+
+  const participantUrl = guidedSessionId
+    ? `${baseUrl}/mapa/sessio?g=${guidedSessionId}`
+    : `${baseUrl}/mapa/sessio`;
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(participantUrl)}&bgcolor=1a2744&color=ffffff&format=svg`;
 
-  const scenarios = phase === "calibra" ? CALIBRA_SCENARIOS : phase === "valida" ? VALIDA_SCENARIOS : [];
+  const calibraActive = showBonusScenarios ? CALIBRA_SCENARIOS : CALIBRA_SCENARIOS.slice(0, CORE_CALIBRA_COUNT);
+  const scenarios = phase === "calibra" ? calibraActive : phase === "valida" ? VALIDA_SCENARIOS : [];
   const scenario = scenarios[currentIdx] || null;
   const table = phase === "calibra" ? "mapa_calibra" : "mapa_valida";
 
   // ─── Fetch votes ─────────────────────────────────────────────
 
   const fetchVotes = useCallback(async () => {
+    if (!sessionActive) return;
+    // Also refresh active participants
+    fetchActiveParticipants();
+
     if (phase === "mapa") {
-      // Fetch mapa declarations progress
-      const { data } = await supabase.from("mapa_declarations").select("session_id, course_id");
+      // Fetch mapa declarations with full data for heatmap
+      let query = supabase.from("mapa_declarations").select("session_id, course_id, delegation_n0, delegation_n1, delegation_n2, delegation_n3, delegation_n4, delegation_n5, teacher_outside, teacher_inside, student_access, student_modality");
+      if (guidedSessionId) query = query.eq("guided_session_id", guidedSessionId);
+      const { data } = await query;
       if (data) {
         const sessions = new Set(data.map((d: { session_id: string }) => d.session_id));
         setMapaProgress({ participants: sessions.size, declarations: data.length });
         setTotalParticipants(sessions.size);
+        setMapaAllData(data as MapaRow[]);
       }
       return;
     }
     if (phase === "calibra" && scenario) {
-      const { data } = await supabase
+      let query = supabase
         .from("mapa_calibra")
         .select("scenario_id, selected_level, session_id")
         .eq("scenario_id", scenario.id);
+      if (guidedSessionId) query = query.eq("guided_session_id", guidedSessionId);
+      const { data } = await query;
 
       if (data) {
         setCalibraVotes(data as CalibraVote[]);
         const sessions = new Set(data.map((d: { session_id: string }) => d.session_id));
         setTotalParticipants(sessions.size);
+        setCurrentScenarioVotes(data.length);
       }
     } else if (phase === "valida" && scenario) {
-      const { data } = await supabase
+      let query = supabase
         .from("mapa_valida")
-        .select("scenario_id, approved, session_id")
+        .select("scenario_id, approved, session_id, has_inconsistency, has_fixed")
         .eq("scenario_id", scenario.id);
+      if (guidedSessionId) query = query.eq("guided_session_id", guidedSessionId);
+      const { data } = await query;
 
       if (data) {
         setValidaVotes(data as ValidaVote[]);
         const sessions = new Set(data.map((d: { session_id: string }) => d.session_id));
         setTotalParticipants(sessions.size);
+        setCurrentScenarioVotes(data.length);
       }
     }
-  }, [phase, scenario]);
+  }, [phase, scenario, guidedSessionId, sessionActive, fetchActiveParticipants]);
 
-  // Count unique participants across all scenarios
+  // Count unique participants across all scenarios (filtered by guided session)
   const fetchTotalParticipants = useCallback(async () => {
-    const { data } = await supabase.from(table).select("session_id");
+    if (!sessionActive) return;
+    let query = supabase.from(table).select("session_id");
+    if (guidedSessionId) query = query.eq("guided_session_id", guidedSessionId);
+    const { data } = await query;
     if (data) {
       const sessions = new Set(data.map((d: { session_id: string }) => d.session_id));
       setTotalParticipants(sessions.size);
     }
-  }, [table]);
+  }, [table, guidedSessionId, sessionActive]);
 
   useEffect(() => {
     fetchVotes();
     fetchTotalParticipants();
   }, [fetchVotes, fetchTotalParticipants]);
 
-  // Auto-refresh every 3 seconds
+  // Auto-refresh every 2 seconds (fallback)
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(fetchVotes, 3000);
+    const interval = setInterval(fetchVotes, 2000);
     return () => clearInterval(interval);
   }, [autoRefresh, fetchVotes]);
 
+  // Supabase Realtime: instant vote updates
+  useEffect(() => {
+    if (!guidedSessionId) return;
+    const channel = supabase
+      .channel(`votes-${guidedSessionId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "mapa_calibra" }, () => fetchVotes())
+      .on("postgres_changes", { event: "*", schema: "public", table: "mapa_valida" }, () => fetchVotes())
+      .on("postgres_changes", { event: "*", schema: "public", table: "mapa_declarations" }, () => fetchVotes())
+      .on("postgres_changes", { event: "*", schema: "public", table: "mapa_sessions" }, () => fetchActiveParticipants())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [guidedSessionId, fetchVotes, fetchActiveParticipants]);
+
   // ─── Sync state to Supabase ─────────────────────────────────
 
-  const broadcastState = useCallback(async (p: Phase, idx: number, active: boolean) => {
+  const broadcastState = useCallback(async (p: Phase, idx: number, active: boolean, gsId?: string) => {
     await supabase.from("mapa_facilitador_state").update({
       phase: p,
       current_idx: idx,
       is_active: active,
+      guided_session_id: gsId ?? (guidedSessionId || null),
       updated_at: new Date().toISOString(),
     }).eq("id", 1);
-  }, []);
+  }, [guidedSessionId]);
 
   // Deactivate on unmount
   useEffect(() => {
@@ -260,7 +389,18 @@ export default function FacilitadorPage() {
   const toggleSession = () => {
     const next = !sessionActive;
     setSessionActive(next);
-    broadcastState(phase, currentIdx, next);
+    if (next) {
+      // Generate new guided session ID
+      const newGsId = crypto.randomUUID().slice(0, 8);
+      setGuidedSessionId(newGsId);
+      setActiveParticipants(0);
+      setPeakParticipants(0);
+      setTotalParticipants(0);
+      broadcastState(phase, currentIdx, true, newGsId);
+    } else {
+      setGuidedSessionId("");
+      broadcastState(phase, currentIdx, false, "");
+    }
   };
 
   // ─── Vote counts ──────────────────────────────────────────────
@@ -275,6 +415,9 @@ export default function FacilitadorPage() {
   const validaYes = validaVotes.filter(v => v.approved).length;
   const validaNo = validaVotes.filter(v => !v.approved).length;
   const validaTotal = validaVotes.length;
+  const validaYesIncon = validaVotes.filter(v => v.approved && v.has_inconsistency).length;
+  const validaNoIncon = validaVotes.filter(v => !v.approved && v.has_inconsistency).length;
+  const validaFixed = validaVotes.filter(v => v.has_fixed).length;
 
   // ─── Render ────────────────────────────────────────────────────
 
@@ -296,6 +439,11 @@ export default function FacilitadorPage() {
             <p className="text-white/90 text-2xl font-bold tracking-wide mb-2 font-mono">
               {participantUrl.replace(/^https?:\/\//, '')}
             </p>
+            {guidedSessionId && (
+              <p className="text-emerald-300 text-sm font-bold uppercase tracking-[0.2em] mt-2">
+                Sessió: {guidedSessionId}
+              </p>
+            )}
             <p className="text-white/30 text-xs font-bold uppercase tracking-[0.3em] mt-4">
               Clica qualsevol lloc per tancar
             </p>
@@ -314,7 +462,7 @@ export default function FacilitadorPage() {
               Calibra
             </button>
             {phase !== "mapa" && scenarios.length > 0 && (
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 items-center">
                 {scenarios.map((_, i) => (
                   <button
                     key={i}
@@ -322,9 +470,20 @@ export default function FacilitadorPage() {
                     className={`h-2 rounded-full transition-all cursor-pointer ${
                       i === currentIdx ? "w-10 bg-white" :
                       i < currentIdx ? "w-5 bg-white/40" : "w-5 bg-white/15"
-                    }`}
+                    } ${phase === "calibra" && i >= CORE_CALIBRA_COUNT ? "opacity-60" : ""}`}
                   />
                 ))}
+                {phase === "calibra" && (
+                  <button
+                    onClick={() => setShowBonusScenarios(!showBonusScenarios)}
+                    className={`h-6 px-2 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                      showBonusScenarios ? "bg-amber-400/20 text-amber-300 border border-amber-400/30" : "bg-white/10 text-white/40 hover:bg-white/20"
+                    }`}
+                    title={showBonusScenarios ? "Amagar escenaris extra" : "Mostrar escenaris extra"}
+                  >
+                    <Plus size={10} /> {showBonusScenarios ? "10" : "+5"}
+                  </button>
+                )}
               </div>
             )}
             <button
@@ -348,10 +507,39 @@ export default function FacilitadorPage() {
             >
               {sessionActive ? "Sessió activa" : "Iniciar sessió"}
             </button>
-            <div className="flex items-center gap-1.5 bg-white/10 px-3 py-2 rounded-xl">
-              <Users size={14} />
-              <span className="text-sm font-bold">{totalParticipants}</span>
-            </div>
+            {/* Active participants (heartbeat) */}
+            {sessionActive && (
+              <div className="flex items-center gap-1.5 bg-emerald-500/20 px-3 py-2 rounded-xl border border-emerald-400/30">
+                <Wifi size={14} className="text-emerald-300" />
+                <span className="text-sm font-bold text-emerald-300">{activeParticipants}</span>
+              </div>
+            )}
+            {/* Vote counter for current scenario */}
+            {sessionActive && phase !== "mapa" && (() => {
+              const expected = activeParticipants > 0 ? activeParticipants : (peakParticipants > 0 ? peakParticipants : totalParticipants);
+              const allVoted = expected > 0 && currentScenarioVotes >= expected;
+              const mostVoted = expected > 0 && currentScenarioVotes >= Math.ceil(expected * 0.8);
+              return (
+                <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border ${
+                  allVoted ? "bg-emerald-500/20 border-emerald-400/30"
+                  : mostVoted ? "bg-amber-500/20 border-amber-400/30"
+                  : "bg-white/10 border-white/10"
+                }`}>
+                  <BarChart3 size={14} className={
+                    allVoted ? "text-emerald-300" :
+                    mostVoted ? "text-amber-300" : "text-white/50"
+                  } />
+                  <span className="text-sm font-bold">{currentScenarioVotes}/{expected}</span>
+                  <span className="text-[9px] text-white/40 font-bold">vots</span>
+                </div>
+              );
+            })()}
+            {sessionActive && (
+              <div className="flex items-center gap-1.5 bg-white/10 px-3 py-2 rounded-xl">
+                <Users size={14} />
+                <span className="text-sm font-bold">{totalParticipants}</span>
+              </div>
+            )}
             <button onClick={() => setShowQR(true)} className="p-2 rounded-xl bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all">
               <QrCode size={16} />
             </button>
@@ -366,47 +554,166 @@ export default function FacilitadorPage() {
 
         {/* ═══ MAPA PHASE — Dashboard ═══ */}
         {phase === "mapa" && (
-          <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-8">
-            <div className="text-center">
-              <Map size={48} className="text-violet-300 mx-auto mb-4" />
-              <h2 className="text-4xl font-bold text-white mb-2">Fase 2: Mapa de Delegació</h2>
-              <p className="text-lg text-white/60">Els participants estan declarant l&apos;ús de la IA per curs</p>
+          <div className="flex-1 min-h-0 flex flex-col gap-4">
+            {/* Header row */}
+            <div className="flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-4">
+                <Map size={24} className="text-violet-300" />
+                <h2 className="text-xl font-bold text-white">Mapa de Delegació</h2>
+                <div className="flex items-center gap-3 ml-4">
+                  <span className="text-sm text-white/50"><span className="text-2xl font-bold text-white">{mapaProgress.participants}</span> participants</span>
+                  <span className="text-sm text-white/50"><span className="text-2xl font-bold text-white">{mapaProgress.declarations}</span> declaracions</span>
+                  <span className="text-sm text-white/50 font-mono"><span className="text-2xl font-bold text-white">{Math.floor(mapaTimer / 60)}:{String(mapaTimer % 60).padStart(2, "0")}</span></span>
+                </div>
+              </div>
+              <button
+                onClick={() => setMapaShowHeatmap(!mapaShowHeatmap)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  mapaShowHeatmap ? "bg-violet-400 text-[var(--jesuites-blue)] shadow-lg" : "bg-white/10 text-white/50 hover:bg-white/20"
+                }`}
+              >
+                <Grid3X3 size={14} /> {mapaShowHeatmap ? "Resultats" : "Resultats"}
+              </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 w-full max-w-2xl">
-              <div className="bg-white/10 rounded-3xl p-8 text-center border border-white/5">
-                <Users size={28} className="text-violet-300 mx-auto mb-3" />
-                <span className="text-6xl font-bold text-white block">{mapaProgress.participants}</span>
-                <span className="text-sm font-bold text-white/50 uppercase tracking-widest mt-2 block">Participants</span>
-              </div>
-              <div className="bg-white/10 rounded-3xl p-8 text-center border border-white/5">
-                <BarChart3 size={28} className="text-violet-300 mx-auto mb-3" />
-                <span className="text-6xl font-bold text-white block">{mapaProgress.declarations}</span>
-                <span className="text-sm font-bold text-white/50 uppercase tracking-widest mt-2 block">Declaracions</span>
-              </div>
-              <div className="bg-white/10 rounded-3xl p-8 text-center border border-white/5">
-                <Clock size={28} className="text-violet-300 mx-auto mb-3" />
-                <span className="text-6xl font-bold text-white block font-mono">
-                  {Math.floor(mapaTimer / 60)}:{String(mapaTimer % 60).padStart(2, "0")}
-                </span>
-                <span className="text-sm font-bold text-white/50 uppercase tracking-widest mt-2 block">Temps</span>
-              </div>
-            </div>
-
-            {/* Average per participant */}
-            {mapaProgress.participants > 0 && (
-              <div className="bg-violet-500/20 rounded-2xl px-8 py-4 border border-violet-400/20 text-center">
-                <span className="text-2xl font-bold text-violet-300">
-                  {(mapaProgress.declarations / mapaProgress.participants).toFixed(1)}
-                </span>
-                <span className="text-sm text-violet-300/70 ml-2">cursos declarats de mitjana (d&apos;11)</span>
+            {/* Default: waiting view */}
+            {!mapaShowHeatmap && (
+              <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-6">
+                <p className="text-lg text-white/60">Els participants estan declarant l&apos;ús de la IA per curs</p>
+                {mapaProgress.participants > 0 && (
+                  <div className="bg-violet-500/20 rounded-2xl px-8 py-4 border border-violet-400/20 text-center">
+                    <span className="text-2xl font-bold text-violet-300">
+                      {(mapaProgress.declarations / mapaProgress.participants).toFixed(1)}
+                    </span>
+                    <span className="text-sm text-violet-300/70 ml-2">cursos declarats de mitjana (d&apos;11)</span>
+                  </div>
+                )}
+                <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] animate-pulse">
+                  Clica &quot;Resultats&quot; per veure el mapa agregat
+                </p>
               </div>
             )}
 
-            <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] animate-pulse">
-              Passa a Valida quan estiguin llestos
-            </p>
+            {/* Heatmap: full mapa results per course */}
+            {mapaShowHeatmap && (
+              <div className="flex-1 min-h-0 overflow-auto">
+                <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                  {/* Header */}
+                  <div className="grid grid-cols-[120px_55px_55px_55px_repeat(3,48px)_1px_repeat(6,1fr)_40px] gap-px bg-white/10">
+                    <div className="bg-[var(--jesuites-blue)] px-2 py-2 text-[8px] font-bold text-white/40 uppercase tracking-widest">Curs</div>
+                    <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                      <span className="text-[8px] font-bold text-white/50 uppercase">Doc.</span>
+                      <span className="text-[7px] text-white/30 block">Fora</span>
+                    </div>
+                    <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                      <span className="text-[8px] font-bold text-white/50 uppercase">Doc.</span>
+                      <span className="text-[7px] text-white/30 block">Dins</span>
+                    </div>
+                    <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                      <span className="text-[8px] font-bold text-emerald-300/70 uppercase">Alum.</span>
+                      <span className="text-[7px] text-white/30 block">Accés</span>
+                    </div>
+                    <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                      <span className="text-[7px] font-bold text-violet-300/70">Guiat</span>
+                    </div>
+                    <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                      <span className="text-[7px] font-bold text-violet-300/70">Autòn.</span>
+                    </div>
+                    <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                      <span className="text-[7px] font-bold text-violet-300/70">Lliure</span>
+                    </div>
+                    <div className="bg-white/20" />
+                    {DELEG_LABELS.map(dl => (
+                      <div key={dl.n} className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                        <span className="text-[9px] font-bold text-white/70">{dl.label}</span>
+                      </div>
+                    ))}
+                    <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center text-[8px] font-bold text-white/40">n</div>
+                  </div>
+                  {/* Rows */}
+                  {COURSES.map(course => {
+                    const rows = mapaAllData.filter(r => r.course_id === course.id);
+                    const count = rows.length;
+                    const pctTeacherOut = count > 0 ? rows.filter(r => r.teacher_outside).length / count * 100 : 0;
+                    const pctTeacherIn = count > 0 ? rows.filter(r => r.teacher_inside).length / count * 100 : 0;
+                    const pctStudent = count > 0 ? rows.filter(r => r.student_access).length / count * 100 : 0;
+                    const pctGuiat = count > 0 ? rows.filter(r => r.student_modality === "guiat").length / count * 100 : 0;
+                    const pctAutonom = count > 0 ? rows.filter(r => r.student_modality === "autonom").length / count * 100 : 0;
+                    const pctLliure = count > 0 ? rows.filter(r => r.student_modality === "lliure").length / count * 100 : 0;
+                    return (
+                      <div key={course.id} className="grid grid-cols-[120px_55px_55px_55px_repeat(3,48px)_1px_repeat(6,1fr)_40px] gap-px bg-white/5">
+                        <div className="bg-[var(--jesuites-blue)] px-2 py-2 flex items-center">
+                          <span className="text-[11px] font-bold text-white">{course.name}</span>
+                          {course.sub && <span className="text-[8px] text-white/30 ml-1">{course.sub}</span>}
+                        </div>
+                        {/* Docent fora */}
+                        <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center relative">
+                          {count > 0 ? (
+                            <>
+                              <div className="absolute inset-0 bg-blue-500 transition-all duration-500" style={{ opacity: pctTeacherOut / 100 * 0.5 }} />
+                              <span className="relative text-[11px] font-bold text-white">{pctTeacherOut > 0 ? `${Math.round(pctTeacherOut)}%` : ""}</span>
+                            </>
+                          ) : <span className="text-white/10 text-[10px]">—</span>}
+                        </div>
+                        {/* Docent dins */}
+                        <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center relative">
+                          {count > 0 ? (
+                            <>
+                              <div className="absolute inset-0 bg-blue-500 transition-all duration-500" style={{ opacity: pctTeacherIn / 100 * 0.5 }} />
+                              <span className="relative text-[11px] font-bold text-white">{pctTeacherIn > 0 ? `${Math.round(pctTeacherIn)}%` : ""}</span>
+                            </>
+                          ) : <span className="text-white/10 text-[10px]">—</span>}
+                        </div>
+                        {/* Alumne accés */}
+                        <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center relative">
+                          {count > 0 ? (
+                            <>
+                              <div className="absolute inset-0 bg-emerald-500 transition-all duration-500" style={{ opacity: pctStudent / 100 * 0.5 }} />
+                              <span className="relative text-[11px] font-bold text-white">{pctStudent > 0 ? `${Math.round(pctStudent)}%` : ""}</span>
+                            </>
+                          ) : <span className="text-white/10 text-[10px]">—</span>}
+                        </div>
+                        {/* Modalitat: guiat, autònom, lliure */}
+                        {[pctGuiat, pctAutonom, pctLliure].map((pct, mi) => (
+                          <div key={mi} className="bg-[var(--jesuites-blue)] px-1 py-2 text-center relative">
+                            {count > 0 ? (
+                              <>
+                                <div className="absolute inset-0 bg-violet-500 transition-all duration-500" style={{ opacity: pct / 100 * 0.5 }} />
+                                <span className="relative text-[10px] font-bold text-white">{pct > 0 ? `${Math.round(pct)}%` : ""}</span>
+                              </>
+                            ) : <span className="text-white/10 text-[10px]">—</span>}
+                          </div>
+                        ))}
+                        {/* Separator */}
+                        <div className="bg-white/20" />
+                        {/* Delegation levels */}
+                        {DELEG_LABELS.map((dl, i) => {
+                          const delegCount = count > 0 ? rows.filter(r => r[`delegation_n${i}` as keyof MapaRow] as boolean).length : 0;
+                          const pct = count > 0 ? delegCount / count * 100 : 0;
+                          return (
+                            <div key={dl.n} className="bg-[var(--jesuites-blue)] px-1 py-2 text-center relative">
+                              {count > 0 && (
+                                <>
+                                  <div
+                                    className={`absolute inset-0 ${dl.color} transition-all duration-500`}
+                                    style={{ opacity: pct / 100 * 0.6 }}
+                                  />
+                                  <span className="relative text-[11px] font-bold text-white">{pct > 0 ? `${Math.round(pct)}%` : ""}</span>
+                                </>
+                              )}
+                              {count === 0 && <span className="text-white/10 text-[10px]">—</span>}
+                            </div>
+                          );
+                        })}
+                        <div className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
+                          <span className="text-[10px] font-bold text-white/40">{count}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -425,9 +732,11 @@ export default function FacilitadorPage() {
             <div className="flex-1" />
             {/* Reveal button inline */}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-white/50">
-                {phase === "calibra" ? calibraTotal : validaTotal} vots
-              </span>
+              {sessionActive && (
+                <span className="text-sm font-bold text-white/50">
+                  {phase === "calibra" ? calibraTotal : validaTotal} vots
+                </span>
+              )}
               <button
                 onClick={() => setIsRevealed(!isRevealed)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
@@ -493,15 +802,25 @@ export default function FacilitadorPage() {
           {phase === "valida" && (
             <div className="h-full flex flex-col gap-3">
               <div className="flex-1 grid grid-cols-2 gap-6 min-h-0">
-                <div className="bg-emerald-500/20 rounded-3xl p-6 flex flex-col items-center justify-center border border-emerald-400/20">
+                <div className="bg-emerald-500/20 rounded-3xl p-6 flex flex-col items-center justify-center border border-emerald-400/20 relative">
                   <span className="text-7xl font-bold text-emerald-300">{validaYes}</span>
                   <span className="text-lg font-bold text-emerald-400/80 mt-2">Sí, ho aprovo</span>
                   {validaTotal > 0 && <span className="text-3xl font-bold text-emerald-300/60 mt-1">{Math.round((validaYes / validaTotal) * 100)}%</span>}
+                  {validaYesIncon > 0 && (
+                    <div className="mt-3 flex items-center gap-1.5 bg-amber-500/20 border border-amber-400/30 rounded-xl px-3 py-1.5">
+                      <span className="text-[11px] font-bold text-amber-300">⚠ {validaYesIncon} incoherència{validaYesIncon > 1 ? "s" : ""}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="bg-rose-500/20 rounded-3xl p-6 flex flex-col items-center justify-center border border-rose-400/20">
+                <div className="bg-rose-500/20 rounded-3xl p-6 flex flex-col items-center justify-center border border-rose-400/20 relative">
                   <span className="text-7xl font-bold text-rose-300">{validaNo}</span>
                   <span className="text-lg font-bold text-rose-400/80 mt-2">No, ho rebutjo</span>
                   {validaTotal > 0 && <span className="text-3xl font-bold text-rose-300/60 mt-1">{Math.round((validaNo / validaTotal) * 100)}%</span>}
+                  {validaNoIncon > 0 && (
+                    <div className="mt-3 flex items-center gap-1.5 bg-amber-500/20 border border-amber-400/30 rounded-xl px-3 py-1.5">
+                      <span className="text-[11px] font-bold text-amber-300">⚠ {validaNoIncon} incoherència{validaNoIncon > 1 ? "s" : ""}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               {validaTotal > 0 && (() => {
@@ -513,9 +832,21 @@ export default function FacilitadorPage() {
                     maxPct >= 60 ? "bg-amber-500/20 border border-amber-400/20" :
                     "bg-rose-500/20 border border-rose-400/20"
                   }`}>
-                    <span className="text-lg font-bold">
-                      {maxPct >= 80 ? "Consens fort" : maxPct >= 60 ? "Tendència clara" : "Divisió — Cal debat!"}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold">
+                        {maxPct >= 80 ? "Consens fort" : maxPct >= 60 ? "Tendència clara" : "Divisió — Cal debat!"}
+                      </span>
+                      {validaFixed > 0 && (
+                        <span className="text-[10px] font-bold bg-emerald-500/30 text-emerald-200 px-3 py-1.5 rounded-lg">
+                          ✓ {validaFixed} rectificat{validaFixed > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {(validaYesIncon + validaNoIncon) > 0 && validaFixed === 0 && (
+                        <span className="text-[10px] font-bold bg-amber-500/30 text-amber-200 px-3 py-1.5 rounded-lg">
+                          ⚠ {validaYesIncon + validaNoIncon} amb incoherència
+                        </span>
+                      )}
+                    </div>
                     <div className="flex gap-2">
                       {vs.impliedLevel >= 0 && (
                         <span className="text-[10px] font-bold bg-white/10 px-3 py-1.5 rounded-lg">{DELEG_LABELS[vs.impliedLevel].label} · {DELEG_LABELS[vs.impliedLevel].name}</span>
@@ -550,13 +881,31 @@ export default function FacilitadorPage() {
           <span className="text-white/30 text-sm font-bold uppercase">
             {phase === "calibra" ? "Calibra" : "Valida"} · {currentIdx + 1}/{scenarios.length}
           </span>
-          <button
-            onClick={goNext}
-            disabled={currentIdx === scenarios.length - 1}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-sm font-bold uppercase tracking-wider disabled:opacity-20 hover:bg-white/20 transition-all"
-          >
-            Següent <ChevronRight size={16} />
-          </button>
+          {(() => {
+            const expected = activeParticipants > 0 ? activeParticipants : (peakParticipants > 0 ? peakParticipants : totalParticipants);
+            const votePct = expected > 0 ? currentScenarioVotes / expected : 0;
+            const softBlocked = sessionActive && expected > 0 && votePct < 0.8;
+            return (
+              <div className="flex items-center gap-2">
+                {softBlocked && (
+                  <span className="text-[9px] font-bold text-amber-300/70 uppercase tracking-wider">
+                    {currentScenarioVotes}/{activeParticipants}
+                  </span>
+                )}
+                <button
+                  onClick={goNext}
+                  disabled={currentIdx === scenarios.length - 1}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
+                    softBlocked
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
+                      : "bg-white/10 hover:bg-white/20"
+                  } disabled:opacity-20`}
+                >
+                  Següent <ChevronRight size={16} />
+                </button>
+              </div>
+            );
+          })()}
         </div>
           </>
         )}
