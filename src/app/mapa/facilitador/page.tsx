@@ -343,13 +343,18 @@ export default function FacilitadorPage() {
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
-    // Pre-load simulation session via ?sim=<id> (read-only, no broadcast)
     const params = new URLSearchParams(window.location.search);
     const simId = params.get("sim");
     if (simId) {
+      // Simulation mode: load existing session read-only
       setGuidedSessionId(simId);
       setSessionActive(true);
       setPhase("mapa");
+    } else {
+      // Auto-start: generate a unique session ID immediately on load
+      const newGsId = crypto.randomUUID().slice(0, 8);
+      setGuidedSessionId(newGsId);
+      setSessionActive(true);
     }
   }, []);
 
