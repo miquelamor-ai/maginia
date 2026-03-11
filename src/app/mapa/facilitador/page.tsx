@@ -705,7 +705,7 @@ export default function FacilitadorPage() {
             </div>
 
             {/* Default: waiting view */}
-            {!mapaShowHeatmap && (
+            {!mapaShowHeatmap && !mapaShowDebat && (
               <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-6">
                 <p className="text-lg text-white/60">Els participants estan declarant l&apos;ús de la IA per curs</p>
                 {mapaProgress.participants > 0 && (
