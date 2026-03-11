@@ -137,6 +137,21 @@ const COURSES = [
   { id: "FP-CGS", name: "FP GS", sub: "" },
 ];
 
+// Expected maximum delegation level per course (based on developmental progression)
+const COURSE_META: Record<string, { ages: string; expectedMax: number }> = {
+  "I3-I5":  { ages: "3–5 anys",  expectedMax: 1 },
+  "PRI-CI": { ages: "6–8 anys",  expectedMax: 2 },
+  "PRI-CM": { ages: "8–10 anys", expectedMax: 3 },
+  "PRI-CS": { ages: "10–12 anys",expectedMax: 3 },
+  "ESO-1":  { ages: "12–13 anys",expectedMax: 4 },
+  "ESO-2":  { ages: "13–14 anys",expectedMax: 4 },
+  "ESO-3":  { ages: "14–15 anys",expectedMax: 5 },
+  "ESO-4":  { ages: "15–16 anys",expectedMax: 5 },
+  "BATX":   { ages: "16–18 anys",expectedMax: 5 },
+  "FP-CGM": { ages: "18+ anys",  expectedMax: 5 },
+  "FP-CGS": { ages: "18+ anys",  expectedMax: 5 },
+};
+
 interface MapaRow {
   course_id: string;
   delegation_n0: boolean;
@@ -462,48 +477,118 @@ export default function FacilitadorPage() {
 
   // ─── Debate analysis ──────────────────────────────────────────
 
-  const DEBATE_FIELDS: { key: keyof MapaRow; label: string; question: (c: string, pct: number) => string }[] = [
+  const DEBATE_FIELDS: { key: keyof MapaRow; label: string; question: (c: string, pct: number, cid: string) => string }[] = [
     {
       key: "teacher_outside", label: "Docent fora",
-      question: (c, p) => p >= 50
-        ? `Al ${c}, la majoria prepareu o corregiu amb IA, però alguns docents no. Quan la preparació assistida millora realment la classe — i quan pot fer que el docent s'allunyi de la realitat de l'aula?`
-        : `Al ${c}, la majoria no usa la IA fora de classe. Quins obstacles —de temps, de confiança o ètics— ho expliquen? Quins beneficis concrets podria aportar a la vostra pràctica diària?`,
+      question: (c, p, cid) => {
+        const { ages } = COURSE_META[cid] ?? { ages: "" };
+        const isYoung = ["I3-I5", "PRI-CI", "PRI-CM"].includes(cid);
+        if (isYoung) return p >= 50
+          ? `Al ${c}, uns docents preparen materials amb IA per a nens de ${ages}. La IA tendeix a proposar contingut massa abstracte per a aquesta edat? Com filtreu o adapteu el que genera perquè sigui realment adequat?`
+          : `Al ${c}, la majoria no usa la IA per preparar per a ${ages}. Creieu que la IA no coneix prou bé el desenvolupament cognitiu d'aquesta etapa — o és una qüestió de confiança i temps?`;
+        return p >= 50
+          ? `Al ${c}, la majoria prepareu o corregiu amb IA, però alguns docents no. Quan la preparació assistida millora realment la classe — i quan pot fer que el docent s'allunyi de la realitat de l'aula?`
+          : `Al ${c}, la majoria no usa la IA fora de classe. Quins obstacles —de temps, de confiança o ètics— ho expliquen? Quins beneficis concrets podria aportar a la vostra pràctica?`;
+      },
     },
     {
       key: "teacher_inside", label: "Docent dins",
-      question: (c, p) => p >= 50
-        ? `Al ${c}, molts feu servir la IA dins l'aula, però no tots. Quan mostrar o fer servir la IA davant l'alumnat és un model pedagògic vàlid — i quan podria normalitzar la dependència sense sentit crític?`
-        : `Al ${c}, pocs docents usen la IA directament a l'aula. Quin valor afegeix mostrar-la en directe? Quins riscos didàctics veieu en introduir-la sense un protocol clar?`,
+      question: (c, p, cid) => {
+        const { ages } = COURSE_META[cid] ?? { ages: "" };
+        const isYoung = ["I3-I5", "PRI-CI"].includes(cid);
+        if (isYoung) return `Al ${c}, hi ha divisió sobre si el docent usa la IA davant d'alumnes de ${ages}. Quin marc conceptual doneu als infants per entendre el que veuen? Com eviteu que percebin la IA com un oracle infalible?`;
+        return p >= 50
+          ? `Al ${c}, molts feu servir la IA dins l'aula, però no tots. Quan mostrar-la en directe és un model pedagògic vàlid — i quan podria normalitzar la dependència sense sentit crític?`
+          : `Al ${c}, pocs docents usen la IA directament a l'aula. Quin valor pedagògic afegeix mostrar-la en viu? Quins riscos veieu en introduir-la sense un protocol clar?`;
+      },
     },
     {
       key: "student_access", label: "Alumnat accés",
-      question: (c, p) => p >= 50
-        ? `Al ${c}, la majoria creieu que l'alumnat hauria de tenir accés a la IA, però no tots. Quines competències prèvies hauria de demostrar un alumne per usar-la autònomament — i qui hauria de verificar-ho?`
-        : `Al ${c}, la majoria no dóna accés a la IA a l'alumnat. Quin aprenentatge específic creieu que es perdria si s'obrís l'accés? En quin context o edat canviaria la vostra resposta?`,
+      question: (c, p, cid) => {
+        const { ages } = COURSE_META[cid] ?? { ages: "" };
+        if (cid === "I3-I5") return p >= 50
+          ? `Al ${c}, alguns docents permeten que nens de ${ages} interactuïn directament amb la IA. En quin context concret té sentit — i com garantiu que l'infant no ho percep com un oracle que sempre té raó?`
+          : `Al ${c}, la majoria descarta l'accés directe per a ${ages}. En quina condició molt específica canviaria la vostra postura? Quin seria el primer pas previ imprescindible?`;
+        if (["PRI-CI", "PRI-CM"].includes(cid)) return p >= 50
+          ? `Al ${c}, uns docents donen accés a la IA per a alumnes de ${ages}. Quin tipus d'interacció considereu adequada — dictar, preguntar, explorar? Quines competències de lectura crítica necessiten primer?`
+          : `Al ${c}, la majoria no dóna accés a la IA a ${ages}. Quina fita de maduresa cognitiva espereu que assoleixin — i com la mesureu?`;
+        return p >= 50
+          ? `Al ${c}, la majoria creieu que l'alumnat hauria de tenir accés directe, però no tots. Quines competències prèvies hauria de demostrar l'alumne — i qui hauria de verificar-ho?`
+          : `Al ${c}, la majoria no dóna accés a l'alumnat. Quin aprenentatge es perdria si s'obrís l'accés? En quin context o tasca concreta canviaria la vostra resposta?`;
+      },
     },
     {
       key: "delegation_n0", label: "N0 Preservació",
-      question: (c) => `Al ${c}, no coincidiu sobre si cal preservar espais totalment lliures de IA. Quines activitats del curs perden valor pedagògic si s'hi permet la IA — i qui ha de prendre aquesta decisió: el docent, el departament o el centre?`,
+      question: (c, p, cid) => {
+        const { ages, expectedMax } = COURSE_META[cid] ?? { ages: "", expectedMax: 3 };
+        if (expectedMax <= 2) return p >= 50
+          ? `Al ${c}, la majoria preserva espais sense IA per a ${ages}, coherent amb l'etapa. Qui descarta N0-Preservació per a nens d'aquesta edat — i quin argument pedagògic al·lega?`
+          : `Al ${c}, una part descarta N0-Preservació per a ${ages}. Significa que creieu que la tecnologia ja és inevitable en qualsevol context — o que la preservació és irreal a la pràctica?`;
+        return `Al ${c}, no coincidiu sobre si cal preservar espais totalment lliures de IA. Quines activitats del curs perden valor pedagògic si s'hi permet la IA — i qui ha de prendre aquesta decisió: el docent, el departament o el centre?`;
+      },
     },
     {
       key: "delegation_n1", label: "N1 Exploració",
-      question: (c) => `Al ${c}, hi ha divisió sobre N1-Exploració, on la IA suggereix però l'alumne decideix i treballa. Com distingiu a la pràctica quan la IA ha inspirat l'alumne i quan li ha estalviat l'esforç de generar les seves pròpies preguntes?`,
+      question: (c, p, cid) => {
+        const { ages, expectedMax } = COURSE_META[cid] ?? { ages: "", expectedMax: 3 };
+        if (expectedMax >= 3) return p >= 50
+          ? `Al ${c}, uns docents descarten N1-Exploració com a nivell adequat per a ${ages}. Creieu que és massa poc per a aquesta edat — o que sense estructura clara l'alumne acaba usant la IA per delegar sense adonar-se'n?`
+          : `Al ${c}, una part rebutja N1-Exploració. Per a alumnes de ${ages}, quan la IA inspira és una ajuda pedagògica — i quan substitueix l'esforç de generar preguntes o idees pròpies?`;
+        return `Al ${c}, hi ha divisió sobre N1-Exploració per a ${ages}. Com distingiu a la pràctica quan la IA ha inspirat l'alumne i quan li ha estalviat l'esforç de formular les seves pròpies preguntes?`;
+      },
     },
     {
       key: "delegation_n2", label: "N2 Suport",
-      question: (c) => `Al ${c}, no acordeu fins on arriba N2-Suport. Poseu un exemple concret d'una tasca del vostre curs on usar la IA per corregir o millorar és legítim — i un altre on ja seria una substitució del treball real de l'alumne.`,
+      question: (c, _p, cid) => {
+        const { ages, expectedMax } = COURSE_META[cid] ?? { ages: "", expectedMax: 3 };
+        if (expectedMax < 2) return `Al ${c}, hi ha qui admet N2-Suport per a nens de ${ages}. Usar la IA per millorar textos propis té sentit quan l'alumne ja domina l'escriptura — però a ${ages}, quines garanties hi ha que el text sigui realment seu i no dictat?`;
+        return `Al ${c}, no acordeu fins on arriba N2-Suport per a ${ages}. Poseu un exemple concret d'una tasca on usar la IA per corregir o millorar és legítim — i un altre on ja seria una substitució del treball cognitiu de l'alumne.`;
+      },
     },
     {
       key: "delegation_n3", label: "N3 Cocreació",
-      question: (c) => `Al ${c}, esteu dividits sobre N3-Cocreació, on alumne i IA alternen el lideratge. Com podeu saber, en avaluar un treball cocreat, quina part és genuïnament de l'alumne? Quin domini del contingut hauria de demostrar prèviament?`,
+      question: (c, p, cid) => {
+        const { ages, expectedMax } = COURSE_META[cid] ?? { ages: "", expectedMax: 3 };
+        const diff = 3 - expectedMax;
+        if (diff > 0) return p >= 50
+          ? `Al ${c}, uns docents admeten N3-Cocreació per a ${ages}, quan la progressió esperada és N${expectedMax}. En quina tasca concreta creieu que un alumne d'aquesta edat pot alternar genuïnament el lideratge amb la IA? Quins indicadors us ho confirmarien?`
+          : `Al ${c}, la majoria descarta N3-Cocreació per a ${ages}, coherent amb l'etapa. Quin argument al·leguen els que l'admeten — i en quines condicions excepcionals tindria sentit?`;
+        return p >= 50
+          ? `Al ${c}, esteu dividits sobre N3-Cocreació per a ${ages}. Com podeu saber, en avaluar un treball cocreat, quina part és genuïnament de l'alumne? Quin domini del contingut hauria de demostrar prèviament?`
+          : `Al ${c}, uns docents descarten N3-Cocreació tot i ser l'edat esperada. Quines condicions del vostre context —ratio, equipament, cultura digital— fan que sigueu més restrictius?`;
+      },
     },
     {
       key: "delegation_n4", label: "N4 Delegació",
-      question: (c) => `Al ${c}, hi ha divisió sobre N4-Delegació, on la IA genera el gruix del producte. En quin tipus de tasca té sentit pedagògic que la IA produeixi i l'alumne avaluï i seleccioni — i com avalueu l'aprenentatge si l'alumne no ha generat el contingut?`,
+      question: (c, p, cid) => {
+        const { ages, expectedMax } = COURSE_META[cid] ?? { ages: "", expectedMax: 3 };
+        const diff = 4 - expectedMax;
+        if (diff > 1) return p >= 50
+          ? `Al ${c}, uns docents admeten N4-Delegació per a ${ages}, quan la progressió esperada és N${expectedMax}. Si la IA genera el producte, quines evidències d'aprenentatge queden? Com avalueu el criteri crític de l'alumne d'aquesta edat sobre el que la IA ha produït?`
+          : `Al ${c}, la majoria descarta N4-Delegació per a ${ages}. Quin argument al·leguen els que l'admeten — és una decisió pedagògica o una normalització de la comoditat?`;
+        if (diff === 1) return p >= 50
+          ? `Al ${c}, uns docents consideren N4-Delegació possible per a ${ages}, un pas per sobre del nivell esperat. En quines tasques específiques té sentit que la IA generi i l'alumne supervisi — i quines competències crítiques necessita prèviament?`
+          : `Al ${c}, uns docents descarten N4-Delegació per a ${ages}. Quins riscos pedagògics específics veieu quan la IA genera el gruix del producte en aquesta etapa?`;
+        return p >= 50
+          ? `Al ${c}, hi ha divisió sobre N4-Delegació per a ${ages}. En quin tipus de tasca té sentit que la IA produeixi i l'alumne avaluï — i com mesures l'aprenentatge real si l'alumne no ha generat el contingut?`
+          : `Al ${c}, una part descarta N4-Delegació tot i ser esperable per a ${ages}. Quines condicions del vostre context fan que sigueu més restrictius — és una decisió conscient o de recursos?`;
+      },
     },
     {
       key: "delegation_n5", label: "N5 Agència",
-      question: (c) => `Al ${c}, no coincidiu sobre N5-Agència, on la IA opera autònomament dins un marc supervisat. Si l'alumne no intervé en el procés, què s'avalua exactament — la capacitat de dissenyar el marc, d'interpretar resultats, o tots dos? On poseu el límit perquè no sigui pur outsourcing?`,
+      question: (c, p, cid) => {
+        const { ages, expectedMax } = COURSE_META[cid] ?? { ages: "", expectedMax: 3 };
+        const diff = 5 - expectedMax;
+        if (diff > 1) return p >= 50
+          ? `Al ${c}, uns docents admeten N5-Agència per a ${ages}, on la IA opera autònomament. Per a alumnes d'aquesta edat, quins mecanismes de supervisió garantirien que no és simplement "deixar fer" la IA sense comprensió ni judici?`
+          : `Al ${c}, la majoria descarta N5-Agència per a ${ages}, coherent amb l'etapa. En quin context molt excepcional podria tenir sentit — i quin tipus de metacognició exigiríeu a l'alumne?`;
+        if (["FP-CGM", "FP-CGS"].includes(cid)) return p >= 50
+          ? `Al ${c}, uns docents descarten N5-Agència per a professionals de ${ages}, quan hauria de ser el nivell esperat en formació professional. Quins arguments pedagògics justifiquen no arribar-hi — és una qüestió de currículum, d'avaluació o de cultura del centre?`
+          : `Al ${c}, no tots admeten N5-Agència per a ${ages}. Per a futurs professionals, operar amb sistemes autònoms d'IA és una competència clau — quin argument pedagògic justifica no preparar-los per a això?`;
+        return p >= 50
+          ? `Al ${c}, hi ha divisió sobre N5-Agència per a ${ages}. Si la IA opera autònomament, què s'avalua exactament — la capacitat de dissenyar el marc, d'interpretar resultats, o tots dos? On poseu el límit perquè no sigui pur outsourcing?`
+          : `Al ${c}, uns docents descarten N5-Agència per a ${ages}. En quines condicions —maduresa, context, avaluació— seria acceptable que la IA operi autònomament en tasques d'aquesta etapa?`;
+      },
     },
   ];
 
@@ -516,7 +601,7 @@ export default function FacilitadorPage() {
       const pct = yes / n * 100;
       const div = 1 - Math.abs((pct - 50) / 50); // 1 = perfect split, 0 = consensus
       if (div < 0.35) return []; // only surface real debate
-      return [{ course, field: f, pct, div, n, question: f.question(course.name, pct) }];
+      return [{ course, field: f, pct, div, n, question: f.question(course.name, pct, course.id) }];
     });
   }).sort((a, b) => b.div - a.div).slice(0, 6);
 
