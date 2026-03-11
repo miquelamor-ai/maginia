@@ -635,11 +635,16 @@ export default function FacilitadorPage() {
               <div className="flex items-center gap-4">
                 <Map size={24} className="text-violet-300" />
                 <h2 className="text-xl font-bold text-white">Mapa de Delegació</h2>
-                <div className="flex items-center gap-3 ml-4">
-                  <span className="text-sm text-white/50"><span className="text-2xl font-bold text-white">{mapaProgress.participants}</span> participants</span>
-                  <span className="text-sm text-white/50"><span className="text-2xl font-bold text-white">{mapaProgress.declarations}</span> declaracions</span>
-                  <span className="text-sm text-white/50 font-mono"><span className="text-2xl font-bold text-white">{Math.floor(mapaTimer / 60)}:{String(mapaTimer % 60).padStart(2, "0")}</span></span>
-                </div>
+                {!mapaShowDebat && (
+                  <div className="flex items-center gap-3 ml-4">
+                    <span className="text-sm text-white/50"><span className="text-2xl font-bold text-white">{mapaProgress.participants}</span> participants</span>
+                    <span className="text-sm text-white/50"><span className="text-2xl font-bold text-white">{mapaProgress.declarations}</span> declaracions</span>
+                    <span className="text-sm text-white/50 font-mono"><span className="text-2xl font-bold text-white">{Math.floor(mapaTimer / 60)}:{String(mapaTimer % 60).padStart(2, "0")}</span></span>
+                  </div>
+                )}
+                {mapaShowDebat && debatePoints.length > 0 && (
+                  <span className="ml-4 text-sm text-rose-300/70 font-bold">{debatePoints.length} punts de debat detectats · {mapaProgress.participants} docents</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {mapaFixCount > 0 && (
@@ -807,69 +812,78 @@ export default function FacilitadorPage() {
 
             {/* Debat view */}
             {mapaShowDebat && (
-              <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-auto">
-                {/* Divergence table */}
-                <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden shrink-0">
-                  <div className="grid grid-cols-[120px_1px_repeat(9,1fr)] gap-px bg-white/10">
-                    <div className="bg-[var(--jesuites-blue)] px-2 py-2 text-[8px] font-bold text-white/40 uppercase tracking-widest">Curs</div>
-                    <div className="bg-white/20" />
-                    {DEBATE_FIELDS.map(f => (
-                      <div key={String(f.key)} className="bg-[var(--jesuites-blue)] px-1 py-2 text-center">
-                        <span className="text-[7px] font-bold text-white/60 leading-tight block">{f.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {COURSES.map(course => {
-                    const rows = mapaAllData.filter(r => r.course_id === course.id);
-                    const n = rows.length;
-                    return (
-                      <div key={course.id} className="grid grid-cols-[120px_1px_repeat(9,1fr)] gap-px bg-white/5">
-                        <div className="bg-[var(--jesuites-blue)] px-2 py-2 flex items-center gap-1">
-                          <span className="text-[11px] font-bold text-white">{course.name}</span>
-                          {n > 0 && <span className="text-[8px] text-white/30">({n})</span>}
-                        </div>
-                        <div className="bg-white/20" />
-                        {DEBATE_FIELDS.map(f => {
-                          if (n === 0) return <div key={String(f.key)} className="bg-[var(--jesuites-blue)] flex items-center justify-center"><span className="text-white/10 text-[10px]">—</span></div>;
-                          const yes = rows.filter(r => r[f.key] as boolean).length;
-                          const pct = yes / n * 100;
-                          const div = 1 - Math.abs((pct - 50) / 50);
-                          // Green=consensus, amber=tendency, red=debate
-                          const bg = div >= 0.7 ? "bg-rose-500" : div >= 0.4 ? "bg-amber-500" : "bg-emerald-500";
-                          const opacity = Math.max(0.1, div * 0.7);
-                          return (
-                            <div key={String(f.key)} className="bg-[var(--jesuites-blue)] px-1 py-2 text-center relative">
-                              <div className={`absolute inset-0 ${bg} transition-all duration-500`} style={{ opacity }} />
-                              <span className="relative text-[10px] font-bold text-white">{Math.round(pct)}%</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Debate points + questions */}
-                {debatePoints.length > 0 && (
-                  <div className="shrink-0">
-                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2">Punts de debat prioritaris</p>
-                    <div className="flex flex-col gap-2">
-                      {debatePoints.map((dp, i) => (
-                        <div key={i} className="flex items-start gap-4 bg-rose-500/10 border border-rose-400/20 rounded-2xl px-4 py-3">
-                          <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
-                            <span className="text-[10px] font-bold text-rose-300 bg-rose-500/20 rounded-lg px-2 py-0.5">{dp.course.name}</span>
-                            <span className="text-[9px] text-white/40">{dp.field.label}</span>
-                            <span className="text-[10px] font-bold text-rose-200">{Math.round(dp.pct)}%</span>
-                          </div>
-                          <p className="text-sm text-white/80 leading-snug flex-1 italic">&ldquo;{dp.question}&rdquo;</p>
-                        </div>
-                      ))}
-                    </div>
+              <div className="flex-1 min-h-0 overflow-auto pb-4">
+                {debatePoints.length === 0 && mapaAllData.length > 0 && (
+                  <div className="h-full flex flex-col items-center justify-center gap-3">
+                    <span className="text-5xl">✓</span>
+                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Consens general — no hi ha divergències significatives</p>
                   </div>
                 )}
-                {debatePoints.length === 0 && mapaAllData.length > 0 && (
-                  <div className="flex-1 flex items-center justify-center">
-                    <p className="text-white/30 text-sm font-bold uppercase tracking-widest">No hi ha divergències significatives</p>
+                {debatePoints.length === 0 && mapaAllData.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center gap-3">
+                    <p className="text-white/30 text-sm font-bold uppercase tracking-widest animate-pulse">Esperant dades del mapa…</p>
+                  </div>
+                )}
+                {debatePoints.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {debatePoints.map((dp, i) => {
+                      const yesPct = Math.round(dp.pct);
+                      const noPct = 100 - yesPct;
+                      const divPct = Math.round(dp.div * 100);
+                      // Intensity: how close to 50/50
+                      const isMax = dp.div >= 0.9;
+                      return (
+                        <div key={i} className={`relative rounded-3xl overflow-hidden border ${isMax ? "border-rose-400/40" : "border-amber-400/20"} bg-gradient-to-br from-white/5 to-transparent`}>
+                          {/* Top split bar */}
+                          <div className="flex h-1.5">
+                            <div className="bg-violet-500 transition-all duration-700" style={{ width: `${yesPct}%` }} />
+                            <div className="bg-rose-500 flex-1 transition-all duration-700" />
+                          </div>
+
+                          <div className="p-5">
+                            {/* Tags row */}
+                            <div className="flex items-center gap-2 mb-4 flex-wrap">
+                              <span className="text-xs font-black text-white bg-white/15 rounded-full px-3 py-1">{dp.course.name}</span>
+                              <span className="text-[10px] font-bold text-white/40 bg-white/5 border border-white/10 rounded-full px-2 py-0.5 uppercase tracking-wider">{dp.field.label}</span>
+                              {isMax && (
+                                <span className="text-[10px] font-black text-rose-300 bg-rose-500/20 border border-rose-400/30 rounded-full px-2 py-0.5 uppercase tracking-wider ml-auto">
+                                  Màxim debat
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Split visualization */}
+                            <div className="flex items-stretch gap-3 mb-4 bg-white/5 rounded-2xl p-3">
+                              <div className="flex flex-col items-center justify-center min-w-[44px]">
+                                <span className="text-2xl font-black text-violet-300 leading-none">{yesPct}%</span>
+                                <span className="text-[9px] text-violet-300/50 uppercase tracking-wider mt-0.5">Sí</span>
+                              </div>
+                              <div className="flex-1 flex flex-col justify-center gap-1.5">
+                                <div className="relative h-4 rounded-full overflow-hidden bg-white/10">
+                                  <div className="absolute inset-y-0 left-0 bg-violet-400/70 rounded-full transition-all duration-700" style={{ width: `${yesPct}%` }} />
+                                  {/* Center line */}
+                                  <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
+                                </div>
+                                <div className="flex justify-between px-0.5">
+                                  <span className="text-[8px] text-white/20">0%</span>
+                                  <span className="text-[8px] text-white/40 font-bold">{divPct}% divergència</span>
+                                  <span className="text-[8px] text-white/20">100%</span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-center justify-center min-w-[44px]">
+                                <span className="text-2xl font-black text-rose-300 leading-none">{noPct}%</span>
+                                <span className="text-[9px] text-rose-300/50 uppercase tracking-wider mt-0.5">No</span>
+                              </div>
+                            </div>
+
+                            {/* Question */}
+                            <p className="text-sm text-white/85 leading-relaxed">{dp.question}</p>
+
+                            <p className="text-[9px] text-white/20 mt-3 font-bold uppercase tracking-wider">Sobre {dp.n} docents · #{i + 1} per divergència</p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
