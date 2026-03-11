@@ -592,18 +592,50 @@ export default function FacilitadorPage() {
     },
   ];
 
-  const debatePoints = COURSES.flatMap(course => {
+  // div = 1 - |pct - 50| / 50  →  1.0 = 50/50 split, 0.2 = 90% consensus, 0.0 = 100% consensus
+  const DEBATE_THRESHOLD = 0.2; // show anything below ~90% consensus
+
+  const booleanDebatePoints = COURSES.flatMap(course => {
     const rows = mapaAllData.filter(r => r.course_id === course.id);
     const n = rows.length;
     if (n < 2) return [];
     return DEBATE_FIELDS.flatMap(f => {
       const yes = rows.filter(r => r[f.key] as boolean).length;
       const pct = yes / n * 100;
-      const div = 1 - Math.abs((pct - 50) / 50); // 1 = perfect split, 0 = consensus
-      if (div < 0.35) return []; // only surface real debate
-      return [{ course, field: f, pct, div, n, question: f.question(course.name, pct, course.id) }];
+      const div = 1 - Math.abs((pct - 50) / 50);
+      if (div < DEBATE_THRESHOLD) return [];
+      return [{ course, field: f, pct, div, n, question: f.question(course.name, pct, course.id), modSplit: null as null | { pres: number; hyb: number; onl: number } }];
     });
-  }).sort((a, b) => b.div - a.div).slice(0, 6);
+  });
+
+  // student_modality is a string field — analyse it separately
+  const modalityDebatePoints = COURSES.flatMap(course => {
+    const rows = mapaAllData.filter(r => r.course_id === course.id && r.student_access && r.student_modality);
+    const n = rows.length;
+    if (n < 2) return [];
+    const pres = rows.filter(r => r.student_modality === "presencial").length;
+    const hyb  = rows.filter(r => r.student_modality === "hybrid").length;
+    const onl  = rows.filter(r => r.student_modality === "online").length;
+    const maxCount = Math.max(pres, hyb, onl);
+    const div = 1 - maxCount / n; // 0 = consensus, ~0.67 = even 3-way split
+    if (div < DEBATE_THRESHOLD) return [];
+    const presPct = Math.round(pres / n * 100);
+    const hybPct  = Math.round(hyb  / n * 100);
+    const onlPct  = Math.round(onl  / n * 100);
+    const { ages } = COURSE_META[course.id] ?? { ages: "" };
+    return [{
+      course,
+      field: { key: "student_modality" as keyof MapaRow, label: "Model alumnat", question: () => "" },
+      pct: presPct,
+      div,
+      n,
+      question: `Al ${course.name}, no coincidiu en el model d'accés de l'alumnat de ${ages} a la IA: ${presPct}% presencial, ${hybPct}% híbrid, ${onlPct}% en línia. Quin model afavoreix millor l'autonomia progressiva — o depèn del tipus de tasca i del perfil de l'alumne?`,
+      modSplit: { pres: presPct, hyb: hybPct, onl: onlPct },
+    }];
+  });
+
+  const debatePoints = [...booleanDebatePoints, ...modalityDebatePoints]
+    .sort((a, b) => b.div - a.div);
 
   // ─── Render ────────────────────────────────────────────────────
 
@@ -948,19 +980,28 @@ export default function FacilitadorPage() {
                       const yesPct = Math.round(dp.pct);
                       const noPct = 100 - yesPct;
                       const divPct = Math.round(dp.div * 100);
-                      // Intensity: how close to 50/50
                       const isMax = dp.div >= 0.9;
+                      const isModality = dp.modSplit !== null;
+                      const borderColor = isMax ? "border-rose-400/40" : dp.div >= 0.4 ? "border-amber-400/25" : "border-white/10";
                       return (
-                        <div key={i} className={`relative rounded-3xl overflow-hidden border ${isMax ? "border-rose-400/40" : "border-amber-400/20"} bg-gradient-to-br from-white/5 to-transparent`}>
+                        <div key={i} className={`relative rounded-3xl overflow-hidden border ${borderColor} bg-gradient-to-br from-white/5 to-transparent`}>
                           {/* Top split bar */}
-                          <div className="flex h-1.5">
-                            <div className="bg-violet-500 transition-all duration-700" style={{ width: `${yesPct}%` }} />
-                            <div className="bg-rose-500 flex-1 transition-all duration-700" />
-                          </div>
+                          {isModality && dp.modSplit ? (
+                            <div className="flex h-1.5">
+                              <div className="bg-blue-400 transition-all duration-700" style={{ width: `${dp.modSplit.pres}%` }} />
+                              <div className="bg-violet-500 transition-all duration-700" style={{ width: `${dp.modSplit.hyb}%` }} />
+                              <div className="bg-emerald-500 flex-1 transition-all duration-700" />
+                            </div>
+                          ) : (
+                            <div className="flex h-1.5">
+                              <div className="bg-violet-500 transition-all duration-700" style={{ width: `${yesPct}%` }} />
+                              <div className="bg-rose-500 flex-1 transition-all duration-700" />
+                            </div>
+                          )}
 
-                          <div className="p-5">
+                          <div className="p-4">
                             {/* Tags row */}
-                            <div className="flex items-center gap-2 mb-4 flex-wrap">
+                            <div className="flex items-center gap-2 mb-3 flex-wrap">
                               <span className="text-xs font-black text-white bg-white/15 rounded-full px-3 py-1">{dp.course.name}</span>
                               <span className="text-[10px] font-bold text-white/40 bg-white/5 border border-white/10 rounded-full px-2 py-0.5 uppercase tracking-wider">{dp.field.label}</span>
                               {isMax && (
@@ -971,33 +1012,42 @@ export default function FacilitadorPage() {
                             </div>
 
                             {/* Split visualization */}
-                            <div className="flex items-stretch gap-3 mb-4 bg-white/5 rounded-2xl p-3">
-                              <div className="flex flex-col items-center justify-center min-w-[44px]">
-                                <span className="text-2xl font-black text-violet-300 leading-none">{yesPct}%</span>
-                                <span className="text-[9px] text-violet-300/50 uppercase tracking-wider mt-0.5">Sí</span>
+                            {isModality && dp.modSplit ? (
+                              <div className="flex items-center gap-2 mb-3 bg-white/5 rounded-2xl px-3 py-2">
+                                {[
+                                  { label: "Presencial", pct: dp.modSplit.pres, color: "text-blue-300" },
+                                  { label: "Híbrid",     pct: dp.modSplit.hyb,  color: "text-violet-300" },
+                                  { label: "Online",     pct: dp.modSplit.onl,  color: "text-emerald-300" },
+                                ].map(m => (
+                                  <div key={m.label} className="flex-1 text-center">
+                                    <div className={`text-xl font-black leading-none ${m.color}`}>{m.pct}%</div>
+                                    <div className="text-[8px] text-white/30 uppercase tracking-wider mt-0.5">{m.label}</div>
+                                  </div>
+                                ))}
                               </div>
-                              <div className="flex-1 flex flex-col justify-center gap-1.5">
-                                <div className="relative h-4 rounded-full overflow-hidden bg-white/10">
-                                  <div className="absolute inset-y-0 left-0 bg-violet-400/70 rounded-full transition-all duration-700" style={{ width: `${yesPct}%` }} />
-                                  {/* Center line */}
-                                  <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
+                            ) : (
+                              <div className="flex items-stretch gap-3 mb-3 bg-white/5 rounded-2xl p-3">
+                                <div className="flex flex-col items-center justify-center min-w-[40px]">
+                                  <span className="text-xl font-black text-violet-300 leading-none">{yesPct}%</span>
+                                  <span className="text-[9px] text-violet-300/50 uppercase tracking-wider mt-0.5">Sí</span>
                                 </div>
-                                <div className="flex justify-between px-0.5">
-                                  <span className="text-[8px] text-white/20">0%</span>
-                                  <span className="text-[8px] text-white/40 font-bold">{divPct}% divergència</span>
-                                  <span className="text-[8px] text-white/20">100%</span>
+                                <div className="flex-1 flex flex-col justify-center gap-1.5">
+                                  <div className="relative h-3 rounded-full overflow-hidden bg-white/10">
+                                    <div className="absolute inset-y-0 left-0 bg-violet-400/70 rounded-full transition-all duration-700" style={{ width: `${yesPct}%` }} />
+                                    <div className="absolute inset-y-0 left-1/2 w-px bg-white/30" />
+                                  </div>
+                                  <span className="text-[8px] text-white/35 font-bold text-center">{divPct}% divergència</span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center min-w-[40px]">
+                                  <span className="text-xl font-black text-rose-300 leading-none">{noPct}%</span>
+                                  <span className="text-[9px] text-rose-300/50 uppercase tracking-wider mt-0.5">No</span>
                                 </div>
                               </div>
-                              <div className="flex flex-col items-center justify-center min-w-[44px]">
-                                <span className="text-2xl font-black text-rose-300 leading-none">{noPct}%</span>
-                                <span className="text-[9px] text-rose-300/50 uppercase tracking-wider mt-0.5">No</span>
-                              </div>
-                            </div>
+                            )}
 
                             {/* Question */}
                             <p className="text-sm text-white/85 leading-relaxed">{dp.question}</p>
-
-                            <p className="text-[9px] text-white/20 mt-3 font-bold uppercase tracking-wider">Sobre {dp.n} docents · #{i + 1} per divergència</p>
+                            <p className="text-[9px] text-white/20 mt-2 font-bold uppercase tracking-wider">Sobre {dp.n} docents · #{i + 1} per divergència</p>
                           </div>
                         </div>
                       );
