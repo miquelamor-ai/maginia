@@ -119,6 +119,9 @@ export default function MapaPage() {
   const [facilitatorSync, setFacilitatorSync] = useState(false);
   const [guidedMode, setGuidedMode] = useState(true);
   const [currentCourseIdx, setCurrentCourseIdx] = useState(0);
+  const [debateRevisionOpen, setDebateRevisionOpen] = useState(false);
+  const [debateMode, setDebateMode] = useState(false);
+  const [debateDeclarations, setDebateDeclarations] = useState<Record<string, CourseData>>({});
 
   useEffect(() => {
     const sid = getSessionId();
@@ -126,6 +129,7 @@ export default function MapaPage() {
     setSessionId(sid);
     setGuidedSessionId(gsid);
     loadMyData(sid);
+    loadDebateData(sid);
     loadAllData();
     // Auto-open consens tab if URL has ?view=consens
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("view") === "consens") {
@@ -147,8 +151,9 @@ export default function MapaPage() {
           localStorage.setItem("maginia_guided_session_id", data.guided_session_id);
           setGuidedSessionId(data.guided_session_id);
         }
-        if (data.phase === "mapa") {
+        if (data.phase === "mapa" || data.phase === "debate") {
           setFacilitatorSync(true);
+          setDebateRevisionOpen(data.phase === "debate" && (data.debate_revision_open ?? false));
         } else if (data.phase === "calibra") {
           window.location.href = "/mapa/calibra";
         } else if (data.phase === "valida") {
@@ -178,27 +183,32 @@ export default function MapaPage() {
     return () => clearInterval(interval);
   }, [sessionId, guidedSessionId]);
 
-  const loadMyData = async (sid: string) => {
-    const { data } = await supabase
-      .from("mapa_declarations")
-      .select("*")
-      .eq("session_id", sid);
+  const rowToDeclaration = (row: RowData): CourseData => ({
+    teacher_outside: row.teacher_outside,
+    teacher_inside: row.teacher_inside,
+    student_access: row.student_access,
+    student_modality: row.student_modality,
+    delegation: [row.delegation_n0, row.delegation_n1, row.delegation_n2,
+                 row.delegation_n3, row.delegation_n4, row.delegation_n5],
+  });
 
+  const loadMyData = async (sid: string) => {
+    const { data } = await supabase.from("mapa_declarations").select("*").eq("session_id", sid);
     if (data) {
       const map: Record<string, CourseData> = {};
-      data.forEach((row: RowData) => {
-        map[row.course_id] = {
-          teacher_outside: row.teacher_outside,
-          teacher_inside: row.teacher_inside,
-          student_access: row.student_access,
-          student_modality: row.student_modality,
-          delegation: [
-            row.delegation_n0, row.delegation_n1, row.delegation_n2,
-            row.delegation_n3, row.delegation_n4, row.delegation_n5,
-          ],
-        };
-      });
+      data.forEach((row: RowData) => { map[row.course_id] = rowToDeclaration(row); });
       setDeclarations(map);
+      // Pre-populate debate declarations from current state (fallback if no debate revision yet)
+      setDebateDeclarations(map);
+    }
+  };
+
+  const loadDebateData = async (sid: string) => {
+    const { data } = await supabase.from("mapa_declarations_debate").select("*").eq("session_id", sid);
+    if (data && data.length > 0) {
+      const map: Record<string, CourseData> = {};
+      data.forEach((row: RowData) => { map[row.course_id] = rowToDeclaration(row); });
+      setDebateDeclarations(map);
     }
   };
 
@@ -208,12 +218,17 @@ export default function MapaPage() {
   };
 
   const updateCourse = useCallback(async (courseId: string, updates: Partial<CourseData>) => {
-    const current = declarations[courseId] || emptyDeclaration();
+    const targetTable = debateMode ? "mapa_declarations_debate" : "mapa_declarations";
+    const current = (debateMode ? debateDeclarations : declarations)[courseId] || emptyDeclaration();
     const updated = { ...current, ...updates };
 
-    setDeclarations(prev => ({ ...prev, [courseId]: updated }));
+    if (debateMode) {
+      setDebateDeclarations(prev => ({ ...prev, [courseId]: updated }));
+    } else {
+      setDeclarations(prev => ({ ...prev, [courseId]: updated }));
+    }
 
-    await supabase.from("mapa_declarations").upsert({
+    await supabase.from(targetTable).upsert({
       session_id: sessionId,
       course_id: courseId,
       teacher_outside: updated.teacher_outside,
@@ -240,10 +255,10 @@ export default function MapaPage() {
 
     setFeedback("Guardat");
     setTimeout(() => setFeedback(null), 1200);
-  }, [sessionId, declarations]);
+  }, [sessionId, declarations, debateDeclarations, debateMode, guidedSessionId]);
 
   const toggleDelegation = useCallback((courseId: string, n: number) => {
-    const current = declarations[courseId] || emptyDeclaration();
+    const current = (debateMode ? debateDeclarations : declarations)[courseId] || emptyDeclaration();
     const currentMax = current.delegation.lastIndexOf(true);
 
     // Cumulative: clicking N sets all 0..N active, N+1..5 inactive
@@ -257,7 +272,7 @@ export default function MapaPage() {
 
     const newDeleg = DELEG.map((_, i) => i <= newMax);
     updateCourse(courseId, { delegation: newDeleg });
-  }, [declarations, updateCourse]);
+  }, [declarations, debateDeclarations, debateMode, updateCourse]);
 
   // ─── Consensus ──────────────────────────────────────────────
 
@@ -325,7 +340,39 @@ export default function MapaPage() {
             <Sparkles size={28} />
           </div>
           <h1 className="text-2xl font-bold text-[var(--jesuites-blue)] uppercase tracking-tighter">Mapa de Delegació</h1>
-          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">Declara l&apos;ús de la IA per curs</p>
+          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+            {debateMode ? "Revisió post-debat — els canvis es guarden per separat" : "Declara l\u0027ús de la IA per curs"}
+          </p>
+
+          {/* Debate revision banner */}
+          {debateRevisionOpen && (
+            <div className={`mt-4 mx-auto max-w-lg rounded-2xl px-5 py-3 flex items-center justify-between gap-4 border transition-all ${
+              debateMode
+                ? "bg-amber-50 border-amber-300"
+                : "bg-blue-50 border-blue-200"
+            }`}>
+              <div className="text-left">
+                <p className={`text-[11px] font-black uppercase tracking-widest ${debateMode ? "text-amber-700" : "text-blue-700"}`}>
+                  {debateMode ? "Revisió activa — Mapa 3" : "El facilitador ha obert la revisió post-debat"}
+                </p>
+                <p className={`text-[10px] mt-0.5 ${debateMode ? "text-amber-600" : "text-blue-500"}`}>
+                  {debateMode
+                    ? "Les teves modificacions generen un tercer mapa independent"
+                    : "Pots revisar les teves opcions tenint en compte el debat col·lectiu"}
+                </p>
+              </div>
+              <button
+                onClick={() => setDebateMode(d => !d)}
+                className={`shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  debateMode
+                    ? "bg-amber-500 text-white shadow"
+                    : "bg-[var(--jesuites-blue)] text-white shadow"
+                }`}
+              >
+                {debateMode ? "Sortir revisió" : "Iniciar revisió"}
+              </button>
+            </div>
+          )}
 
           {/* View Toggle */}
           <div className="flex justify-center gap-2 mt-6">

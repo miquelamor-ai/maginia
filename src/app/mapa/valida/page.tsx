@@ -386,6 +386,23 @@ export default function ValidaPage() {
     const courseData = myMap[fix.courseId];
     if (!courseData) return;
 
+    // Snapshot original values into mapa_declarations_initial (first fix wins — never overwritten)
+    await supabase.from("mapa_declarations_initial").upsert({
+      session_id:        sessionId,
+      course_id:         fix.courseId,
+      guided_session_id: guidedSessionId || null,
+      teacher_outside:   courseData.teacher_outside,
+      teacher_inside:    courseData.teacher_inside,
+      student_access:    courseData.student_access,
+      student_modality:  courseData.student_modality,
+      delegation_n0:     courseData.delegation_n0,
+      delegation_n1:     courseData.delegation_n1,
+      delegation_n2:     courseData.delegation_n2,
+      delegation_n3:     courseData.delegation_n3,
+      delegation_n4:     courseData.delegation_n4,
+      delegation_n5:     courseData.delegation_n5,
+    }, { onConflict: "session_id,course_id", ignoreDuplicates: true });
+
     // Build update
     const newValue = !fix.currentValue;
     const update: Record<string, unknown> = { [fix.field]: newValue };
