@@ -1516,10 +1516,10 @@ export default function FacilitadorPage() {
               <ChevronLeft size={16} /> Decàleg
             </button>
             <button
-              onClick={() => switchPhase("intro")}
+              onClick={() => switchPhase("tancament")}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)] text-white text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
             >
-              Ruta <ChevronRight size={16} />
+              Tancament <ChevronRight size={16} />
             </button>
           </div>
           </div>
