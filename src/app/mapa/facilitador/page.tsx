@@ -596,6 +596,16 @@ export default function FacilitadorPage() {
     });
   }, [sessionActive, phase, broadcastState]);
 
+  const switchPhase = useCallback((p: Phase) => {
+    setPhase(p);
+    setCurrentIdx(0);
+    if (p === "decaleg") setDecalegStep(0);
+    setIsRevealed(false);
+    setIntroStep(0);
+    // Always broadcast so participants know when to redirect
+    if (sessionActive) broadcastState(p, 0, true);
+  }, [sessionActive, broadcastState]);
+
   // ─── Keyboard navigation ────────────────────────────────────
 
   useEffect(() => {
@@ -663,16 +673,6 @@ export default function FacilitadorPage() {
     const interval = setInterval(() => setMapaTimer(t => t + 1), 1000);
     return () => clearInterval(interval);
   }, [mapaTimerActive]);
-
-  const switchPhase = useCallback((p: Phase) => {
-    setPhase(p);
-    setCurrentIdx(0);
-    if (p === "decaleg") setDecalegStep(0);
-    setIsRevealed(false);
-    setIntroStep(0);
-    // Always broadcast so participants know when to redirect
-    if (sessionActive) broadcastState(p, 0, true);
-  }, [sessionActive, broadcastState]);
 
   // Sync introStep to Supabase so participants can follow along
   useEffect(() => {
