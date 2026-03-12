@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Sparkles, Send, CheckCircle2 } from "lucide-react";
 
@@ -17,7 +16,6 @@ function getGuidedSessionId(): string {
 }
 
 export default function DecalegPage() {
-  const router = useRouter();
   const [sessionId] = useState(getSessionId);
   const [guidedSessionId] = useState(getGuidedSessionId);
   const [p1, setP1] = useState("");
@@ -26,30 +24,31 @@ export default function DecalegPage() {
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Check if already submitted
+  // Check if already submitted in THIS guided session
   useEffect(() => {
     if (!sessionId) return;
-    supabase.from("mapa_decaleg_submissions")
-      .select("id").eq("session_id", sessionId).maybeSingle()
-      .then(({ data }) => { if (data) setSubmitted(true); });
-  }, [sessionId]);
+    let query = supabase.from("mapa_decaleg_submissions").select("id").eq("session_id", sessionId);
+    if (guidedSessionId) query = query.eq("guided_session_id", guidedSessionId);
+    query.maybeSingle().then(({ data }) => { if (data) setSubmitted(true); });
+  }, [sessionId, guidedSessionId]);
 
-  // Listen for facilitator phase change and redirect
+  // Poll facilitator state and redirect when phase changes away from decaleg
   useEffect(() => {
-    const channel = supabase
-      .channel("decaleg-phase-watch")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mapa_facilitador_state" }, (payload) => {
-        const newPhase = payload.new?.phase;
-        const isActive = payload.new?.is_active;
-        const newGsId = payload.new?.guided_session_id;
-        // Only redirect if the session is still active, it's our session, and phase changed away from decaleg
-        if (isActive && newGsId === guidedSessionId && newPhase && newPhase !== "decaleg") {
-          router.push("/mapa/sessio" + (guidedSessionId ? `?g=${guidedSessionId}` : ""));
-        }
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [guidedSessionId, router]);
+    if (!guidedSessionId) return;
+    const poll = async () => {
+      const { data } = await supabase
+        .from("mapa_facilitador_state")
+        .select("phase, is_active, guided_session_id")
+        .eq("id", 1)
+        .single();
+      if (data?.is_active && data.guided_session_id === guidedSessionId && data.phase !== "decaleg") {
+        window.location.href = "/mapa/sessio?g=" + guidedSessionId;
+      }
+    };
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, [guidedSessionId]);
 
   const handleSubmit = async () => {
     if (!p1.trim() || !p2.trim() || !p3.trim()) return;
