@@ -104,20 +104,19 @@ export default function SessioPage() {
     return () => clearInterval(interval);
   }, [guidedSessionId]);
 
-  // Auto-redirect when facilitator starts
+  // Auto-redirect when facilitator starts — only if guided_session_id matches
   useEffect(() => {
-    if (facilitator?.is_active) {
-      const p = facilitator.phase;
-      // Phases with a participant page → redirect there
-      // intro/repas are facilitator-only presentation → wait here
-      const target = p === "decaleg" ? "/mapa/decaleg"
-        : p === "calibra" ? "/mapa/calibra"
-        : p === "mapa" ? "/mapa"
-        : p === "valida" ? "/mapa/valida"
-        : null; // intro, repas, debate, tancament → stay on sessio
-      if (target) window.location.href = target;
-    }
-  }, [facilitator]);
+    if (!facilitator?.is_active) return;
+    if (!guidedSessionId) return;
+    if (facilitator.guided_session_id !== guidedSessionId) return; // stale session, ignore
+    const p = facilitator.phase;
+    const target = p === "decaleg" ? "/mapa/decaleg"
+      : p === "calibra" ? "/mapa/calibra"
+      : p === "mapa" ? "/mapa"
+      : p === "valida" ? "/mapa/valida"
+      : null; // intro, repas, debate, tancament → stay on sessio (waiting screen)
+    if (target) window.location.href = target;
+  }, [facilitator, guidedSessionId]);
 
   const loadAll = async (sid: string) => {
     const [calibraRes, mapaRes, validaRes] = await Promise.all([
