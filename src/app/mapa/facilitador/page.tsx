@@ -340,6 +340,7 @@ export default function FacilitadorPage() {
   const [decalegGenerating, setDecalegGenerating] = useState(false);
   const [tancamentSlide, setTancamentSlide] = useState<0 | 1>(0);
   const [tancamentVotes, setTancamentVotes] = useState<{worry: number; doubt: number; agree: number; inspired: number}>({worry:0,doubt:0,agree:0,inspired:0});
+  const [decalegRefinements, setDecalegRefinements] = useState<{participant_id: string; text: string}[]>([]);
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
@@ -452,6 +453,12 @@ export default function FacilitadorPage() {
         }
         setTancamentVotes(counts);
       }
+      // Also load refinements
+      let qr = supabase.from("mapa_decaleg_refinements").select("participant_id, text").order("created_at", { ascending: false });
+      if (guidedSessionId) qr = qr.eq("guided_session_id", guidedSessionId);
+      const { data: refData } = await qr;
+      if (refData) setDecalegRefinements(refData as typeof decalegRefinements);
+
       // Also load saved decaleg if available
       const { data: fsData } = await supabase.from("mapa_facilitador_state").select("decaleg_json").eq("id", 1).single();
       if (fsData?.decaleg_json) {
@@ -1727,10 +1734,10 @@ export default function FacilitadorPage() {
             {/* Sub-slide selector */}
             <div className="flex gap-2 shrink-0">
               {[
-                { n: 0, label: "Decàleg final" },
+                { n: 0, label: "Afinament Decàleg" },
                 { n: 1, label: "Reflexió col·lectiva" },
               ].map(s => (
-                <button key={s.n} onClick={() => setTancamentSlide(s.n as 0 | 1)}
+                <button key={s.n} onClick={() => { setTancamentSlide(s.n as 0 | 1); broadcastState(phase, s.n, true); }}
                   className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                     tancamentSlide === s.n
                       ? "bg-[var(--jesuites-blue)] text-white shadow"
@@ -1744,35 +1751,104 @@ export default function FacilitadorPage() {
 
             {/* Slide 0: Decaleg final */}
             {tancamentSlide === 0 && (
-              <div className="flex-1 min-h-0 overflow-auto">
+              <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+                {/* Left: refinements */}
+                <div className="w-80 shrink-0 flex flex-col gap-3">
+                  <div className="flex items-center justify-between shrink-0">
+                    <h3 className="text-sm font-bold text-[var(--jesuites-blue)] uppercase tracking-wider">Afinaments (temps real)</h3>
+                    <span className="text-xs font-bold bg-[var(--jesuites-blue)] text-white px-2 py-1 rounded-lg">{decalegRefinements.length}</span>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-auto flex flex-col gap-2">
+                    {decalegRefinements.length === 0 && (
+                      <p className="text-sm text-gray-400 text-center mt-8 animate-pulse italic">Esperant matisos dels docents…</p>
+                    )}
+                    {decalegRefinements.map((r, i) => (
+                      <div key={i} className="bg-white rounded-2xl border border-black/[0.06] p-3 shadow-sm animate-in slide-in-from-left duration-500">
+                         <p className="text-[10px] font-bold text-[var(--jesuites-blue)]/40 uppercase tracking-wider mb-1">Aportació</p>
+                         <p className="text-xs text-gray-700 leading-snug">{r.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {decalegGenerated && (
+                    <button
+                      onClick={async () => {
+                        setDecalegGenerating(true);
+                        try {
+                          const marcRes = await fetch("/marc_general_ia.md").catch(() => null);
+                          const marcText = marcRes ? await marcRes.text() : "";
+                          const res = await fetch("/api/decaleg/synthesize", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                              submissions: decalegSubmissions, 
+                              refinements: decalegRefinements,
+                              currentDecaleg: decalegGenerated,
+                              marcContext: marcText 
+                            }),
+                          });
+                          const data = await res.json();
+                          if (data.orientations) {
+                            setDecalegGenerated(data);
+                            await supabase.from("mapa_facilitador_state")
+                              .update({ decaleg_json: JSON.stringify(data) }).eq("id", 1);
+                          }
+                        } catch (e) { console.error(e); }
+                        setDecalegGenerating(false);
+                      }}
+                      disabled={decalegGenerating}
+                      className="shrink-0 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[var(--jesuites-blue)] text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 hover:brightness-110 transition-all border-b-4 border-black/20"
+                    >
+                      <RefreshCw size={14} className={decalegGenerating ? "animate-spin" : ""} />
+                      {decalegGenerating ? "Refinant…" : "Regenerar Decàleg"}
+                    </button>
+                  )}
+                </div>
+
+                {/* Right: Decaleg current */}
+                <div className="flex-1 min-h-0 overflow-auto">
                 {!decalegGenerated && (
                   <div className="h-full flex items-center justify-center">
                     <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">El decàleg no s&apos;ha generat encara</p>
                   </div>
                 )}
                 {decalegGenerated && (
-                  <div>
-                    {decalegGenerated.summary && (
-                      <div className="mb-4 bg-[var(--jesuites-blue)]/5 border border-[var(--jesuites-blue)]/10 rounded-2xl px-4 py-3">
-                        <p className="text-xs font-bold text-[var(--jesuites-blue)] uppercase tracking-wider mb-1">Consens dels docents</p>
-                        <p className="text-sm text-[var(--jesuites-text)]/70 italic">{decalegGenerated.summary}</p>
-                      </div>
-                    )}
+                  <div className="flex flex-col gap-4">
+                    {/* Multi-column layout for decaleg */}
                     <div className="grid grid-cols-2 gap-3">
-                      {decalegGenerated.orientations.map(item => (
-                        <div key={item.n} className="bg-white rounded-2xl border border-black/[0.06] p-4 shadow-sm">
+                      {decalegGenerated.orientations.map((item: any) => (
+                        <div key={item.n} className={`bg-white rounded-2xl border p-4 shadow-sm transition-all ${item.tension ? 'border-orange-300 ring-2 ring-orange-100 bg-orange-50/30' : 'border-black/[0.06]'}`}>
                           <div className="flex items-start gap-3">
                             <span className="shrink-0 w-7 h-7 rounded-lg bg-[var(--jesuites-blue)] text-white text-xs font-black flex items-center justify-center">{item.n}</span>
-                            <div>
-                              <p className="text-sm font-bold text-[var(--jesuites-blue)] mb-1">{item.title}</p>
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-[var(--jesuites-blue)] mb-1 flex items-center gap-2">
+                                {item.title}
+                                {item.tension && <AlertCircle size={14} className="text-orange-500 animate-pulse" />}
+                              </p>
                               <p className="text-xs text-gray-600 leading-relaxed">{item.text}</p>
+                              {item.tension && (
+                                <div className="mt-2 p-2 rounded-lg bg-orange-100/50 border border-orange-200">
+                                  <p className="text-[10px] font-bold text-orange-700 uppercase tracking-wider mb-0.5">Tensió detectada</p>
+                                  <p className="text-[10px] text-orange-600 leading-tight">{item.tension}</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
+                    {(decalegGenerated as any).detectedTensions?.length > 0 && (
+                      <div className="bg-orange-50 rounded-2xl border border-orange-200 p-4">
+                        <h4 className="text-[10px] font-black text-orange-700 uppercase tracking-widest mb-2">Tensions Temàtiques Generals</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(decalegGenerated as any).detectedTensions.map((t: string, ti: number) => (
+                            <span key={ti} className="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded-lg border border-orange-200">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
+                </div>
               </div>
             )}
 
