@@ -1002,12 +1002,6 @@ export default function FacilitadorPage() {
           </div>
           {/* Right: controls */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={toggleSession}
-              className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${sessionActive ? "bg-emerald-500 text-white" : inactiveTab}`}
-            >
-              {sessionActive ? "Sessió activa" : "Iniciar sessió"}
-            </button>
             {/* Active participants (heartbeat) */}
             {sessionActive && (
               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${controlBg}`}>
