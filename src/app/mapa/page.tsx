@@ -701,7 +701,7 @@ function CourseCard({
         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.25em] mb-2">Alumnat utilitza IA?</p>
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => updateCourse(course.id, { student_access: false, student_modality: null })}
+            onClick={() => updateCourse(course.id, { student_access: false, student_modality: null, delegation: [true, false, false, false, false, false] })}
             className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${!d.student_access ? "bg-gray-600 text-white shadow-md" : "bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200"}`}
           >
             No
