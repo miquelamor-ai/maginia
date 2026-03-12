@@ -143,7 +143,8 @@ export default function SessioPage() {
     setLoading(false);
   };
 
-  const isGuided = facilitator?.is_active === true;
+  // Guided mode if participant has a session ID (from QR scan), regardless of current is_active
+  const isGuided = !!guidedSessionId;
 
   // ─── Render ────────────────────────────────────────────────────
 
