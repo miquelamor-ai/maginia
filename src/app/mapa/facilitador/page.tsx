@@ -609,10 +609,11 @@ export default function FacilitadorPage() {
       if (!isNext && !isPrev) return;
       e.preventDefault();
 
-      // Intro: advance/retreat layers (capped — transition handled by explicit button)
+      // Intro: advance/retreat layers; use captured value (not functional updater)
+      // to avoid stale-closure counter overflow bug with key repeat
       if (phase === "intro") {
-        if (isNext) setIntroStep(s => Math.min(s + 1, 5));
-        else setIntroStep(s => Math.max(0, s - 1));
+        if (isNext) { if (introStep >= 5) switchPhase("repas"); else setIntroStep(introStep + 1); }
+        else setIntroStep(Math.max(0, introStep - 1));
         return;
       }
       // Tancament: switch between slides
@@ -621,10 +622,10 @@ export default function FacilitadorPage() {
         else setTancamentSlide(s => Math.max(0, s - 1) as 0 | 1);
         return;
       }
-      // decaleg: step 0 (QR/lobby) → step 1 (collecting) — transition to Ruta via explicit button
+      // decaleg: step 0 → step 1 → intro (Ruta); use captured value
       if (phase === "decaleg") {
-        if (isNext) setDecalegStep(s => Math.min(s + 1, 1));
-        else setDecalegStep(s => Math.max(0, s - 1));
+        if (isNext) { if (decalegStep >= 1) switchPhase("intro"); else setDecalegStep(decalegStep + 1); }
+        else setDecalegStep(Math.max(0, decalegStep - 1));
         return;
       }
       // repas: → calibra, ← intro
@@ -668,7 +669,7 @@ export default function FacilitadorPage() {
     setCurrentIdx(0);
     if (p === "decaleg") setDecalegStep(0);
     setIsRevealed(false);
-    if (p !== "intro") setIntroStep(0);
+    setIntroStep(0);
     // Always broadcast so participants know when to redirect
     if (sessionActive) broadcastState(p, 0, true);
   }, [sessionActive, broadcastState]);
