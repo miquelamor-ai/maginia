@@ -351,10 +351,14 @@ export default function FacilitadorPage() {
       setSessionActive(true);
       setPhase("mapa");
     } else {
-      // Auto-start: generate a unique session ID immediately on load
-      const newGsId = crypto.randomUUID().slice(0, 8);
-      setGuidedSessionId(newGsId);
-      setSessionActive(true);
+      // First deactivate any stale session so participants don't get redirected
+      // while we're setting up the new session
+      supabase.from("mapa_facilitador_state").update({ is_active: false }).eq("id", 1).then(() => {
+        // Then auto-start with a fresh session ID
+        const newGsId = crypto.randomUUID().slice(0, 8);
+        setGuidedSessionId(newGsId);
+        setSessionActive(true);
+      });
     }
   }, []);
 
