@@ -355,16 +355,20 @@ export default function FacilitadorPage() {
       const newGsId = crypto.randomUUID().slice(0, 8);
       setGuidedSessionId(newGsId);
       setSessionActive(true);
-      // Immediately sync to Supabase so participants get the right phase on QR scan
-      supabase.from("mapa_facilitador_state").update({
-        phase: "decaleg",
-        current_idx: 0,
-        is_active: true,
-        guided_session_id: newGsId,
-        updated_at: new Date().toISOString(),
-      }).eq("id", 1);
     }
   }, []);
+
+  // Reactive sync: keep Supabase in sync whenever phase or session changes
+  // This is more robust than fire-and-forget in the auto-start useEffect
+  useEffect(() => {
+    if (!sessionActive || !guidedSessionId) return;
+    supabase.from("mapa_facilitador_state").update({
+      phase,
+      is_active: true,
+      guided_session_id: guidedSessionId,
+      updated_at: new Date().toISOString(),
+    }).eq("id", 1);
+  }, [phase, guidedSessionId, sessionActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch active participants (heartbeat within last 60s)
   const fetchActiveParticipants = useCallback(async () => {
