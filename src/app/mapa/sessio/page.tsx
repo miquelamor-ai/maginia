@@ -92,11 +92,6 @@ export default function SessioPage() {
         .single();
       if (data) {
         setFacilitator(data as FacilitatorState);
-        // If facilitator broadcasts a guided_session_id, adopt it
-        if (data.is_active && data.guided_session_id && !guidedSessionId) {
-          localStorage.setItem("maginia_guided_session_id", data.guided_session_id);
-          setGuidedSessionId(data.guided_session_id);
-        }
       }
     };
     poll();

@@ -40,7 +40,10 @@ export default function DecalegPage() {
       .channel("decaleg-phase-watch")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mapa_facilitador_state" }, (payload) => {
         const newPhase = payload.new?.phase;
-        if (newPhase && newPhase !== "decaleg") {
+        const isActive = payload.new?.is_active;
+        const newGsId = payload.new?.guided_session_id;
+        // Only redirect if the session is still active, it's our session, and phase changed away from decaleg
+        if (isActive && newGsId === guidedSessionId && newPhase && newPhase !== "decaleg") {
           router.push("/mapa/sessio" + (guidedSessionId ? `?g=${guidedSessionId}` : ""));
         }
       })
