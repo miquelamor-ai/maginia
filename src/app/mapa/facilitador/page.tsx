@@ -643,7 +643,7 @@ export default function FacilitadorPage() {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [goNext, goPrev, phase, setIntroStep, setDecalegStep, setTancamentSlide]);
+  }, [goNext, goPrev, phase, introStep, decalegStep, switchPhase, setIntroStep, setDecalegStep, setTancamentSlide]);
 
   // ─── Mapa timer ──────────────────────────────────────────────
 
@@ -663,17 +663,15 @@ export default function FacilitadorPage() {
     return () => clearInterval(interval);
   }, [mapaTimerActive]);
 
-  const switchPhase = (p: Phase) => {
+  const switchPhase = useCallback((p: Phase) => {
     setPhase(p);
     setCurrentIdx(0);
     if (p === "decaleg") setDecalegStep(0);
     setIsRevealed(false);
     if (p !== "intro") setIntroStep(0);
-    // Only broadcast phases that participants react to
-    if (sessionActive && (p === "calibra" || p === "mapa" || p === "valida" || p === "debate")) {
-      broadcastState(p, 0, true);
-    }
-  };
+    // Always broadcast so participants know when to redirect
+    if (sessionActive) broadcastState(p, 0, true);
+  }, [sessionActive, broadcastState]);
 
   const toggleSession = () => {
     const next = !sessionActive;
