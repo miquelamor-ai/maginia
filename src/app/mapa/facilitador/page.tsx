@@ -351,28 +351,19 @@ export default function FacilitadorPage() {
       setSessionActive(true);
       setPhase("mapa");
     } else {
-      // First deactivate any stale session so participants don't get redirected
-      // while we're setting up the new session
-      supabase.from("mapa_facilitador_state").update({ is_active: false }).eq("id", 1).then(() => {
-        // Then auto-start with a fresh session ID
-        const newGsId = crypto.randomUUID().slice(0, 8);
+      // Write directly to Supabase in one shot: new session ID, phase=decaleg, is_active=true
+      const newGsId = crypto.randomUUID().slice(0, 8);
+      supabase.from("mapa_facilitador_state").update({
+        phase: "decaleg",
+        current_idx: 0,
+        is_active: true,
+        guided_session_id: newGsId,
+      }).eq("id", 1).then(() => {
         setGuidedSessionId(newGsId);
         setSessionActive(true);
       });
     }
   }, []);
-
-  // Reactive sync: keep Supabase in sync whenever phase or session changes
-  // This is more robust than fire-and-forget in the auto-start useEffect
-  useEffect(() => {
-    if (!sessionActive || !guidedSessionId) return;
-    supabase.from("mapa_facilitador_state").update({
-      phase,
-      is_active: true,
-      guided_session_id: guidedSessionId,
-      updated_at: new Date().toISOString(),
-    }).eq("id", 1);
-  }, [phase, guidedSessionId, sessionActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch active participants (heartbeat within last 60s)
   const fetchActiveParticipants = useCallback(async () => {
