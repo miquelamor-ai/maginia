@@ -99,11 +99,15 @@ export default function SessioPage() {
     return () => clearInterval(interval);
   }, [guidedSessionId]);
 
-  // Auto-redirect when facilitator starts — only if guided_session_id matches
+  // Auto-redirect when facilitator starts — only if they are in guided mode
   useEffect(() => {
     if (!facilitator?.is_active) return;
-    if (!guidedSessionId) return;
-    if (facilitator.guided_session_id !== guidedSessionId) return; // stale session, ignore
+    if (!guidedSessionId) return; // Must be in guided mode (scanned the QR)
+    
+    // We ignore if facilitator.guided_session_id !== guidedSessionId
+    // to allow participants with a stale session ID from an earlier run
+    // to resync with the newly restarted active session.
+    
     const p = facilitator.phase;
     const target = p === "decaleg" ? "/mapa/decaleg"
       : p === "intro" || p === "repas" ? "/mapa/ruta"

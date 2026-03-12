@@ -97,7 +97,15 @@ export default function RutaPage() {
         .select("phase, current_idx, is_active, guided_session_id")
         .eq("id", 1)
         .single();
-      if (!data || !data.is_active || data.guided_session_id !== guidedSessionId) return;
+      if (!data || !data.is_active) return;
+      
+      // Auto-adopt new session ID if missing or changed, so heartbeat works correctly
+      if (data.guided_session_id && data.guided_session_id !== guidedSessionId) {
+        localStorage.setItem("maginia_guided_session_id", data.guided_session_id);
+        // We don't set state immediately here to avoid a re-render during poll,
+        // but local storage is updated for the next mount.
+      }
+      
       const p = data.phase;
       setPhase(p);
       if (p === "intro") {
