@@ -37,14 +37,15 @@ export default function DecalegPage() {
 
   // Poll facilitator state: redirect when phase changes, show decaleg when generated
   useEffect(() => {
-    if (!guidedSessionId) return;
     const poll = async () => {
       const { data } = await supabase
         .from("mapa_facilitador_state")
-        .select("phase, is_active, guided_session_id, decaleg_json")
+        .select("phase, is_active, decaleg_json")
         .eq("id", 1)
         .single();
-      if (!data || !data.is_active || data.guided_session_id !== guidedSessionId) return;
+      
+      if (!data || !data.is_active) return;
+      
       // Show generated decaleg if available
       if (data.decaleg_json) {
         try {
@@ -52,9 +53,10 @@ export default function DecalegPage() {
           if (parsed?.orientations?.length) setOrientations(parsed.orientations);
         } catch { /* invalid JSON, ignore */ }
       }
+      
       // Redirect when facilitator moves away from decaleg
       if (data.phase !== "decaleg") {
-        window.location.href = "/mapa/sessio?g=" + guidedSessionId;
+        window.location.href = "/mapa/sessio" + (guidedSessionId ? "?g=" + guidedSessionId : "");
       }
     };
     poll();
@@ -90,12 +92,14 @@ export default function DecalegPage() {
 
         {submitted ? (
           <div className="space-y-4">
-            {/* Confirmation */}
-            <div className="bg-white rounded-3xl border border-black/[0.06] p-6 text-center shadow-sm">
-              <CheckCircle2 size={40} className="text-emerald-500 mx-auto mb-3" />
-              <h2 className="text-lg font-bold text-[var(--jesuites-blue)] mb-1">Aportació enviada</h2>
-              <p className="text-gray-500 text-sm">Gràcies! El facilitador recollirà totes les aportacions.</p>
-            </div>
+            {/* Confirmation (Hidden when decaleg is generated) */}
+            {!orientations && (
+              <div className="bg-white rounded-3xl border border-black/[0.06] p-6 text-center shadow-sm animate-fade-in-up">
+                <CheckCircle2 size={40} className="text-emerald-500 mx-auto mb-3" />
+                <h2 className="text-lg font-bold text-[var(--jesuites-blue)] mb-1">Aportació enviada</h2>
+                <p className="text-gray-500 text-sm">Gràcies! El facilitador recollirà totes les aportacions.</p>
+              </div>
+            )}
 
             {/* Generated decaleg (shown when facilitator generates it) */}
             {orientations && orientations.length > 0 && (
