@@ -74,8 +74,10 @@ Respon ÚNICAMENT amb un JSON en aquest format exacte:
     const result = JSON.parse(jsonMatch[0]);
 
     return NextResponse.json(result);
-  } catch (err) {
-    console.error("Synthesis error:", err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const status = (err as {status?: number})?.status;
+    console.error("Synthesis error:", msg, "status:", status, err);
+    return NextResponse.json({ error: msg, status }, { status: 500 });
   }
 }
