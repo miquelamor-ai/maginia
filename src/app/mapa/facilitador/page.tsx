@@ -338,6 +338,7 @@ export default function FacilitadorPage() {
   const [decalegSubmissions, setDecalegSubmissions] = useState<{session_id: string; principle_1: string; principle_2: string; principle_3: string}[]>([]);
   const [decalegGenerated, setDecalegGenerated] = useState<{orientations: {n: number; title: string; text: string}[]; summary: string} | null>(null);
   const [decalegGenerating, setDecalegGenerating] = useState(false);
+  const [decalegError, setDecalegError] = useState<string | null>(null);
   const [tancamentSlide, setTancamentSlide] = useState<0 | 1>(0);
   const [tancamentVotes, setTancamentVotes] = useState<{worry: number; doubt: number; agree: number; inspired: number}>({worry:0,doubt:0,agree:0,inspired:0});
   const [decalegRefinements, setDecalegRefinements] = useState<{participant_id: string; text: string}[]>([]);
@@ -1452,6 +1453,7 @@ export default function FacilitadorPage() {
                 <button
                   onClick={async () => {
                     setDecalegGenerating(true);
+                    setDecalegError(null);
                     try {
                       const marcRes = await fetch("/marc_general_ia.md").catch(() => null);
                       const marcText = marcRes ? await marcRes.text() : "";
@@ -1463,10 +1465,16 @@ export default function FacilitadorPage() {
                       const data = await res.json();
                       if (data.orientations) {
                         setDecalegGenerated(data);
+                        setDecalegError(null);
                         await supabase.from("mapa_facilitador_state")
                           .update({ decaleg_json: JSON.stringify(data) }).eq("id", 1);
+                      } else {
+                        setDecalegError(data.error || "Resposta invàlida de l'API");
                       }
-                    } catch (e) { console.error(e); }
+                    } catch (e) {
+                      setDecalegError(String(e));
+                      console.error(e);
+                    }
                     setDecalegGenerating(false);
                   }}
                   disabled={decalegGenerating}
@@ -1474,6 +1482,11 @@ export default function FacilitadorPage() {
                 >
                   {decalegGenerating ? "Generant…" : `Generar decàleg (${decalegSubmissions.length} × 3)`}
                 </button>
+              )}
+              {decalegError && (
+                <div className="shrink-0 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-[10px] text-rose-700 font-mono break-all">
+                  ❌ {decalegError}
+                </div>
               )}
             </div>
 
