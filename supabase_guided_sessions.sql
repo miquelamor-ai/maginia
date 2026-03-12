@@ -28,3 +28,7 @@ ALTER TABLE public.mapa_declarations
 -- 6. Enable RLS policies for mapa_sessions (allow all for now)
 ALTER TABLE public.mapa_sessions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all on mapa_sessions" ON public.mapa_sessions FOR ALL USING (true) WITH CHECK (true);
+
+-- 7. Add decaleg_json to facilitador state (stores AI-generated decàleg for participants)
+ALTER TABLE public.mapa_facilitador_state
+    ADD COLUMN IF NOT EXISTS decaleg_json TEXT;

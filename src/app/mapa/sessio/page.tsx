@@ -106,10 +106,11 @@ export default function SessioPage() {
     if (facilitator.guided_session_id !== guidedSessionId) return; // stale session, ignore
     const p = facilitator.phase;
     const target = p === "decaleg" ? "/mapa/decaleg"
+      : p === "intro" || p === "repas" ? "/mapa/ruta"
       : p === "calibra" ? "/mapa/calibra"
       : p === "mapa" ? "/mapa"
       : p === "valida" ? "/mapa/valida"
-      : null; // intro, repas, debate, tancament → stay on sessio (waiting screen)
+      : null; // debate, tancament → stay on sessio (waiting screen)
     if (target) window.location.href = target;
   }, [facilitator, guidedSessionId]);
 

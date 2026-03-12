@@ -609,9 +609,9 @@ export default function FacilitadorPage() {
       if (!isNext && !isPrev) return;
       e.preventDefault();
 
-      // Intro: advance/retreat layers
+      // Intro: advance/retreat layers (capped — transition handled by explicit button)
       if (phase === "intro") {
-        if (isNext) { if (introStep >= 5) switchPhase("repas"); else setIntroStep(s => s + 1); }
+        if (isNext) setIntroStep(s => Math.min(s + 1, 5));
         else setIntroStep(s => Math.max(0, s - 1));
         return;
       }
@@ -621,9 +621,9 @@ export default function FacilitadorPage() {
         else setTancamentSlide(s => Math.max(0, s - 1) as 0 | 1);
         return;
       }
-      // decaleg: step 0 (QR/lobby) → step 1 (collecting) → intro (Ruta)
+      // decaleg: step 0 (QR/lobby) → step 1 (collecting) — transition to Ruta via explicit button
       if (phase === "decaleg") {
-        if (isNext) { if (decalegStep >= 1) switchPhase("intro"); else setDecalegStep(s => s + 1); }
+        if (isNext) setDecalegStep(s => Math.min(s + 1, 1));
         else setDecalegStep(s => Math.max(0, s - 1));
         return;
       }
@@ -672,6 +672,13 @@ export default function FacilitadorPage() {
     // Always broadcast so participants know when to redirect
     if (sessionActive) broadcastState(p, 0, true);
   }, [sessionActive, broadcastState]);
+
+  // Sync introStep to Supabase so participants can follow along
+  useEffect(() => {
+    if (phase === "intro" && sessionActive) {
+      broadcastState("intro", introStep, true);
+    }
+  }, [introStep, phase, sessionActive, broadcastState]);
 
   const toggleSession = () => {
     const next = !sessionActive;
@@ -1411,7 +1418,8 @@ export default function FacilitadorPage() {
           </div>
         )}
         {phase === "decaleg" && decalegStep === 1 && (
-          <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col gap-3">
+            <div className="flex-1 min-h-0 flex gap-6 overflow-hidden">
             {/* Left: submissions */}
             <div className="w-80 shrink-0 flex flex-col gap-3">
               <div className="flex items-center justify-between shrink-0">
@@ -1498,6 +1506,22 @@ export default function FacilitadorPage() {
                 </div>
               )}
             </div>
+            </div>
+          {/* Navigation */}
+          <div className="flex items-center justify-between shrink-0 border-t border-[var(--jesuites-blue)]/10 pt-3">
+            <button
+              onClick={() => setDecalegStep(0)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)]/10 text-[var(--jesuites-blue)] text-sm font-bold uppercase tracking-wider hover:bg-[var(--jesuites-blue)]/20 transition-all"
+            >
+              <ChevronLeft size={16} /> Decàleg
+            </button>
+            <button
+              onClick={() => switchPhase("intro")}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)] text-white text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+            >
+              Ruta <ChevronRight size={16} />
+            </button>
+          </div>
           </div>
         )}
 
@@ -1617,10 +1641,10 @@ export default function FacilitadorPage() {
                 </button>
                 <span className="text-[var(--jesuites-blue)]/40 text-xs font-bold uppercase tracking-widest">{introStep + 1} / {LAYERS.length}</span>
                 <button
-                  onClick={() => { if (introStep === LAYERS.length - 1) switchPhase("repas"); else setIntroStep(s => s + 1); }}
+                  onClick={() => { if (introStep >= LAYERS.length - 1) switchPhase("repas"); else setIntroStep(s => s + 1); }}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)] text-white text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
                 >
-                  {introStep === LAYERS.length - 1 ? "Repàs de nivells" : "Següent"} <ChevronRight size={16} />
+                  {introStep >= LAYERS.length - 1 ? "Repàs de nivells" : "Següent"} <ChevronRight size={16} />
                 </button>
               </div>
             </div>
