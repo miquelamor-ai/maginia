@@ -107,11 +107,15 @@ export default function SessioPage() {
   // Auto-redirect when facilitator starts
   useEffect(() => {
     if (facilitator?.is_active) {
-      const target = facilitator.phase === "valida" ? "/mapa/valida"
-        : facilitator.phase === "mapa" ? "/mapa"
-        : facilitator.phase === "decaleg" ? "/mapa/decaleg"
-        : "/mapa/calibra";
-      window.location.href = target;
+      const p = facilitator.phase;
+      // Phases with a participant page → redirect there
+      // intro/repas are facilitator-only presentation → wait here
+      const target = p === "decaleg" ? "/mapa/decaleg"
+        : p === "calibra" ? "/mapa/calibra"
+        : p === "mapa" ? "/mapa"
+        : p === "valida" ? "/mapa/valida"
+        : null; // intro, repas, debate, tancament → stay on sessio
+      if (target) window.location.href = target;
     }
   }, [facilitator]);
 

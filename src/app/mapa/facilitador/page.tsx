@@ -355,6 +355,14 @@ export default function FacilitadorPage() {
       const newGsId = crypto.randomUUID().slice(0, 8);
       setGuidedSessionId(newGsId);
       setSessionActive(true);
+      // Immediately sync to Supabase so participants get the right phase on QR scan
+      supabase.from("mapa_facilitador_state").update({
+        phase: "decaleg",
+        current_idx: 0,
+        is_active: true,
+        guided_session_id: newGsId,
+        updated_at: new Date().toISOString(),
+      }).eq("id", 1);
     }
   }, []);
 
@@ -612,14 +620,20 @@ export default function FacilitadorPage() {
         else setTancamentSlide(s => Math.max(0, s - 1) as 0 | 1);
         return;
       }
-      // decaleg: step 0 (QR/lobby) ↔ step 1 (collecting)
+      // decaleg: step 0 (QR/lobby) → step 1 (collecting) → intro (Ruta)
       if (phase === "decaleg") {
-        if (isNext) setDecalegStep(s => Math.min(1, s + 1));
+        if (isNext) { if (decalegStep >= 1) switchPhase("intro"); else setDecalegStep(s => s + 1); }
         else setDecalegStep(s => Math.max(0, s - 1));
         return;
       }
-      // mapa / debate / repas — no arrow nav
-      if (phase === "mapa" || phase === "debate" || phase === "repas") return;
+      // repas: → calibra, ← intro
+      if (phase === "repas") {
+        if (isNext) switchPhase("calibra");
+        else switchPhase("intro");
+        return;
+      }
+      // mapa / debate — no arrow nav
+      if (phase === "mapa" || phase === "debate") return;
 
       // calibra / valida — scenario navigation + Space to reveal
       if (isNext) goNext();
@@ -1669,6 +1683,21 @@ export default function FacilitadorPage() {
                   </div>
                 );
               })}
+            </div>
+            {/* Navigation */}
+            <div className="flex items-center justify-between shrink-0 border-t border-[var(--jesuites-blue)]/10 pt-3 mt-3">
+              <button
+                onClick={() => switchPhase("intro")}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)]/10 text-[var(--jesuites-blue)] text-sm font-bold uppercase tracking-wider hover:bg-[var(--jesuites-blue)]/20 transition-all"
+              >
+                <ChevronLeft size={16} /> Ruta
+              </button>
+              <button
+                onClick={() => switchPhase("calibra")}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--jesuites-blue)] text-white text-sm font-bold uppercase tracking-wider hover:brightness-110 transition-all"
+              >
+                Calibra <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         )}
