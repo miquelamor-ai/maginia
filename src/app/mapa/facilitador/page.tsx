@@ -358,7 +358,9 @@ export default function FacilitadorPage() {
         current_idx: 0,
         is_active: true,
         guided_session_id: newGsId,
-      }).eq("id", 1).then(() => {
+      }).eq("id", 1).then(({ error }) => {
+        if (error) console.error("❌ Supabase update failed:", error.message, error.code);
+        else console.log("✅ Supabase session started:", newGsId);
         setGuidedSessionId(newGsId);
         setSessionActive(true);
       });
