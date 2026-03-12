@@ -114,7 +114,8 @@ export default function SessioPage() {
       : p === "calibra" ? "/mapa/calibra"
       : p === "mapa" ? "/mapa"
       : p === "valida" ? "/mapa/valida"
-      : null; // debate, tancament → stay on sessio (waiting screen)
+      : p === "tancament" ? "/mapa/tancament"
+      : null; // debate → stay on sessio (waiting screen)
     if (target) window.location.href = target;
   }, [facilitator, guidedSessionId]);
 
